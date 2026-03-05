@@ -1,0 +1,102 @@
+Subject,Question,Option_A,Option_B,Option_C,Option_D,Correct_Answer
+Accounting Basics,What is accounting?,Recording transactions,Writing letters,Designing slides,Editing photos,A
+Accounting Basics,What is a transaction?,Business event,Phone call,Meeting plan,Note,A
+Accounting Basics,Assets are?,What business owns,What business owes,Expenses,Income,A
+Accounting Basics,Liabilities are?,What business owns,What business owes,Profit,Loss,B
+Accounting Basics,Capital is?,Owner's investment,Loan,Expense,Sales,A
+Accounting Basics,Which equation is correct?,Assets=Liabilities+Capital,Assets=Capital-Liabilities,Capital=Assets+Liabilities,Assets=Income,A
+Accounting Basics,Debit increases which account?,Assets,Income,Liabilities,Capital,A
+Accounting Basics,Credit increases which account?,Assets,Expenses,Income,Drawings,C
+Accounting Basics,Which is an expense?,Rent,Sales,Capital,Loan,A
+Accounting Basics,Which is an income?,Purchase,Sales,Assets,Stock,B
+Company Creation & Configuration,What is a company in Tally?,A ledger,A set of accounts,Invoice,Stock item,B
+Company Creation & Configuration,First step in Tally?,Create company,Create voucher,Create stock,Print report,A
+Company Creation & Configuration,Which menu opens company options?,Alt+F3,Ctrl+N,Alt+F2,Ctrl+F3,A
+Company Creation & Configuration,What is configuration used for?,Settings,Design,Reports,Printing,A
+Company Creation & Configuration,What is backup?,Copy of data,Delete data,Sort data,Print data,A
+Company Creation & Configuration,What does Alter Company do?,Edit company,Delete company,Create voucher,Print,A
+Company Creation & Configuration,Which option sets financial year?,F11,F12,Alt+F3,Ctrl+F3,C
+Company Creation & Configuration,What is security control?,Password protection,Auto print,Auto email,Backup,A
+Ledgers & Groups,What is a ledger?,Account record,Voucher,Stock item,Invoice,A
+Ledgers & Groups,What is a group?,Category of ledgers,Voucher type,Report,Inventory,A
+Ledgers & Groups,Sundry Debtors are?,Customers,Suppliers,Bank,Expenses,A
+Ledgers & Groups,Sundry Creditors are?,Customers,Suppliers,Income,Stock,B
+Ledgers & Groups,Which group is Cash ledger under?,Cash-in-Hand,Bank Accounts,Sales,Purchase,A
+Ledgers & Groups,Which group is Bank ledger under?,Cash-in-Hand,Bank Accounts,Loans,Sales,B
+Ledgers & Groups,Which group is Sales ledger under?,Direct Income,Indirect Expenses,Capital,Assets,A
+Ledgers & Groups,Which group is Purchase ledger under?,Direct Expenses,Indirect Income,Capital,Assets,A
+Ledgers & Groups,Which group is Salary under?,Indirect Expenses,Direct Income,Assets,Capital,A
+Ledgers & Groups,Which group is GST ledger under?,Duties & Taxes,Sales,Purchase,Cash,A
+Voucher Entry,Which voucher records cash payment?,Payment,Receipt,Sales,Purchase,A
+Voucher Entry,Which voucher records cash receipt?,Payment,Receipt,Sales,Purchase,B
+Voucher Entry,Which voucher records credit sales?,Sales,Payment,Receipt,Contra,A
+Voucher Entry,Which voucher records credit purchase?,Purchase,Sales,Receipt,Contra,A
+Voucher Entry,Shortcut for Payment voucher?,F5,F6,F8,F9,A
+Voucher Entry,Shortcut for Receipt voucher?,F5,F6,F8,F9,B
+Voucher Entry,Shortcut for Sales voucher?,F5,F6,F8,F9,C
+Voucher Entry,Shortcut for Purchase voucher?,F5,F6,F8,F9,D
+Voucher Entry,Which voucher is for bank transfer?,Contra,Sales,Purchase,Receipt,A
+Voucher Entry,Journal voucher is used for?,Non-cash adjustments,Sales,Purchase,Receipt,A
+Voucher Entry,What is narration?,Transaction description,Ledger type,Tax code,Stock item,A
+GST Setup & Tax Entries,What does GST stand for?,Goods Sales Tax,Goods and Services Tax,General Sales Tax,Goods Service Tariff,B
+GST Setup & Tax Entries,GST is applied on?,Sales & purchases,Only sales,Only purchases,Only expenses,A
+GST Setup & Tax Entries,Which report shows GST summary?,GSTR,Trial Balance,Day Book,Stock Summary,A
+GST Setup & Tax Entries,HSN/SAC are used for?,Tax classification,Ledger grouping,Stock units,Company creation,A
+GST Setup & Tax Entries,Input GST is?,Tax on purchases,Tax on sales,Profit tax,Service charge,A
+GST Setup & Tax Entries,Output GST is?,Tax on purchases,Tax on sales,Expense,Income,B
+GST Setup & Tax Entries,Which tax is intrastate?,CGST+SGST,IGST,CESS,Nil,A
+GST Setup & Tax Entries,Which tax is interstate?,CGST+SGST,IGST,CESS,Nil,B
+GST Setup & Tax Entries,Which return is common for GST?,GSTR-1,Trial Balance,Stock Summary,Day Book,A
+Inventory Basics,What is a stock item?,Product,Ledger,Company,Voucher,A
+Inventory Basics,What is a unit?,Measurement like pcs/kg,Ledger,Group,Report,A
+Inventory Basics,What is a godown?,Storage location,Sales report,Tax report,Company,A
+Inventory Basics,Stock group is used for?,Categorizing items,Payments,Receipts,Expenses,A
+Inventory Basics,What is stock valuation?,Value of inventory,Ledger balance,Tax amount,Profit,A
+Inventory Basics,Which report shows stock?,Stock Summary,Trial Balance,Day Book,P&L,A
+Inventory Basics,What is reorder level?,Min stock before reorder,Max stock,Opening stock,Closing stock,A
+Inventory Basics,What is batch?,Lot of items,Ledger,Tax report,Voucher,A
+Inventory Basics,Opening stock means?,Stock at start,Stock at end,Sales total,Purchase total,A
+Inventory Basics,Closing stock means?,Stock at end,Stock at start,Sales total,Purchase total,A
+Purchase & Sales,Sales invoice is created in?,Sales voucher,Receipt,Payment,Contra,A
+Purchase & Sales,Purchase invoice is created in?,Purchase voucher,Sales,Receipt,Contra,A
+Purchase & Sales,Which document is issued to buyer?,Sales invoice,Payment voucher,Journal,Contra,A
+Purchase & Sales,Which voucher affects stock?,Sales/Purchase,Receipt,Payment,Contra,A
+Purchase & Sales,What is credit note?,Sales return,Purchase return,Payment,Receipt,A
+Purchase & Sales,What is debit note?,Purchase return,Sales return,Receipt,Payment,A
+Purchase & Sales,Which report shows item-wise sales?,Sales Register,Stock Summary,Day Book,Trial Balance,A
+Purchase & Sales,Which report shows item-wise purchases?,Purchase Register,Stock Summary,Day Book,Trial Balance,A
+Purchase & Sales,What is a delivery note?,Goods dispatch document,Payment voucher,Receipt,Journal,A
+Purchase & Sales,What is a receipt note?,Goods received document,Sales invoice,Payment voucher,Journal,A
+Banking,What is bank reconciliation?,Match bank and books,Pay salary,Create ledger,Issue invoice,A
+Banking,Cheque is recorded in?,Payment voucher,Sales voucher,Journal,Contra,A
+Banking,Post-dated cheque means?,Future date cheque,Old cheque,Bounced cheque,Invalid,A
+Banking,Which voucher is for bank transfer?,Contra,Sales,Purchase,Receipt,A
+Banking,What is BRS?,Bank Reconciliation Statement,Book Report Summary,Bank Receipt Slip,Balance Report Sheet,A
+Banking,Why reconcile bank?,Find differences,Add tax,Print invoice,Create ledger,A
+Banking,Which report shows bank transactions?,Bank Book,Ledger List,Trial Balance,Stock Summary,A
+Banking,What is cheque clearance?,Cheque processed by bank,Cheque issued,Cheque printed,Cheque canceled,A
+Reports,Trial Balance shows?,All ledger balances,Stock items,Invoices only,Payments only,A
+Reports,P&L shows?,Profit or loss,Stock,Invoices,Receipts,A
+Reports,Balance Sheet shows?,Assets & liabilities,Sales report,Tax report,Stock only,A
+Reports,Day Book shows?,All vouchers,Only sales,Only purchases,Only payments,A
+Reports,Which report shows cash position?,Cash Book,Stock Summary,Trial Balance,Sales Register,A
+Reports,Which report shows bank position?,Bank Book,Purchase Register,Day Book,P&L,A
+Reports,Which report shows profitability?,P&L,Trial Balance,Stock Summary,Ledger List,A
+Reports,Which report shows financial position?,Balance Sheet,Day Book,Stock Summary,Ledger List,A
+Reports,Which report shows ledger-wise detail?,Ledger Report,Stock Summary,P&L,Day Book,A
+Outstanding & Final Accounts,Outstanding report shows?,Unpaid dues,Stock list,Tax list,Expenses list,A
+Outstanding & Final Accounts,Receivables are?,Amounts to receive,Amounts to pay,Assets,Expenses,A
+Outstanding & Final Accounts,Payables are?,Amounts to receive,Amounts to pay,Income,Assets,B
+Outstanding & Final Accounts,Which report shows overdue bills?,Outstanding,Day Book,Trial Balance,Stock Summary,A
+Outstanding & Final Accounts,Final accounts include?,P&L and Balance Sheet,Stock only,Invoices only,Receipts only,A
+Outstanding & Final Accounts,Which report shows debtor list?,Receivables,Payables,Stock,Day Book,A
+Outstanding & Final Accounts,Which report shows creditor list?,Payables,Receivables,Stock,Invoices,A
+Outstanding & Final Accounts,Which statement shows net worth?,Balance Sheet,P&L,Day Book,Ledger List,A
+Outstanding & Final Accounts,Which report shows bills pending for payment?,Payables,Receivables,Stock,Sales,A
+Outstanding & Final Accounts,Which report shows bills pending for receipt?,Receivables,Payables,Stock,Sales,A
+Accounting Basics,Drawings are?,Owner withdrawals,Business income,Company assets,Company liabilities,A
+Ledgers & Groups,Furniture comes under which group?,Fixed Assets,Current Assets,Indirect Expenses,Direct Income,A
+Voucher Entry,Which voucher is used for cash deposit into bank?,Contra,Payment,Receipt,Journal,A
+GST Setup & Tax Entries,Where is GST rate usually defined?,Tax ledger,Trial Balance,Day Book,Stock Summary,A
+Reports,Which report shows all sales transactions?,Sales Register,Purchase Register,Stock Summary,Day Book,A
+Inventory Basics,Which unit is used for weight?,kg,pcs,ltr,box,A

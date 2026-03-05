@@ -1,0 +1,101 @@
+Subject,Question,Option_A,Option_B,Option_C,Option_D,Correct_Answer
+MS Office Fundamentals,What is Microsoft Office?,A software suite,A single program,A hardware device,An operating system,A
+MS Office Fundamentals,Which application is used for word processing?,MS Word,MS Excel,MS PowerPoint,MS Access,A
+MS Office Fundamentals,Which application is used for spreadsheets?,MS Word,MS Excel,MS PowerPoint,MS Outlook,B
+MS Office Fundamentals,Which application is used for presentations?,MS Word,MS Excel,MS PowerPoint,MS Access,C
+MS Office Fundamentals,Which application is used for email?,MS Outlook,MS Excel,MS Word,MS Access,A
+Computer Basics,What does RAM stand for?,Random Access Memory,Read Access Memory,Ready Access Memory,Rapid Access Machine,A
+Computer Basics,Which key saves a document?,Ctrl+S,Ctrl+P,Ctrl+N,Ctrl+X,A
+Computer Basics,Which key copies selected text?,Ctrl+C,Ctrl+V,Ctrl+X,Ctrl+Z,A
+Computer Basics,Which key pastes copied text?,Ctrl+V,Ctrl+C,Ctrl+X,Ctrl+Z,A
+Computer Basics,Which file extension is for Word documents?,.xlsx,.pptx,.docx,.jpg,C
+File Management,Which folder stores deleted files in Windows?,Documents,Recycle Bin,Downloads,Desktop,B
+File Management,Which shortcut renames a file in Windows?,F1,F2,F3,F4,B
+File Management,Which shortcut creates a new folder in Windows?,Ctrl+N,Ctrl+Shift+N,Ctrl+F,Ctrl+M,B
+File Management,Which option shows file details?,List view,Details view,Large icons,Tiles,B
+File Management,Which drive letter is usually the system drive?,C:,D:,E:,F:,A
+MS Word Basics,Which tab contains basic text formatting?,Home,Insert,Layout,Review,A
+MS Word Basics,Which shortcut makes text bold?,Ctrl+B,Ctrl+I,Ctrl+U,Ctrl+P,A
+MS Word Basics,Which shortcut makes text italic?,Ctrl+B,Ctrl+I,Ctrl+U,Ctrl+P,B
+MS Word Basics,Which shortcut underlines text?,Ctrl+B,Ctrl+I,Ctrl+U,Ctrl+P,C
+MS Word Basics,What does font size change?,Text color,Text size,Line spacing,Page size,B
+MS Word Page Setup,Which option changes page orientation?,Margins,Orientation,Columns,Indent,B
+MS Word Page Setup,Which option changes page size?,Size,Spacing,Styles,Review,A
+MS Word Page Setup,Which option changes margins?,Margins,Orientation,Columns,Indent,A
+MS Word Page Setup,Which view shows the print layout?,Draft,Print Layout,Web Layout,Outline,B
+MS Word Tables,Which tab is used to insert a table?,Home,Insert,Layout,Review,B
+MS Word Tables,What does Merge Cells do?,Splits a cell,Joins cells,Deletes a row,Adds a column,B
+MS Word Tables,What does Split Table do?,Joins tables,Splits one table,Deletes a column,Adds a row,B
+MS Word Images,Which tab inserts a picture?,Home,Insert,Layout,References,B
+MS Word Images,Which option wraps text around an image?,Text Wrap,Line Spacing,Indent,Columns,A
+MS Word Mail Merge,Mail Merge is used for?,Editing images,Creating charts,Bulk personalized documents,Spell check,C
+MS Word Mail Merge,Which tab is used for Mail Merge?,Home,Mailings,References,Review,B
+MS Word Mail Merge,What is a data source in Mail Merge?,Font style,Recipient list,Page size,Theme,B
+MS Word Proofing,Which feature checks spelling?,Spell Check,Track Changes,Word Count,Thesaurus,A
+MS Word Proofing,Which feature tracks edits?,Track Changes,Mail Merge,Table Tools,Watermark,A
+MS Word Proofing,Which tab contains Track Changes?,Home,Insert,Review,View,C
+MS Word Proofing,Which feature finds synonyms?,Thesaurus,Word Count,Zoom,Header,A
+MS Excel Basics,What is a cell?,Row only,Column only,Intersection of row and column,Sheet name,C
+MS Excel Basics,Which symbol starts a formula?,#,=,*,&,B
+MS Excel Basics,Which tab has cell formatting tools?,Home,Insert,Data,View,A
+MS Excel Basics,What is the default Excel file extension?,.docx,.xlsx,.pptx,.txt,B
+MS Excel Basics,Which key edits the active cell?,F1,F2,F3,F4,B
+MS Excel Formatting,Which format displays currency?,Number,Currency,Date,Text,B
+MS Excel Formatting,Which format displays date?,Number,Currency,Date,Text,C
+MS Excel Formatting,Which option centers text?,Left,Right,Center,Justify,C
+MS Excel Formatting,Which feature highlights conditions?,Conditional Formatting,Filter,Sort,Data Validation,A
+MS Excel Functions,Which function adds numbers?,SUM,AVG,MAX,MIN,A
+MS Excel Functions,Which function calculates average?,SUM,AVERAGE,COUNT,MAX,B
+MS Excel Functions,Which function finds maximum?,MAX,MIN,COUNT,IF,A
+MS Excel Functions,Which function counts numeric cells?,COUNT,COUNTA,COUNTIF,COUNTBLANK,A
+MS Excel Functions,Which function checks a condition?,IF,AND,OR,NOT,A
+MS Excel Functions,Which function combines text?,SUM,CONCAT,AVERAGE,MAX,B
+MS Excel Functions,Which function returns current date?,TODAY,NOW,DATE,DAY,A
+MS Excel Functions,Which function rounds a number?,ROUND,TRIM,LEFT,RIGHT,A
+MS Excel Functions,Which function counts non-empty cells?,COUNT,COUNTA,COUNTIF,COUNTBLANK,B
+MS Excel Functions,Which function looks up a value in a table?,VLOOKUP,SUMIF,ROUND,CONCAT,A
+MS Excel Charts,Which tab inserts charts?,Insert,Home,Data,View,A
+MS Excel Charts,Which chart shows trends over time?,Pie,Line,Bar,Column,B
+MS Excel Charts,Which chart compares categories?,Column,Line,Scatter,Area,A
+MS Excel Charts,Which chart shows parts of a whole?,Pie,Line,Bar,Area,A
+MS Excel Data Tools,What does Sort do?,Arranges data,Deletes data,Adds data,Prints data,A
+MS Excel Data Tools,What does Filter do?,Hides rows by criteria,Sorts A-Z,Adds chart,Prints sheet,A
+MS Excel Data Tools,What does Remove Duplicates do?,Adds duplicates,Deletes duplicates,Sorts data,Prints data,B
+MS Excel Data Tools,What is Data Validation used for?,Restrict input,Print data,Sort data,Add charts,A
+MS Excel Data Tools,What is a PivotTable?,Summary table,Chart only,Text style,Macro,A
+MS PowerPoint Basics,Which shortcut adds a new slide?,Ctrl+N,Ctrl+M,Ctrl+S,Ctrl+P,B
+MS PowerPoint Basics,Which tab changes the theme?,Design,Insert,Home,View,A
+MS PowerPoint Basics,Which view shows thumbnails and slide?,Normal,Slide Sorter,Notes,Reading,A
+MS PowerPoint Basics,Which feature plays slides?,Slide Show,Review,Design,View,A
+MS PowerPoint Layouts,What is a slide layout?,Arrangement of placeholders,Animation type,Color theme,File size,A
+MS PowerPoint Layouts,Which option imports slides?,Reuse Slides,Slide Master,Notes,Outline,A
+MS PowerPoint Layouts,Which tab inserts SmartArt?,Insert,Design,Review,View,A
+MS PowerPoint Layouts,What is a placeholder?,Box for content,Chart type,Footer,Header,A
+MS PowerPoint Animations,Animations apply to?,Objects/text,Slide only,Theme,Background,A
+MS PowerPoint Animations,Transitions apply to?,Slide,Text only,Charts only,Tables only,A
+MS PowerPoint Animations,Which tab controls animations?,Animations,Transitions,Design,View,A
+MS PowerPoint Animations,Which tab controls transitions?,Transitions,Animations,Home,Review,A
+MS PowerPoint Animations,What does Animation Pane show?,Order of animations,Theme list,Slide count,Notes,A
+MS PowerPoint Animations,Which key starts slideshow from beginning?,F5,Shift+F5,Ctrl+F5,F7,A
+MS Outlook Basics,What is Outlook used for?,Email and calendar,Spreadsheets,Presentations,Database,A
+MS Outlook Basics,Inbox contains?,Received mail,Sent mail,Drafts,Deleted,B
+MS Outlook Basics,Sent Items contains?,Received mail,Sent mail,Drafts,Deleted,B
+MS Outlook Basics,What does CC mean?,Carbon Copy,Blind Copy,Close Copy,Copy Count,A
+MS Outlook Basics,What does BCC mean?,Blind Carbon Copy,Basic Carbon Copy,Batch Copy,Backup Copy,A
+MS Outlook Basics,What is an attachment?,File sent with email,Email body,Signature,Folder,A
+MS Outlook Calendar,Calendar is used for?,Meetings,Typing,Printing,Charts,A
+MS Outlook Calendar,Contacts store?,People details,Emails only,Files,Charts,A
+Printing & Output,What is Print Preview?,Shows print layout,Edits text,Adds header,Deletes page,A
+Printing & Output,Which shortcut opens print dialog?,Ctrl+P,Ctrl+S,Ctrl+N,Ctrl+O,A
+Printing & Output,What does Duplex mean?,Two-sided printing,Single-sided printing,Color printing,Fast printing,A
+Printing & Output,What is PDF?,Portable Document Format,Picture Document File,Print Document Form,Public Data File,A
+Printing & Output,What is page orientation?,Portrait or Landscape,Font size,Line spacing,Column count,A
+MS Word Basics,Which shortcut opens a document?,Ctrl+O,Ctrl+S,Ctrl+N,Ctrl+P,A
+MS Word Proofing,Which feature counts words?,Word Count,Mail Merge,Track Changes,Thesaurus,A
+MS Excel Basics,What is the Name Box used for?,Shows active cell address,Shows formula,Shows chart,Shows sheet name,A
+MS Excel Functions,Which function finds minimum?,MIN,MAX,AVERAGE,SUM,A
+MS PowerPoint Basics,Which view is best for rearranging slides?,Slide Sorter,Normal,Notes,Reading,A
+MS PowerPoint Layouts,Which feature applies formatting to all slides?,Slide Master,Animation Pane,Design Ideas,Transitions,A
+MS Outlook Basics,Which folder stores unsent emails?,Drafts,Outbox,Sent Items,Trash,A
+Printing & Output,Which setting prints multiple copies?,Copies,Orientation,Scale,Paper Size,A
+MS Office Fundamentals,Which app is used for databases?,MS Access,MS Word,MS Excel,MS PowerPoint,A

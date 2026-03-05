@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Test</title>
+</head>
+<body>
+    <h1>Search and Filter Test</h1>
+    
+    <div>
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 10px; margin: 10px;">
+        <select id="statusFilter" style="padding: 10px; margin: 10px;">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+        </select>
+        <button id="clearBtn">Clear</button>
+    </div>
+    
+    <table border="1" style="width: 100%; margin: 20px 0;">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Status</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="payment-row" 
+                data-student-name="amit" 
+                data-payment-status="approved" 
+                data-payment-type="course_fee">
+                <td>Amit</td>
+                <td>Approved</td>
+                <td>Course Fee</td>
+            </tr>
+            <tr class="payment-row" 
+                data-student-name="rajesh" 
+                data-payment-status="pending" 
+                data-payment-type="assessment_fee">
+                <td>Rajesh</td>
+                <td>Pending</td>
+                <td>Assessment Fee</td>
+            </tr>
+            <tr class="payment-row" 
+                data-student-name="priya" 
+                data-payment-status="approved" 
+                data-payment-type="registration">
+                <td>Priya</td>
+                <td>Approved</td>
+                <td>Registration</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Test page loaded');
+        
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const clearBtn = document.getElementById('clearBtn');
+        const paymentRows = document.querySelectorAll('.payment-row');
+
+        console.log('Elements found:', {
+            searchInput: !!searchInput,
+            statusFilter: !!statusFilter,
+            paymentRows: paymentRows.length
+        });
+
+        function performSearch() {
+            console.log('Performing search...');
+            
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const statusValue = statusFilter.value;
+
+            console.log('Search criteria:', { searchTerm, statusValue });
+
+            let visibleCount = 0;
+
+            paymentRows.forEach((row, index) => {
+                const studentName = row.dataset.studentName || '';
+                const paymentStatus = row.dataset.paymentStatus || '';
+
+                console.log(`Row ${index}:`, { studentName, paymentStatus });
+
+                const matchesSearch = searchTerm === '' || studentName.includes(searchTerm);
+                const matchesStatus = statusValue === '' || paymentStatus === statusValue;
+
+                console.log(`Row ${index} matches:`, { matchesSearch, matchesStatus });
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            console.log('Visible count:', visibleCount);
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', performSearch);
+        }
+
+        if (statusFilter) {
+            statusFilter.addEventListener('change', performSearch);
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                statusFilter.value = '';
+                performSearch();
+            });
+        }
+
+        performSearch();
+    });
+    </script>
+</body>
+</html>
