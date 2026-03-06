@@ -90,9 +90,10 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $loginCredentials['password'],
                 $this->loginUrl(),
-            ]
+            ],
+            null,
+            ['customer_name', 'email', 'login_url']
         );
     }
 
@@ -128,9 +129,10 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $loginCredentials['password'],
                 $this->loginUrl(),
-            ]
+            ],
+            null,
+            ['customer_name', 'email', 'login_url']
         );
     }
 

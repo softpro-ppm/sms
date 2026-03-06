@@ -62,7 +62,7 @@ class WhatsAppTestCommand extends Command
     {
         return match ($template) {
             'registration_received' => ['Test Student'],
-            'account_approved', 'registration_complete' => ['Test Student', 'test@example.com', '9999999999', url('/login')],
+            'account_approved', 'registration_complete' => ['Test Student', 'test@example.com', url('/login')],
             'enrollment_confirmation' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', url('/login')],
             'payment_approved' => ['Test Student', 'RCP-TEST', '500', 'MS Office', '1400'],
             'fully_paid' => ['Test Student', 'MS Office', 'MSO-1', url('/login')],
@@ -76,7 +76,7 @@ class WhatsAppTestCommand extends Command
     {
         return match ($template) {
             'registration_received' => ['student_name'],
-            'account_approved', 'registration_complete' => ['customer_name', 'email', 'password', 'login_url'],
+            'account_approved', 'registration_complete' => ['customer_name', 'email', 'login_url'],
             'enrollment_confirmation' => ['customer_name', 'course', 'batch', 'enrollment_number', 'total_fee', 'outstanding', 'login_url'],
             'payment_approved' => ['customer_name', 'receipt_number', 'amount', 'course', 'outstanding'],
             'fully_paid' => ['customer_name', 'course', 'batch', 'login_url'],
