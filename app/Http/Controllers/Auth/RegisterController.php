@@ -83,12 +83,16 @@ class RegisterController extends Controller
             \Log::error('Self-registration WhatsApp failed: ' . $e->getMessage());
         }
 
-        return redirect()->route('register.success')
-            ->with('success', 'Registration submitted successfully! Your WhatsApp number will be your login password. Please wait for admin approval.');
+        return redirect()->to('/register/success');
     }
 
     public function success()
     {
-        return view('auth.register-success');
+        try {
+            return view('auth.register-success');
+        } catch (\Throwable $e) {
+            \Log::error('Registration success page failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->view('auth.register-success-fallback', [], 200);
+        }
     }
 }
