@@ -34,7 +34,9 @@ class WhatsAppTestCommand extends Command
         if ($template) {
             $this->info("Sending template '{$template}' to +91 {$phone}...");
             $params = $this->getTemplateParams($template);
-            $result = $whatsapp->sendTemplateMessage($phone, $template, 'en', $params);
+            $paramNames = $this->getTemplateParamNames($template);
+            $languageCode = config('services.whatsapp.template_language', 'en_US');
+            $result = $whatsapp->sendTemplateMessage($phone, $template, $languageCode, $params, null, $paramNames);
         } else {
             $this->info("Sending free-form message to +91 {$phone}...");
             $msg = "Test from Softpro SMS. WhatsApp API is working.";
@@ -67,6 +69,20 @@ class WhatsAppTestCommand extends Command
             'assessment_result' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', url('/login')],
             'certificate_issued' => ['Test Student', 'MS Office', 'CERT-TEST', url('/student/certificates/1/view')],
             default => [],
+        };
+    }
+
+    private function getTemplateParamNames(string $template): ?array
+    {
+        return match ($template) {
+            'registration_received' => ['student_name'],
+            'account_approved', 'registration_complete' => ['customer_name', 'email', 'password', 'login_url'],
+            'enrollment_confirmation' => ['customer_name', 'course', 'batch', 'enrollment_number', 'total_fee', 'outstanding', 'login_url'],
+            'payment_approved' => ['customer_name', 'receipt_number', 'amount', 'course', 'outstanding'],
+            'fully_paid' => ['customer_name', 'course', 'batch', 'login_url'],
+            'assessment_result' => ['customer_name', 'course', 'correct', 'total', 'percentage', 'status', 'login_url'],
+            'certificate_issued' => ['customer_name', 'course', 'certificate_number', 'view_url'],
+            default => null,
         };
     }
 }

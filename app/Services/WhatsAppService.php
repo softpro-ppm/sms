@@ -66,13 +66,15 @@ class WhatsAppService
      * Send a template message.
      * @param array $bodyParameters - Body variables in order (e.g. ['Name', 'value2'])
      * @param array|null $buttonParameters - For URL button: ['url' => 'https://...', 'display_text' => 'Login']
+     * @param array|null $parameterNames - Optional names matching template vars (e.g. ['student_name']) for named templates
      */
     public function sendTemplateMessage(
         $to,
         $templateName,
         $languageCode = 'en',
         array $bodyParameters = [],
-        ?array $buttonParameters = null
+        ?array $buttonParameters = null,
+        ?array $parameterNames = null
     ): array {
         $template = [
             'name' => $templateName,
@@ -82,9 +84,17 @@ class WhatsAppService
         $components = [];
 
         if (!empty($bodyParameters)) {
+            $parameters = [];
+            foreach ($bodyParameters as $i => $param) {
+                $p = ['type' => 'text', 'text' => (string) $param];
+                if ($parameterNames && isset($parameterNames[$i])) {
+                    $p['parameter_name'] = $parameterNames[$i];
+                }
+                $parameters[] = $p;
+            }
             $components[] = [
                 'type' => 'body',
-                'parameters' => array_map(fn($param) => ['type' => 'text', 'text' => (string) $param], $bodyParameters),
+                'parameters' => $parameters,
             ];
         }
 

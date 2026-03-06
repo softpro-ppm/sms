@@ -25,7 +25,8 @@ class WhatsAppNotificationService
         string $templateName,
         string $type,
         array $bodyParams,
-        ?array $buttonParams = null
+        ?array $buttonParams = null,
+        ?array $parameterNames = null
     ): bool {
         $phone = preg_replace('/[^0-9]/', '', $phone);
         if (strlen($phone) !== 10) {
@@ -33,12 +34,14 @@ class WhatsAppNotificationService
         }
 
         try {
+            $languageCode = config('services.whatsapp.template_language', 'en_US');
             $result = $this->whatsapp->sendTemplateMessage(
                 $phone,
                 $templateName,
-                'en',
+                $languageCode,
                 $bodyParams,
-                $buttonParams
+                $buttonParams,
+                $parameterNames
             );
 
             WhatsAppLog::create([
@@ -99,13 +102,14 @@ class WhatsAppNotificationService
             return false;
         }
 
-        // Meta may have 1 or 2 vars. Using 1 (name) - if approved has 2, add $student->email as 2nd param.
         return $this->sendTemplate(
             $student->id,
             $phone,
             'registration_received',
             'registration_received',
-            [$student->full_name]
+            [$student->full_name],
+            null,
+            ['student_name']
         );
     }
 
