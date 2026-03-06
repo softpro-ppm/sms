@@ -25,7 +25,8 @@ class WhatsAppNotificationService
         string $templateName,
         string $type,
         array $bodyParams,
-        ?array $buttonParams = null
+        ?array $buttonParams = null,
+        ?array $parameterNames = null
     ): bool {
         $phone = preg_replace('/[^0-9]/', '', $phone);
         if (strlen($phone) !== 10) {
@@ -33,37 +34,41 @@ class WhatsAppNotificationService
         }
 
         try {
+            $languageCode = config('services.whatsapp.template_language', 'en_US');
             $result = $this->whatsapp->sendTemplateMessage(
                 $phone,
                 $templateName,
-                'en',
+                $languageCode,
                 $bodyParams,
-                $buttonParams
+                $buttonParams,
+                $parameterNames
             );
 
-            WhatsAppLog::create([
-                'student_id' => $studentId,
-                'template_name' => $templateName,
-                'type' => $type,
-                'phone' => $phone,
-                'status' => $result['success'] ? 'sent' : 'failed',
-                'meta_message_id' => $result['message_id'] ?? null,
-                'error_message' => $result['error'] ?? null,
-                'metadata' => $result['success'] ? null : ['error' => $result['error']],
-            ]);
+            $this->logWhatsApp($studentId, $templateName, $type, $phone, $result['success'] ? 'sent' : 'failed', $result['message_id'] ?? null, $result['error'] ?? null, $result['success'] ? null : ['error' => $result['error']]);
 
             return $result['success'];
         } catch (\Exception $e) {
             Log::error('WhatsApp send failed: ' . $e->getMessage());
+            $this->logWhatsApp($studentId, $templateName, $type, $phone, 'failed', null, $e->getMessage(), null);
+            return false;
+        }
+    }
+
+    private function logWhatsApp(?int $studentId, string $templateName, string $type, string $phone, string $status, ?string $metaMessageId, ?string $errorMessage, ?array $metadata): void
+    {
+        try {
             WhatsAppLog::create([
                 'student_id' => $studentId,
                 'template_name' => $templateName,
                 'type' => $type,
                 'phone' => $phone,
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
+                'status' => $status,
+                'meta_message_id' => $metaMessageId,
+                'error_message' => $errorMessage,
+                'metadata' => $metadata,
             ]);
-            return false;
+        } catch (\Throwable $e) {
+            Log::warning('WhatsAppLog create failed (table may not exist): ' . $e->getMessage());
         }
     }
 
@@ -85,9 +90,10 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $loginCredentials['password'],
                 $this->loginUrl(),
-            ]
+            ],
+            null,
+            ['customer_name', 'email', 'login_url']
         );
     }
 
@@ -99,13 +105,14 @@ class WhatsAppNotificationService
             return false;
         }
 
-        // Meta may have 1 or 2 vars. Using 1 (name) - if approved has 2, add $student->email as 2nd param.
         return $this->sendTemplate(
             $student->id,
             $phone,
             'registration_received',
             'registration_received',
-            [$student->full_name]
+            [$student->full_name],
+            null,
+            ['student_name']
         );
     }
 
@@ -122,9 +129,10 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $loginCredentials['password'],
                 $this->loginUrl(),
-            ]
+            ],
+            null,
+            ['customer_name', 'email', 'login_url']
         );
     }
 
