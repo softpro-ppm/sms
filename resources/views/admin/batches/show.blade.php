@@ -11,7 +11,14 @@
             <h2 class="text-2xl font-bold text-gray-900">{{ $batch->batch_name }}</h2>
             <p class="text-gray-600 mt-1">{{ $batch->course->name }} • Batch ID: #{{ $batch->id }}</p>
         </div>
-        <div class="mt-4 sm:mt-0 flex space-x-3">
+        <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+            @if(!$batch->is_full)
+            <a href="{{ route('admin.batches.enroll', $batch) }}" 
+               class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200">
+                <i class="fas fa-user-plus mr-2"></i>
+                Add/Enroll Students
+            </a>
+            @endif
             <a href="{{ route('admin.batches.edit', $batch) }}" 
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-edit mr-2"></i>

@@ -6,7 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Student;
+use App\Mail\EnrollmentConfirmationMail;
+use App\Services\EnrollmentNumberService;
+use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
@@ -232,6 +237,159 @@ class BatchController extends Controller
         
         return redirect()->back()
             ->with('success', "Batch {$status} successfully!");
+    }
+
+    /**
+     * Show page to enroll students in this batch.
+     * Only shows approved students who have NO enrollments in any batch.
+     */
+    public function enrollStudents(Request $request, Batch $batch)
+    {
+        $batch->load('course');
+
+        // Check batch capacity
+        $activeCount = $batch->enrollments()->where('status', 'active')->count();
+        if ($batch->max_students && $activeCount >= $batch->max_students) {
+            return redirect()->route('admin.batches.show', $batch)
+                ->with('error', 'Batch is full. Cannot enroll more students.');
+        }
+
+        $search = trim((string) $request->get('search', ''));
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
+
+        // Eligible: approved students with ZERO enrollments (not enrolled in any batch)
+        $query = Student::where('status', 'approved')
+            ->whereDoesntHave('enrollments');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('aadhar_number', 'like', '%' . $search . '%')
+                    ->orWhere('whatsapp_number', 'like', '%' . $search . '%');
+            });
+        }
+
+        $students = $query->orderBy('full_name')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        $course = $batch->course;
+        $registrationFee = (float) ($course->registration_fee ?? 100);
+        $assessmentFee = (float) ($course->assessment_fee ?? 100);
+        $courseFee = (float) ($course->course_fee ?? 0);
+        $totalFee = $registrationFee + $courseFee + $assessmentFee;
+
+        return view('admin.batches.enroll', compact('batch', 'students', 'course', 'registrationFee', 'assessmentFee', 'courseFee', 'totalFee'));
+    }
+
+    /**
+     * Store enrollments for selected students in this batch.
+     */
+    public function storeEnrollments(Request $request, Batch $batch)
+    {
+        $validator = Validator::make($request->all(), [
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'required|exists:students,id',
+            'enrollment_date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $batch->load('course');
+        $course = $batch->course;
+        $registrationFee = (float) ($course->registration_fee ?? 100);
+        $assessmentFee = (float) ($course->assessment_fee ?? 100);
+        $courseFee = (float) ($course->course_fee ?? 0);
+        $totalFees = $registrationFee + $courseFee + $assessmentFee;
+
+        $studentIds = array_unique($request->student_ids);
+        $enrolled = 0;
+        $errors = [];
+
+        foreach ($studentIds as $studentId) {
+            $student = Student::find($studentId);
+            if (!$student) {
+                continue;
+            }
+
+            // Re-check: must be approved and have no enrollments
+            if ($student->status !== 'approved') {
+                $errors[] = "{$student->full_name}: Not approved.";
+                continue;
+            }
+            if ($student->enrollments()->exists()) {
+                $errors[] = "{$student->full_name}: Already enrolled in a batch.";
+                continue;
+            }
+
+            // Check batch capacity
+            $activeCount = $batch->enrollments()->where('status', 'active')->count();
+            if ($batch->max_students && $activeCount >= $batch->max_students) {
+                $errors[] = "Batch is full. Stopped after enrolling {$enrolled} student(s).";
+                break;
+            }
+
+            $creditToApply = min(
+                (float) ($student->credit_balance ?? 0),
+                $totalFees
+            );
+
+            $enrollmentNumber = EnrollmentNumberService::generateEnrollmentNumber();
+
+            $enrollment = Enrollment::create([
+                'enrollment_number' => $enrollmentNumber,
+                'student_id' => $student->id,
+                'batch_id' => $batch->id,
+                'enrollment_date' => $request->enrollment_date,
+                'status' => 'active',
+                'total_fee' => $totalFees,
+                'paid_amount' => 0,
+                'outstanding_amount' => $totalFees,
+                'is_eligible_for_assessment' => false,
+                'registration_fee' => $registrationFee,
+                'course_fee' => $courseFee,
+                'assessment_fee' => $assessmentFee,
+            ]);
+
+            if ($creditToApply > 0) {
+                try {
+                    $creditService = new \App\Services\StudentCreditService();
+                    $creditService->applyCreditToEnrollment($enrollment, $creditToApply);
+                } catch (\Exception $e) {
+                    \Log::error('Credit apply failed: ' . $e->getMessage());
+                }
+            }
+
+            try {
+                $enrollment->load(['batch.course', 'student']);
+                Mail::to($student->email)->send(new EnrollmentConfirmationMail($enrollment));
+            } catch (\Exception $e) {
+                \Log::error('Enrollment confirmation email failed: ' . $e->getMessage());
+            }
+            try {
+                app(WhatsAppNotificationService::class)->sendEnrollmentConfirmation($enrollment);
+            } catch (\Exception $e) {
+                \Log::error('Enrollment WhatsApp failed: ' . $e->getMessage());
+            }
+
+            $enrolled++;
+        }
+
+        if (!empty($errors)) {
+            return redirect()->route('admin.batches.show', $batch)
+                ->with('warning', $enrolled > 0
+                    ? "Enrolled {$enrolled} student(s). " . implode(' ', $errors)
+                    : implode(' ', $errors));
+        }
+
+        return redirect()->route('admin.batches.show', $batch)
+            ->with('success', "Successfully enrolled {$enrolled} student(s) in {$batch->batch_name}!");
     }
 
     public function getBatchesByCourse(Request $request)

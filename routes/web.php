@@ -126,6 +126,8 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
     Route::get('/batches/create', [BatchController::class, 'create'])->name('batches.create');
     Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
     Route::get('/batches/{batch}', [BatchController::class, 'show'])->name('batches.show');
+    Route::get('/batches/{batch}/enroll', [BatchController::class, 'enrollStudents'])->name('batches.enroll');
+    Route::post('/batches/{batch}/enroll', [BatchController::class, 'storeEnrollments'])->name('batches.enroll.store');
     Route::get('/batches/{batch}/edit', [BatchController::class, 'edit'])->name('batches.edit');
     Route::put('/batches/{batch}', [BatchController::class, 'update'])->name('batches.update');
     Route::delete('/batches/{batch}', [BatchController::class, 'destroy'])->name('batches.destroy');
