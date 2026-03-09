@@ -77,9 +77,9 @@ class WhatsAppTestCommand extends Command
             'registration_complete' => ['Test Student'],
             'enrollment_confirmation', 'enrollment_confirmation_2' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', $loginUrl],
             'payment_approved', 'payment_approved2' => ['Test Student', 'RCP-TEST', '500', 'MS Office', '1400'],
-            'fully_paid' => ['Test Student', 'MS Office', 'MSO-1', $loginUrl],
-            'assessment_result' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', $loginUrl],
-            'certificate_issued' => ['Test Student', 'MS Office', 'CERT-TEST', url('/student/certificates/1/view')],
+            'fully_paid', 'fully_paid_2' => ['Test Student', 'MS Office', 'MSO-1', $loginUrl],
+            'assessment_result', 'assessment_result_2' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', $loginUrl],
+            'certificate_issued', 'certificate_issued_2' => ['Test Student', 'MS Office', 'CERT-TEST', url('/student/certificates/1/view')],
             default => [],
         };
     }
@@ -92,9 +92,9 @@ class WhatsAppTestCommand extends Command
             'registration_complete' => ['customer_name'],
             'enrollment_confirmation', 'enrollment_confirmation_2' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount', 'login_url'],
             'payment_approved', 'payment_approved2' => ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount'],
-            'fully_paid' => ['student_name', 'course_name', 'batch_name', 'login_url'],
-            'assessment_result' => ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status', 'login_url'],
-            'certificate_issued' => ['student_name', 'course_name', 'certificate_number', 'view_url'],
+            'fully_paid', 'fully_paid_2' => ['student_name', 'course_name', 'batch_name', 'login_url'],
+            'assessment_result', 'assessment_result_2' => ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status', 'login_url'],
+            'certificate_issued', 'certificate_issued_2' => ['student_name', 'course_name', 'certificate_number', 'view_url'],
             default => null,
         };
     }

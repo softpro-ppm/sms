@@ -1,5 +1,34 @@
 # Deployment Guide
 
+## Quick Deploy
+
+From the project root, run:
+
+```bash
+npm run deploy
+```
+
+Or with a custom commit message:
+
+```bash
+./scripts/deploy.sh "Fix WhatsApp templates"
+```
+
+**What it does:**
+1. Builds frontend (Vite)
+2. Git add, commit (if changes), push
+3. SSHs to server and runs: `git pull` + `php artisan config:clear`
+
+**SSH:** `ssh -p 65002 u820431346@145.14.146.15`  
+**Server path:** `~/public_html/sms`
+
+**Tip:** Set up SSH key auth for passwordless deploy:
+```bash
+ssh-copy-id -p 65002 u820431346@145.14.146.15
+```
+
+---
+
 ## .env File (IMPORTANT)
 
 **`.env` is NOT in git** – it must be created/edited separately on each environment (local, server). This prevents your local `.env` from overwriting the server's production `.env` when you `git pull`.

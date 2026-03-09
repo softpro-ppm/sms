@@ -211,7 +211,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'fully_paid',
+            'fully_paid_2',
             'fully_paid',
             [
                 $student->full_name,
@@ -234,7 +234,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'assessment_result',
+            'assessment_result_2',
             'assessment_result',
             [
                 $student->full_name,
@@ -259,7 +259,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'certificate_issued',
+            'certificate_issued_2',
             'certificate_issued',
             [
                 $student->full_name,
