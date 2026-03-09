@@ -1,5 +1,17 @@
 # WhatsApp `account_approved` Template
 
+## Button URL Fix (Duplicate URL)
+
+If the "Click to Login" button opens `https://sms.softpromis.com/loginhttps://sms.softpromis.com/login` (duplicated URL), your template has the base URL + dynamic suffix. Add to `.env`:
+
+```env
+WHATSAPP_BUTTON_URL_EMPTY_SUFFIX=true
+```
+
+This passes an empty string for the button parameter so the URL is correct. If your template uses `{{1}}` as the full URL (no base), set to `false`.
+
+---
+
 ## Template Structure (WhatsApp Manager)
 
 **Name:** `account_approved`  

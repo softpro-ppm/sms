@@ -92,8 +92,9 @@ class WhatsAppTestCommand extends Command
 
     private function getTemplateButtonParams(string $template): ?array
     {
+        $url = config('services.whatsapp.button_url_empty_suffix', true) ? '' : url('/login');
         return match ($template) {
-            'account_approved', 'registration_complete' => ['url' => url('/login')],
+            'account_approved', 'registration_complete' => ['url' => $url],
             default => null,
         };
     }

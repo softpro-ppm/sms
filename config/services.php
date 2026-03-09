@@ -40,6 +40,9 @@ return [
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en_US'),
+        // When true: pass empty string for button URL (template has full URL as base, {{1}} is suffix)
+        // When false: pass full URL (template has {{1}} as whole URL)
+        'button_url_empty_suffix' => env('WHATSAPP_BUTTON_URL_EMPTY_SUFFIX', true),
     ],
 
 ];
