@@ -162,7 +162,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'enrollment_confirmation',
+            'enrollment_confirmation_2',
             'enrollment_confirmation',
             [
                 $student->full_name,
@@ -188,7 +188,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'payment_approved',
+            'payment_approved2',
             'payment_approved',
             [
                 $student->full_name,
