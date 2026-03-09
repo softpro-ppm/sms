@@ -96,16 +96,16 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
-        // registration_complete: header (Hello {{customer_name}},) + body (no vars) + button
+        // registration_complete: body only (Hello {{customer_name}}, ...) - no header, no button in Meta template
         return $this->sendTemplate(
             $student->id,
             $phone,
             'registration_complete',
             'registration_complete',
-            [],
-            ['url' => $this->loginButtonParam()],
-            ['header' => ['customer_name'], 'body' => []],
-            [$student->full_name]
+            [$student->full_name],
+            null,
+            ['customer_name'],
+            []
         );
     }
 
