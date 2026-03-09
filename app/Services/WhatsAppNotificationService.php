@@ -90,10 +90,9 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $this->loginUrl(),
             ],
-            null,
-            ['customer_name', 'email', 'login_url']
+            ['url' => $this->loginUrl()],
+            ['customer_name', 'email']
         );
     }
 
@@ -121,6 +120,8 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
+        $displayPhone = $student->whatsapp_number ?? $student->phone ?? 'N/A';
+
         return $this->sendTemplate(
             $student->id,
             $phone,
@@ -129,10 +130,10 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $loginCredentials['email'],
-                $this->loginUrl(),
+                $displayPhone,
             ],
-            null,
-            ['customer_name', 'email', 'login_url']
+            ['url' => $this->loginUrl()],
+            ['customer_name', 'email', 'phone_number']
         );
     }
 

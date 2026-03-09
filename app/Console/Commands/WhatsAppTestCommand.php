@@ -35,8 +35,9 @@ class WhatsAppTestCommand extends Command
             $this->info("Sending template '{$template}' to +91 {$phone}...");
             $params = $this->getTemplateParams($template);
             $paramNames = $this->getTemplateParamNames($template);
+            $buttonParams = $this->getTemplateButtonParams($template);
             $languageCode = config('services.whatsapp.template_language', 'en_US');
-            $result = $whatsapp->sendTemplateMessage($phone, $template, $languageCode, $params, null, $paramNames);
+            $result = $whatsapp->sendTemplateMessage($phone, $template, $languageCode, $params, $buttonParams, $paramNames);
         } else {
             $this->info("Sending free-form message to +91 {$phone}...");
             $msg = "Test from Softpro SMS. WhatsApp API is working.";
@@ -60,13 +61,15 @@ class WhatsAppTestCommand extends Command
 
     private function getTemplateParams(string $template): array
     {
+        $loginUrl = url('/login');
         return match ($template) {
             'registration_received' => ['Test Student'],
-            'account_approved', 'registration_complete' => ['Test Student', 'test@example.com', url('/login')],
-            'enrollment_confirmation' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', url('/login')],
+            'account_approved' => ['Test Student', 'test@example.com', '9550755039'],
+            'registration_complete' => ['Test Student', 'test@example.com'],
+            'enrollment_confirmation' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', $loginUrl],
             'payment_approved' => ['Test Student', 'RCP-TEST', '500', 'MS Office', '1400'],
-            'fully_paid' => ['Test Student', 'MS Office', 'MSO-1', url('/login')],
-            'assessment_result' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', url('/login')],
+            'fully_paid' => ['Test Student', 'MS Office', 'MSO-1', $loginUrl],
+            'assessment_result' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', $loginUrl],
             'certificate_issued' => ['Test Student', 'MS Office', 'CERT-TEST', url('/student/certificates/1/view')],
             default => [],
         };
@@ -76,12 +79,21 @@ class WhatsAppTestCommand extends Command
     {
         return match ($template) {
             'registration_received' => ['student_name'],
-            'account_approved', 'registration_complete' => ['customer_name', 'email', 'login_url'],
-            'enrollment_confirmation' => ['customer_name', 'course', 'batch', 'enrollment_number', 'total_fee', 'outstanding', 'login_url'],
-            'payment_approved' => ['customer_name', 'receipt_number', 'amount', 'course', 'outstanding'],
-            'fully_paid' => ['customer_name', 'course', 'batch', 'login_url'],
-            'assessment_result' => ['customer_name', 'course', 'correct', 'total', 'percentage', 'status', 'login_url'],
-            'certificate_issued' => ['customer_name', 'course', 'certificate_number', 'view_url'],
+            'account_approved' => ['customer_name', 'email', 'phone_number'],
+            'registration_complete' => ['customer_name', 'email'],
+            'enrollment_confirmation' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount', 'login_url'],
+            'payment_approved' => ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount'],
+            'fully_paid' => ['student_name', 'course_name', 'batch_name', 'login_url'],
+            'assessment_result' => ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status', 'login_url'],
+            'certificate_issued' => ['student_name', 'course_name', 'certificate_number', 'view_url'],
+            default => null,
+        };
+    }
+
+    private function getTemplateButtonParams(string $template): ?array
+    {
+        return match ($template) {
+            'account_approved', 'registration_complete' => ['url' => url('/login')],
             default => null,
         };
     }
