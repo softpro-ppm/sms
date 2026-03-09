@@ -64,9 +64,10 @@ class WhatsAppService
 
     /**
      * Send a template message.
+     * @param array $headerParameters - Header variables in order (e.g. for "Hello {{1}}," use ['Name'])
      * @param array $bodyParameters - Body variables in order (e.g. ['Name', 'value2'])
      * @param array|null $buttonParameters - For URL button: ['url' => 'https://...', 'display_text' => 'Login']
-     * @param array|null $parameterNames - Optional names matching template vars (e.g. ['student_name']) for named templates
+     * @param array|null $parameterNames - Optional names for body/header (indexed by component: 'header' => [...], 'body' => [...])
      */
     public function sendTemplateMessage(
         $to,
@@ -74,7 +75,8 @@ class WhatsAppService
         $languageCode = 'en',
         array $bodyParameters = [],
         ?array $buttonParameters = null,
-        ?array $parameterNames = null
+        ?array $parameterNames = null,
+        array $headerParameters = []
     ): array {
         $template = [
             'name' => $templateName,
@@ -83,12 +85,29 @@ class WhatsAppService
 
         $components = [];
 
+        if (!empty($headerParameters)) {
+            $parameters = [];
+            $headerNames = $parameterNames['header'] ?? null;
+            foreach ($headerParameters as $i => $param) {
+                $p = ['type' => 'text', 'text' => (string) $param];
+                if ($headerNames && isset($headerNames[$i])) {
+                    $p['parameter_name'] = $headerNames[$i];
+                }
+                $parameters[] = $p;
+            }
+            $components[] = [
+                'type' => 'header',
+                'parameters' => $parameters,
+            ];
+        }
+
         if (!empty($bodyParameters)) {
             $parameters = [];
+            $bodyNames = is_array($parameterNames) && isset($parameterNames['body']) ? $parameterNames['body'] : $parameterNames;
             foreach ($bodyParameters as $i => $param) {
                 $p = ['type' => 'text', 'text' => (string) $param];
-                if ($parameterNames && isset($parameterNames[$i])) {
-                    $p['parameter_name'] = $parameterNames[$i];
+                if ($bodyNames && isset($bodyNames[$i])) {
+                    $p['parameter_name'] = $bodyNames[$i];
                 }
                 $parameters[] = $p;
             }

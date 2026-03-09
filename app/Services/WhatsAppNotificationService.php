@@ -26,7 +26,8 @@ class WhatsAppNotificationService
         string $type,
         array $bodyParams,
         ?array $buttonParams = null,
-        ?array $parameterNames = null
+        ?array $parameterNames = null,
+        array $headerParams = []
     ): bool {
         $phone = preg_replace('/[^0-9]/', '', $phone);
         if (strlen($phone) !== 10) {
@@ -41,7 +42,8 @@ class WhatsAppNotificationService
                 $languageCode,
                 $bodyParams,
                 $buttonParams,
-                $parameterNames
+                $parameterNames,
+                $headerParams
             );
 
             $this->logWhatsApp($studentId, $templateName, $type, $phone, $result['success'] ? 'sent' : 'failed', $result['message_id'] ?? null, $result['error'] ?? null, $result['success'] ? null : ['error' => $result['error']]);
@@ -94,15 +96,16 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
-        // registration_complete: body (customer_name only) + button
+        // registration_complete: header (Hello {{customer_name}},) + body (no vars) + button
         return $this->sendTemplate(
             $student->id,
             $phone,
             'registration_complete',
             'registration_complete',
-            [$student->full_name],
+            [],
             ['url' => $this->loginButtonParam()],
-            ['customer_name']
+            ['header' => ['customer_name'], 'body' => []],
+            [$student->full_name]
         );
     }
 
