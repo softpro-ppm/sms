@@ -65,7 +65,7 @@ class WhatsAppTestCommand extends Command
         return match ($template) {
             'registration_received' => ['Test Student'],
             'account_approved' => ['Test Student', 'test@example.com', '9550755039'],
-            'registration_complete' => ['Test Student', 'test@example.com'],
+            'registration_complete' => ['Test Student'],
             'enrollment_confirmation' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', $loginUrl],
             'payment_approved' => ['Test Student', 'RCP-TEST', '500', 'MS Office', '1400'],
             'fully_paid' => ['Test Student', 'MS Office', 'MSO-1', $loginUrl],
@@ -80,7 +80,7 @@ class WhatsAppTestCommand extends Command
         return match ($template) {
             'registration_received' => ['student_name'],
             'account_approved' => ['customer_name', 'email', 'phone_number'],
-            'registration_complete' => ['customer_name', 'email'],
+            'registration_complete' => ['customer_name'],
             'enrollment_confirmation' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount', 'login_url'],
             'payment_approved' => ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount'],
             'fully_paid' => ['student_name', 'course_name', 'batch_name', 'login_url'],
@@ -92,7 +92,9 @@ class WhatsAppTestCommand extends Command
 
     private function getTemplateButtonParams(string $template): ?array
     {
-        $url = config('services.whatsapp.button_url_empty_suffix', true) ? '' : url('/login');
+        $baseUrl = url('/login');
+        $emptySuffix = config('services.whatsapp.button_url_empty_suffix', true);
+        $url = $emptySuffix ? '?' : $baseUrl;
         return match ($template) {
             'account_approved', 'registration_complete' => ['url' => $url],
             default => null,

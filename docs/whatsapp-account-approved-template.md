@@ -8,7 +8,7 @@ If the "Click to Login" button opens `https://sms.softpromis.com/loginhttps://sm
 WHATSAPP_BUTTON_URL_EMPTY_SUFFIX=true
 ```
 
-This passes an empty string for the button parameter so the URL is correct. If your template uses `{{1}}` as the full URL (no base), set to `false`.
+This passes `?` for the button parameter (results in `https://sms.softpromis.com/login?`). If your template uses `{{1}}` as the full URL (no base), set to `false`.
 
 ---
 

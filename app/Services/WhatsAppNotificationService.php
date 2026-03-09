@@ -79,12 +79,12 @@ class WhatsAppNotificationService
 
     /**
      * For dynamic URL buttons: if template has base URL + {{1}} suffix,
-     * pass empty string to avoid duplication. Otherwise pass full URL.
+     * pass "?" to avoid duplication (results in base + ?). Otherwise pass full URL.
      */
     private function loginButtonParam(): string
     {
         if (config('services.whatsapp.button_url_empty_suffix', true)) {
-            return '';
+            return '?';
         }
         return $this->loginUrl();
     }
@@ -94,18 +94,15 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
-        // registration_complete: body (customer_name, email) + button with login URL
+        // registration_complete: body (customer_name only) + button
         return $this->sendTemplate(
             $student->id,
             $phone,
             'registration_complete',
             'registration_complete',
-            [
-                $student->full_name,
-                $loginCredentials['email'],
-            ],
+            [$student->full_name],
             ['url' => $this->loginButtonParam()],
-            ['customer_name', 'email']
+            ['customer_name']
         );
     }
 
