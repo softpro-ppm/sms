@@ -16,7 +16,7 @@
         <p class="text-gray-600 mb-6">
             Thank you for registering. Your account is pending admin approval. You will receive an email when approved.
         </p>
-        <a href="/login" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700">
+        <a href="/login" class="inline-block bg-amber-400 hover:bg-amber-500 text-black px-6 py-3 rounded-lg font-semibold transition-colors">
             Go to Login
         </a>
     </div>

@@ -23,7 +23,7 @@
                    autocomplete="email" 
                    required 
                    value="{{ old('email') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('email') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('email') border-red-500 @enderror"
                    placeholder="Enter your email">
         </div>
         @error('email')
@@ -45,7 +45,7 @@
                    type="password" 
                    autocomplete="current-password" 
                    required
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('password') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('password') border-red-500 @enderror"
                    placeholder="Enter your password">
         </div>
         @error('password')
@@ -59,13 +59,13 @@
             <input id="remember" 
                    name="remember" 
                    type="checkbox" 
-                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                   class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
             <label for="remember" class="ml-2 block text-sm text-gray-700">
                 Remember me
             </label>
         </div>
         <div class="text-sm">
-            <a href="#" class="font-medium text-primary-600 hover:text-primary-500">
+            <a href="#" class="font-medium text-gray-900 hover:text-amber-600">
                 Forgot password?
             </a>
         </div>
@@ -74,9 +74,9 @@
     <!-- Submit Button -->
     <div>
         <button type="submit" 
-                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-black bg-amber-400 hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200">
             <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                <i class="fas fa-sign-in-alt text-primary-500 group-hover:text-primary-400"></i>
+                <i class="fas fa-sign-in-alt text-gray-800 group-hover:text-gray-900"></i>
             </span>
             Sign in
         </button>
@@ -86,7 +86,7 @@
     <div class="text-center">
         <p class="text-sm text-gray-600">
             Don't have an account?
-            <a href="{{ route('register') }}" class="font-medium text-primary-600 hover:text-primary-500">
+            <a href="{{ route('register') }}" class="font-medium text-gray-900 hover:text-amber-600">
                 Register here
             </a>
         </p>

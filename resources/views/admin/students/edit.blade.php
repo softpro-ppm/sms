@@ -48,16 +48,17 @@
                         @enderror
                     </div>
 
-                    <!-- Date of Birth -->
+                    <!-- Date of Birth (dd/mm/yyyy format for India) -->
                     <div>
                         <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-2">
                             Date of Birth
                         </label>
-                        <input type="date" 
+                        <input type="text" 
                                id="date_of_birth" 
                                name="date_of_birth" 
                                value="{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}"
-                               max="{{ date('Y-m-d') }}"
+                               placeholder="dd/mm/yyyy"
+                               autocomplete="off"
                                class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('date_of_birth') border-red-500 @enderror">
                         @error('date_of_birth')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -323,6 +324,18 @@
 
 @section('scripts')
 <script>
+    // Date of Birth - dd/mm/yyyy format (India), consistent across all devices
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr('#date_of_birth', {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            maxDate: 'today',
+            disableMobile: true,
+            allowInput: false
+        });
+    });
+
     // Function to capitalize first letter of each word - works for Full Name, Address, City, State
     function capitalizeWords(input) {
         if (!input) return;

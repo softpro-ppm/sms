@@ -23,7 +23,7 @@
                    maxlength="12"
                    required 
                    value="{{ old('aadhar_number') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('aadhar_number') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('aadhar_number') border-red-500 @enderror"
                    placeholder="Enter 12-digit Aadhar number"
                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                    pattern="[0-9]{12}">
@@ -47,7 +47,7 @@
                    type="text" 
                    required 
                    value="{{ old('full_name') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('full_name') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('full_name') border-red-500 @enderror"
                    placeholder="Enter your full name"
                    oninput="capitalizeWords(this)"
                    onblur="capitalizeWords(this)">
@@ -70,7 +70,7 @@
                    name="father_name" 
                    type="text" 
                    value="{{ old('father_name') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('father_name') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('father_name') border-red-500 @enderror"
                    placeholder="Enter father's name"
                    oninput="capitalizeWords(this)"
                    onblur="capitalizeWords(this)">
@@ -94,7 +94,7 @@
                 <select id="gender" 
                         name="gender" 
                         required
-                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('gender') border-red-500 @enderror">
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('gender') border-red-500 @enderror">
                     <option value="" {{ old('gender') == '' ? 'selected' : '' }}>Select Gender</option>
                     <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
                     <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
@@ -118,7 +118,7 @@
                 <select id="qualification" 
                         name="qualification" 
                         required
-                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('qualification') border-red-500 @enderror">
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('qualification') border-red-500 @enderror">
                     <option value="" {{ old('qualification') == '' ? 'selected' : '' }}>Select Qualification</option>
                     <option value="ITI" {{ old('qualification') == 'ITI' ? 'selected' : '' }}>ITI</option>
                     <option value="Post Graduate" {{ old('qualification') == 'Post Graduate' ? 'selected' : '' }}>Post Graduate</option>
@@ -152,7 +152,7 @@
                    required 
                    value="{{ old('email') }}"
                    inputmode="email"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('email') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('email') border-red-500 @enderror"
                    placeholder="Enter your email"
                    oninput="validateEmail(this)"
                    onblur="normalizeEmail(this)">
@@ -177,7 +177,7 @@
                    required
                    maxlength="10"
                    value="{{ old('whatsapp_number') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('whatsapp_number') border-red-500 @enderror"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('whatsapp_number') border-red-500 @enderror"
                    placeholder="Enter 10-digit WhatsApp number"
                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         </div>
@@ -187,20 +187,22 @@
         <p class="mt-1 text-xs text-gray-500">This will be used as your login password</p>
     </div>
 
-    <!-- Date of Birth -->
+    <!-- Date of Birth (dd/mm/yyyy format for India - consistent across all devices) -->
     <div>
         <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-2">
             Date of Birth
         </label>
         <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                 <i class="fas fa-calendar text-gray-400"></i>
             </div>
             <input id="date_of_birth" 
                    name="date_of_birth" 
-                   type="date" 
+                   type="text" 
+                   autocomplete="off"
                    value="{{ old('date_of_birth') }}"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('date_of_birth') border-red-500 @enderror">
+                   placeholder="dd/mm/yyyy"
+                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('date_of_birth') border-red-500 @enderror">
         </div>
         @error('date_of_birth')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -215,7 +217,7 @@
         <textarea id="address" 
                   name="address" 
                   rows="3"
-                  class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('address') border-red-500 @enderror"
+                  class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('address') border-red-500 @enderror"
                   placeholder="Enter your address"
                   onblur="capitalizeWords(this)">{{ old('address') }}</textarea>
         @error('address')
@@ -233,7 +235,7 @@
                    name="city" 
                    type="text" 
                    value="{{ old('city') }}"
-                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('city') border-red-500 @enderror"
+                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('city') border-red-500 @enderror"
                    placeholder="City"
                    onblur="capitalizeWords(this)">
             @error('city')
@@ -249,7 +251,7 @@
                    name="state" 
                    type="text" 
                    value="{{ old('state') }}"
-                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('state') border-red-500 @enderror"
+                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('state') border-red-500 @enderror"
                    placeholder="State"
                    onblur="capitalizeWords(this)">
             @error('state')
@@ -266,7 +268,7 @@
                    type="text" 
                    maxlength="10"
                    value="{{ old('pincode') }}"
-                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('pincode') border-red-500 @enderror"
+                   class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('pincode') border-red-500 @enderror"
                    placeholder="Pincode">
             @error('pincode')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -281,14 +283,14 @@
                    name="terms" 
                    type="checkbox" 
                    required
-                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                   class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
         </div>
         <div class="ml-3 text-sm">
             <label for="terms" class="text-gray-700">
                 I agree to the 
-                <a href="{{ route('terms') }}" target="_blank" class="text-primary-600 hover:text-primary-500">Terms of Service</a>
+                <a href="{{ route('terms') }}" target="_blank" class="text-gray-900 hover:text-amber-600">Terms of Service</a>
                 and 
-                <a href="{{ route('privacy') }}" target="_blank" class="text-primary-600 hover:text-primary-500">Privacy Policy</a>
+                <a href="{{ route('privacy') }}" target="_blank" class="text-gray-900 hover:text-amber-600">Privacy Policy</a>
             </label>
         </div>
     </div>
@@ -296,9 +298,9 @@
     <!-- Submit Button -->
     <div>
         <button type="submit" 
-                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-black bg-amber-400 hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200">
             <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                <i class="fas fa-user-plus text-primary-500 group-hover:text-primary-400"></i>
+                <i class="fas fa-user-plus text-gray-800 group-hover:text-gray-900"></i>
             </span>
             Create Account
         </button>
@@ -308,7 +310,7 @@
     <div class="text-center">
         <p class="text-sm text-gray-600">
             Already have an account?
-            <a href="{{ route('login') }}" class="font-medium text-primary-600 hover:text-primary-500">
+            <a href="{{ route('login') }}" class="font-medium text-gray-900 hover:text-amber-600">
                 Sign in here
             </a>
         </p>
@@ -318,6 +320,19 @@
 
 @section('scripts')
 <script>
+    // Date of Birth - dd/mm/yyyy format (India), consistent across all devices
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr('#date_of_birth', {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            altInputClass: 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white',
+            maxDate: 'today',
+            disableMobile: true,
+            allowInput: false
+        });
+    });
+
     // Capitalize first letter of each word - works for Full Name, Address, City, State
     function capitalizeWords(input) {
         if (!input) return;

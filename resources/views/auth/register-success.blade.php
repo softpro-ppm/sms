@@ -39,8 +39,8 @@
         <h4 class="text-lg font-semibold text-gray-900 mb-4">What happens next?</h4>
         <div class="space-y-3">
             <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span class="text-primary-600 text-sm font-semibold">1</span>
+                <div class="flex-shrink-0 w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                    <span class="text-amber-700 text-sm font-semibold">1</span>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-900">Admin Review</p>
@@ -48,8 +48,8 @@
                 </div>
             </div>
             <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span class="text-primary-600 text-sm font-semibold">2</span>
+                <div class="flex-shrink-0 w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                    <span class="text-amber-700 text-sm font-semibold">2</span>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-900">Account Activation</p>
@@ -57,8 +57,8 @@
                 </div>
             </div>
             <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span class="text-primary-600 text-sm font-semibold">3</span>
+                <div class="flex-shrink-0 w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                    <span class="text-amber-700 text-sm font-semibold">3</span>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-900">Start Learning</p>
@@ -69,12 +69,12 @@
     </div>
 
     <!-- Contact Info -->
-    <div class="bg-primary-50 border border-primary-200 rounded-lg p-6">
-        <h4 class="text-lg font-semibold text-primary-900 mb-2">Need Help?</h4>
-        <p class="text-sm text-primary-700 mb-3">
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <h4 class="text-lg font-semibold text-gray-900 mb-2">Need Help?</h4>
+        <p class="text-sm text-gray-700 mb-3">
             If you have any questions about your registration, please contact us:
         </p>
-        <div class="space-y-2 text-sm text-primary-700">
+        <div class="space-y-2 text-sm text-gray-700">
             <div class="flex items-center space-x-2">
                 <i class="fas fa-phone w-4"></i>
                 <span>+91 7799773656</span>
@@ -89,11 +89,11 @@
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-4">
         <a href="{{ route('login') }}" 
-           class="flex-1 bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors duration-200 text-center">
+           class="flex-1 bg-amber-400 hover:bg-amber-500 text-black px-6 py-3 rounded-lg font-semibold transition-colors duration-200 text-center">
             Go to Login
         </a>
         <a href="{{ route('home') }}" 
-           class="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors duration-200 text-center">
+           class="flex-1 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 text-center">
             Back to Home
         </a>
     </div>
