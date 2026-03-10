@@ -163,7 +163,7 @@ class WhatsAppTestCommand extends Command
         $url = $emptySuffix ? '?' : $baseUrl;
         return match ($template) {
             'account_approved' => ['url' => $url],
-            'enrollment_confirmation', 'enrollment_confirmation_2' => ['url' => $baseUrl],  // full URL for enrollment
+            'enrollment_confirmation', 'enrollment_confirmation_2' => null,  // Body only - add ['url' => $baseUrl] if template has button
             default => null,
         };
     }

@@ -43,6 +43,8 @@ return [
         // When true: pass empty string for button URL (template has full URL as base, {{1}} is suffix)
         // When false: pass full URL (template has {{1}} as whole URL)
         'button_url_empty_suffix' => env('WHATSAPP_BUTTON_URL_EMPTY_SUFFIX', true),
+        // When false: send params without parameter_name (for templates using {{1}},{{2}})
+        'use_parameter_names' => env('WHATSAPP_USE_PARAMETER_NAMES', true),
     ],
 
 ];

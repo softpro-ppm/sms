@@ -159,7 +159,7 @@ class WhatsAppNotificationService
         $course = $enrollment->batch->course;
         $batch = $enrollment->batch;
 
-        // Template: 6 body params + 1 button (full URL). Use loginUrl() - template expects full {{1}}.
+        // Template: 6 body params. Button only if template has "Visit website" in Meta.
         return $this->sendTemplate(
             $student->id,
             $phone,
@@ -173,7 +173,7 @@ class WhatsAppNotificationService
                 (string) (int) $enrollment->total_fee,
                 (string) (int) $enrollment->outstanding_amount,
             ],
-            ['url' => $this->loginUrl()],
+            null,  // Set to ['url' => $this->loginUrl()] if template has Visit website button
             ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount']
         );
     }

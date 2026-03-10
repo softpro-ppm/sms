@@ -104,9 +104,10 @@ class WhatsAppService
         if (!empty($bodyParameters)) {
             $parameters = [];
             $bodyNames = is_array($parameterNames) && isset($parameterNames['body']) ? $parameterNames['body'] : $parameterNames;
+            $useParamNames = config('services.whatsapp.use_parameter_names', true);
             foreach ($bodyParameters as $i => $param) {
                 $p = ['type' => 'text', 'text' => (string) $param];
-                if ($bodyNames && isset($bodyNames[$i])) {
+                if ($useParamNames && $bodyNames && isset($bodyNames[$i])) {
                     $p['parameter_name'] = $bodyNames[$i];
                 }
                 $parameters[] = $p;

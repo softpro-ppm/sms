@@ -81,6 +81,7 @@ MAIL_FROM_NAME="Softpro Skill Solutions"
 WHATSAPP_ACCESS_TOKEN=your_meta_token
 WHATSAPP_PHONE_NUMBER_ID=880926738448475
 WHATSAPP_TEMPLATE_LANGUAGE=en
+# Use "en" for "English" templates, "en_US" for "English (US)"
 WHATSAPP_API_URL=https://graph.facebook.com/v17.0
 WHATSAPP_BUTTON_URL_EMPTY_SUFFIX=true
 ```
