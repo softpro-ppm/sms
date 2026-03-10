@@ -3,13 +3,6 @@
 @section('content')
 <div class="min-h-[calc(100vh-140px)] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
-        <!-- Global error (from failed login) -->
-        @if($errors->any())
-            <div class="max-w-2xl mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-sm text-red-600">{{ $errors->first('email') }}</p>
-            </div>
-        @endif
-
         <!-- Centered logo + title (above split on all screens) -->
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo/Logo_png.png') }}" alt="SOFTPRO" class="h-14 w-auto bg-white rounded-xl p-2 shadow-lg mx-auto">
@@ -148,5 +141,53 @@
     </div>
 </div>
 
+<!-- Error popup modal (black/yellow/white theme) -->
+<div x-data="{ showError: {{ $errors->any() ? 'true' : 'false' }} }"
+     x-show="showError"
+     x-cloak
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div x-show="showError"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         @click="showError = false"
+         class="absolute inset-0 bg-gray-900/60"></div>
+
+    <!-- Modal -->
+    <div x-show="showError"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="relative bg-white rounded-xl shadow-2xl border-2 border-gray-900 max-w-sm w-full overflow-hidden">
+        <!-- Header (black) -->
+        <div class="bg-gray-900 px-6 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-400 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-gray-900 text-lg"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">Login Error</h3>
+        </div>
+        <!-- Body -->
+        <div class="px-6 py-5">
+            <p class="text-gray-700">{{ $errors->first('email') }}</p>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+            <button type="button"
+                    @click="showError = false"
+                    class="px-6 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold rounded-lg transition-colors">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>[x-cloak] { display: none !important; }</style>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 @endsection
