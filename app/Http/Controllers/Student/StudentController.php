@@ -516,11 +516,11 @@ class StudentController extends Controller
         elseif ($percentage >= 35) $grade = 'B';
         
         // Calculate actual time taken - prefer client-side value (includes tab switch time)
+        $startTime = session('assessment_start_time_' . $assessment->id);
         $timeTakenSeconds = (int) $request->input('time_taken_seconds');
         if ($timeTakenSeconds > 0) {
             $timeTakenMinutes = max(1, (int) ceil($timeTakenSeconds / 60));
         } else {
-            $startTime = session('assessment_start_time_' . $assessment->id);
             $timeTakenMinutes = $startTime ? max(1, (int) ceil(now()->diffInSeconds($startTime) / 60)) : 1;
         }
         
