@@ -21,10 +21,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Public\StudentVerificationController;
 
-// Public routes
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Public routes - home shows split login (Student left, Reception/Admin right)
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('home');
 
 Route::get('/privacy', function () {
     return view('public.privacy-policy');
@@ -38,7 +36,7 @@ Route::get('/data-deletion', function () {
     return view('public.data-deletion');
 })->name('data-deletion');
 
-// Authentication routes
+// Authentication routes - login same as home (split login view)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
