@@ -38,12 +38,38 @@
             }
         }
     </script>
+    <style>
+        .sp-marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .sp-marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: sp-marquee 18s linear infinite;
+        }
+        @keyframes sp-marquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
     <!-- Yellow top strip (softpro.co.in style) -->
-    <div class="bg-amber-400 text-black text-sm py-2 px-4 text-center">
-        <span>Admissions Open. Limited seats available.</span>
-        <a href="{{ route('verify.index') }}" class="font-semibold underline ml-2 hover:text-gray-800">Verify Student</a>
+    <div class="bg-amber-400 text-black text-xs sm:text-sm py-2 px-4 flex items-center justify-between gap-4">
+        <div class="sp-marquee-container flex-1">
+            <div class="sp-marquee-text">
+                Admissions Open. Limited seats available, Enroll Now.
+            </div>
+        </div>
+        <a href="https://softpro.co.in" target="_blank" rel="noopener"
+           class="ml-4 inline-flex items-center px-3 py-1 rounded-md bg-gray-900 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap">
+            Explore Courses
+        </a>
     </div>
 
     <!-- Black header with logo -->
