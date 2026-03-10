@@ -37,11 +37,20 @@ class BatchController extends Controller
             });
         }
 
-        $batches = $query->orderBy('created_at', 'desc')
+        $today = Carbon::today();
+        $todayStr = $today->format('Y-m-d');
+        $batches = $query
+            ->orderByRaw("
+                CASE
+                    WHEN DATE(start_date) > ? THEN 0
+                    WHEN DATE(start_date) <= ? AND DATE(end_date) >= ? THEN 1
+                    WHEN DATE(end_date) < ? THEN 2
+                    ELSE 3
+                END
+            ", [$todayStr, $todayStr, $todayStr, $todayStr])
+            ->orderByDesc('start_date')
             ->paginate($perPage)
             ->appends($request->query());
-
-        $today = Carbon::today();
         $stats = [
             'total_batches' => Batch::count(),
             'active_batches' => Batch::where('is_active', true)->count(),

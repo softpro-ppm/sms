@@ -639,10 +639,18 @@ class StudentController extends Controller
                 $query->whereNull('end_date')
                     ->orWhereDate('end_date', '>=', $gracePeriod);
             })
-            ->orderBy('batch_name')
+            ->orderByDesc('start_date')
             ->get(['id', 'batch_name', 'start_date', 'end_date', 'max_students']);
 
-        return response()->json($batches);
+        return response()->json($batches->map(function ($batch) {
+            return [
+                'id' => $batch->id,
+                'batch_name' => $batch->batch_name,
+                'start_date' => $batch->start_date?->format('d-m-Y'),
+                'end_date' => $batch->end_date?->format('d-m-Y'),
+                'max_students' => $batch->max_students,
+            ];
+        }));
     }
 
     /**
