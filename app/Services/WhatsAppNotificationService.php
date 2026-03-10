@@ -190,6 +190,7 @@ class WhatsAppNotificationService
             Log::warning('WhatsApp payment_approved skip: no phone', [
                 'student_id' => $student->id,
                 'payment_id' => $payment->id,
+                'receipt' => $payment->payment_receipt_number,
                 'whatsapp_number' => $student->whatsapp_number,
                 'phone' => $student->phone,
             ]);
@@ -210,7 +211,9 @@ class WhatsAppNotificationService
                 (string) (int) $payment->amount,
                 $course,
                 (string) (int) ($enrollment?->outstanding_amount ?? 0),
-            ]
+            ],
+            null,
+            ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount']
         );
     }
 

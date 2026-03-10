@@ -4,20 +4,22 @@ namespace App\Console\Commands;
 
 use App\Models\Payment;
 use App\Models\WhatsAppLog;
+use App\Services\WhatsAppNotificationService;
 use Illuminate\Console\Command;
 
 class WhatsAppDebugCommand extends Command
 {
-    protected $signature = 'whatsapp:debug {--payment= : Payment ID to check}';
+    protected $signature = 'whatsapp:debug {--payment= : Payment ID to check} {--retry : Resend payment_approved WhatsApp for this payment}';
 
     protected $description = 'Debug WhatsApp delivery - check student phone and recent logs';
 
-    public function handle(): int
+    public function handle(WhatsAppNotificationService $whatsapp): int
     {
         $paymentId = $this->option('payment');
+        $retry = $this->option('retry');
 
         if ($paymentId) {
-            $payment = Payment::with('student')->find($paymentId);
+            $payment = Payment::with(['student', 'enrollment.batch.course'])->find($paymentId);
             if (!$payment) {
                 $this->error("Payment {$paymentId} not found.");
                 return 1;
@@ -28,11 +30,18 @@ class WhatsAppDebugCommand extends Command
                 [
                     ['Student ID', $student->id],
                     ['Student Name', $student->full_name],
+                    ['Receipt', $payment->payment_receipt_number],
                     ['whatsapp_number', $student->whatsapp_number ?? '(null)'],
                     ['phone', $student->phone ?? '(null)'],
                     ['Phone for WhatsApp', ($student->whatsapp_number ?? $student->phone) ?: 'NONE - would skip'],
                 ]
             );
+
+            if ($retry) {
+                $this->info('Attempting to send payment_approved WhatsApp...');
+                $ok = $whatsapp->sendPaymentApproved($payment);
+                $this->line($ok ? '✅ Sent successfully' : '❌ Failed (check whatsapp_logs or Laravel log)');
+            }
             return 0;
         }
 
