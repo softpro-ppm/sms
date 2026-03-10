@@ -618,7 +618,7 @@ class StudentController extends Controller
         // Load relationships
         $result->load(['assessment', 'enrollment.batch.course']);
 
-        return view('student.assessments.show', compact('result'));
+        return view('student.assessments.show', compact('result', 'student'));
     }
 
     public function viewCertificate(Certificate $certificate)

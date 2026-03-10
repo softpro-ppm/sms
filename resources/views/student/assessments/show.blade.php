@@ -15,7 +15,7 @@
                 <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-user text-pink-600 text-sm"></i>
                 </div>
-                <span class="text-sm font-medium text-gray-900">Baleti Janaki</span>
+                <span class="text-sm font-medium text-gray-900">{{ $student->full_name ?? auth()->user()->name ?? 'Student' }}</span>
                 <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
             </div>
         </div>
