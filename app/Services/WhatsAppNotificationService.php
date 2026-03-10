@@ -30,7 +30,11 @@ class WhatsAppNotificationService
         array $headerParams = []
     ): bool {
         $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($phone) === 12 && str_starts_with($phone, '91')) {
+            $phone = substr($phone, 2);
+        }
         if (strlen($phone) !== 10) {
+            Log::warning('WhatsApp skip: invalid phone length', ['phone' => $phone, 'template' => $templateName]);
             return false;
         }
 
@@ -182,7 +186,10 @@ class WhatsAppNotificationService
     {
         $student = $payment->student;
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
-        if (!$phone) return false;
+        if (!$phone) {
+            Log::warning('WhatsApp payment_approved skip: no phone', ['student_id' => $student->id, 'payment_id' => $payment->id]);
+            return false;
+        }
 
         $enrollment = $payment->enrollment;
         $course = $enrollment?->batch?->course?->name ?? 'N/A';

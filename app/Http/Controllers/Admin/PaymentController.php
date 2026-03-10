@@ -268,30 +268,33 @@ class PaymentController extends Controller
             }
         }
 
-        // Send payment approved email
+        // Send payment approved email and WhatsApp (decoupled - WhatsApp sent even if email fails)
+        $payment->load(['student', 'enrollment.batch.course']);
         try {
-            $payment->load(['student', 'enrollment.batch.course']);
             Mail::to($payment->student->email)->send(new PaymentApprovedMail($payment));
-            // Send fully paid email if enrollment is now fully paid
-            if ($payment->enrollment_id) {
-                $enrollment = $payment->enrollment;
-                if ($enrollment->outstanding_amount <= 0) {
-                    $enrollment->load(['batch.course', 'student']);
-                    Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
-                    try {
-                        app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
-                    } catch (\Exception $e) {
-                        \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
-                    }
-                }
-            }
-            try {
-                app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
-            } catch (\Exception $e) {
-                \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
-            }
         } catch (\Exception $e) {
             \Log::error('Payment email failed: ' . $e->getMessage());
+        }
+        if ($payment->enrollment_id) {
+            $enrollment = $payment->enrollment;
+            if ($enrollment->outstanding_amount <= 0) {
+                try {
+                    $enrollment->load(['batch.course', 'student']);
+                    Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
+                } catch (\Exception $e) {
+                    \Log::error('Fully paid email failed: ' . $e->getMessage());
+                }
+                try {
+                    app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
+                } catch (\Exception $e) {
+                    \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
+                }
+            }
+        }
+        try {
+            app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
+        } catch (\Exception $e) {
+            \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
         }
 
         return redirect()->route('admin.payments.index')
@@ -368,17 +371,17 @@ class PaymentController extends Controller
                 }
             }
 
-            // Send payment approved email
+            // Send payment approved email and WhatsApp (decoupled)
+            $payment->load(['student', 'enrollment.batch.course']);
             try {
-                $payment->load(['student', 'enrollment.batch.course']);
                 Mail::to($payment->student->email)->send(new PaymentApprovedMail($payment));
-                try {
-                    app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
-                } catch (\Exception $e) {
-                    \Log::error('Bulk payment WhatsApp failed: ' . $e->getMessage());
-                }
             } catch (\Exception $e) {
                 \Log::error('Bulk payment email failed: ' . $e->getMessage());
+            }
+            try {
+                app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
+            } catch (\Exception $e) {
+                \Log::error('Bulk payment WhatsApp failed: ' . $e->getMessage());
             }
 
             $approvedCount++;
