@@ -231,8 +231,9 @@ class WhatsAppNotificationService
                 $student->full_name,
                 $course->name,
                 $enrollment->batch->batch_name,
-                $this->loginUrl(),
-            ]
+            ],
+            ['url' => $this->loginUrl()],
+            ['student_name', 'course_name', 'batch_name']
         );
     }
 
@@ -257,8 +258,9 @@ class WhatsAppNotificationService
                 (string) $result->total_questions,
                 (string) $result->percentage,
                 $status,
-                $this->loginUrl(),
-            ]
+            ],
+            ['url' => $this->loginUrl()],
+            ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status']
         );
     }
 
@@ -279,8 +281,9 @@ class WhatsAppNotificationService
                 $student->full_name,
                 $certificate->course->name,
                 $certificate->certificate_number ?? 'N/A',
-                $viewUrl,
-            ]
+            ],
+            ['url' => $viewUrl],
+            ['student_name', 'course_name', 'certificate_number']
         );
     }
 }
