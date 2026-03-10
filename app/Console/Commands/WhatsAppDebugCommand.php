@@ -9,7 +9,10 @@ use Illuminate\Console\Command;
 
 class WhatsAppDebugCommand extends Command
 {
-    protected $signature = 'whatsapp:debug {--payment= : Payment ID to check} {--retry : Resend payment_approved WhatsApp for this payment}';
+    protected $signature = 'whatsapp:debug 
+        {--payment= : Payment ID to check} 
+        {--retry : Resend payment_approved WhatsApp for this payment}
+        {--phone= : Filter logs by phone number (10 digits, e.g. 9550755039)}';
 
     protected $description = 'Debug WhatsApp delivery - check student phone and recent logs';
 
@@ -17,6 +20,31 @@ class WhatsAppDebugCommand extends Command
     {
         $paymentId = $this->option('payment');
         $retry = $this->option('retry');
+        $phone = $this->option('phone');
+
+        if ($phone) {
+            $phone = preg_replace('/[^0-9]/', '', $phone);
+            if (strlen($phone) === 12 && str_starts_with($phone, '91')) {
+                $phone = substr($phone, 2);
+            }
+            $this->info("WhatsApp logs for phone: {$phone}");
+            $logs = WhatsAppLog::where('phone', $phone)->orderByDesc('created_at')->take(50)->get();
+            if ($logs->isEmpty()) {
+                $this->warn("No WhatsApp logs found for {$phone}.");
+                return 0;
+            }
+            $this->table(
+                ['template_name', 'type', 'status', 'error', 'created_at'],
+                $logs->map(fn ($l) => [
+                    $l->template_name,
+                    $l->type,
+                    $l->status,
+                    $l->error_message ?? '-',
+                    $l->created_at->format('Y-m-d H:i'),
+                ])->toArray()
+            );
+            return 0;
+        }
 
         if ($paymentId) {
             $payment = Payment::with(['student', 'enrollment.batch.course'])->find($paymentId);
