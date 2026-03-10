@@ -29,6 +29,7 @@ class LoginController extends Controller
 
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
+        $scope = $request->input('role_scope'); // 'student' or 'staff' (reception/admin)
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
@@ -37,6 +38,21 @@ class LoginController extends Controller
                 Auth::logout();
                 return redirect()->back()
                     ->withErrors(['email' => 'Your account has been deactivated.'])
+                    ->withInput($request->except('password'));
+            }
+
+            // Enforce that users sign in through the correct section
+            if ($scope === 'student' && $user->role !== 'student') {
+                Auth::logout();
+                return redirect()->back()
+                    ->withErrors(['email' => 'Please use the Reception / Admin login section for this account.'])
+                    ->withInput($request->except('password'));
+            }
+
+            if ($scope === 'staff' && !in_array($user->role, ['admin', 'reception'], true)) {
+                Auth::logout();
+                return redirect()->back()
+                    ->withErrors(['email' => 'Please use the Student login section for this account.'])
                     ->withInput($request->except('password'));
             }
 

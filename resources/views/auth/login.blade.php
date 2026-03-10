@@ -51,6 +51,7 @@
 
                     <form method="POST" action="{{ route('login') }}" class="space-y-5">
                         @csrf
+                        <input type="hidden" name="role_scope" value="student">
                         <div>
                             <label for="student_email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                             <div class="relative">
@@ -106,6 +107,7 @@
 
                     <form method="POST" action="{{ route('login') }}" class="space-y-5">
                         @csrf
+                        <input type="hidden" name="role_scope" value="staff">
                         <div>
                             <label for="staff_email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                             <div class="relative">
