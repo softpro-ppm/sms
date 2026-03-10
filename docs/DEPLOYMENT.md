@@ -82,6 +82,7 @@ WHATSAPP_ACCESS_TOKEN=your_meta_token
 WHATSAPP_PHONE_NUMBER_ID=880926738448475
 WHATSAPP_TEMPLATE_LANGUAGE=en
 # Use "en" for "English" templates, "en_US" for "English (US)"
+# WHATSAPP_USE_PARAMETER_NAMES=true  (default) - required for templates with {{name}} variables
 WHATSAPP_API_URL=https://graph.facebook.com/v17.0
 WHATSAPP_BUTTON_URL_EMPTY_SUFFIX=true
 ```
