@@ -75,7 +75,7 @@ class WhatsAppTestCommand extends Command
             'registration_received' => ['Test Student'],
             'account_approved' => ['Test Student', 'test@example.com', '9550755039'],
             'registration_complete' => ['Test Student'],
-            'enrollment_confirmation', 'enrollment_confirmation_2' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900', $loginUrl],
+            'enrollment_confirmation', 'enrollment_confirmation_2' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900'],
             'payment_approved', 'payment_approved2' => ['Test Student', 'RCP-TEST', '500', 'MS Office', '1400'],
             'fully_paid', 'fully_paid_2' => ['Test Student', 'MS Office', 'MSO-1', $loginUrl],
             'assessment_result', 'assessment_result_2' => ['Test Student', 'MS Office', '45', '50', '90', 'Passed', $loginUrl],
@@ -90,7 +90,7 @@ class WhatsAppTestCommand extends Command
             'registration_received' => ['student_name'],
             'account_approved' => ['customer_name', 'email', 'phone_number'],
             'registration_complete' => ['customer_name'],
-            'enrollment_confirmation', 'enrollment_confirmation_2' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount', 'login_url'],
+            'enrollment_confirmation', 'enrollment_confirmation_2' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount'],
             'payment_approved', 'payment_approved2' => ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount'],
             'fully_paid', 'fully_paid_2' => ['student_name', 'course_name', 'batch_name', 'login_url'],
             'assessment_result', 'assessment_result_2' => ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status', 'login_url'],
@@ -163,6 +163,7 @@ class WhatsAppTestCommand extends Command
         $url = $emptySuffix ? '?' : $baseUrl;
         return match ($template) {
             'account_approved' => ['url' => $url],
+            'enrollment_confirmation', 'enrollment_confirmation_2' => ['url' => $url],
             default => null,
         };
     }

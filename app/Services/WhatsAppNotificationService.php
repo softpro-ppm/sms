@@ -159,6 +159,7 @@ class WhatsAppNotificationService
         $course = $enrollment->batch->course;
         $batch = $enrollment->batch;
 
+        // Template: 6 body params + 1 button (URL). Do NOT put login_url in body.
         return $this->sendTemplate(
             $student->id,
             $phone,
@@ -171,8 +172,9 @@ class WhatsAppNotificationService
                 $enrollment->enrollment_number,
                 (string) (int) $enrollment->total_fee,
                 (string) (int) $enrollment->outstanding_amount,
-                $this->loginUrl(),
-            ]
+            ],
+            ['url' => $this->loginButtonParam()],
+            ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount']
         );
     }
 
