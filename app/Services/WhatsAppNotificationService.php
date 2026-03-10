@@ -186,8 +186,13 @@ class WhatsAppNotificationService
     {
         $student = $payment->student;
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
-        if (!$phone) {
-            Log::warning('WhatsApp payment_approved skip: no phone', ['student_id' => $student->id, 'payment_id' => $payment->id]);
+        if (!$phone || trim((string) $phone) === '') {
+            Log::warning('WhatsApp payment_approved skip: no phone', [
+                'student_id' => $student->id,
+                'payment_id' => $payment->id,
+                'whatsapp_number' => $student->whatsapp_number,
+                'phone' => $student->phone,
+            ]);
             return false;
         }
 
