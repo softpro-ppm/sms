@@ -90,3 +90,22 @@ Replace `your_mysql_password`, `your_mail_password`, `your_meta_token` with actu
 ### Never commit .env
 
 The `.gitignore` excludes `.env`. Do not force-add it. Each machine keeps its own `.env`.
+
+---
+
+## 419 Page Expired (Registration / Login)
+
+If users get "419 Page Expired" when submitting the registration or login form:
+
+1. **No-cache headers** – Auth pages now send `Cache-Control: no-store` so browsers don't serve cached pages with stale CSRF tokens.
+
+2. **Session storage** – Ensure `storage/framework/sessions` is writable on the server:
+   ```bash
+   chmod -R 775 storage/framework/sessions
+   ```
+
+3. **Session config** – In `.env`, ensure:
+   - `SESSION_SECURE_COOKIE=true` (for HTTPS)
+   - `APP_URL=https://sms.softpromis.com` (exact match, no trailing slash)
+
+4. **Quick fix** – Ask the user to refresh the page and try again (gets a fresh CSRF token).
