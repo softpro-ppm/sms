@@ -232,7 +232,7 @@ class WhatsAppNotificationService
                 $course->name,
                 $enrollment->batch->batch_name,
             ],
-            ['url' => $this->loginUrl()],
+            null,
             ['student_name', 'course_name', 'batch_name']
         );
     }
@@ -259,7 +259,7 @@ class WhatsAppNotificationService
                 (string) $result->percentage,
                 $status,
             ],
-            ['url' => $this->loginUrl()],
+            null,
             ['student_name', 'course_name', 'correct_answers', 'total_questions', 'percentage', 'status']
         );
     }
@@ -269,8 +269,6 @@ class WhatsAppNotificationService
         $student = $certificate->student;
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
-
-        $viewUrl = url('/student/certificates/' . $certificate->id . '/view');
 
         return $this->sendTemplate(
             $student->id,
@@ -282,7 +280,7 @@ class WhatsAppNotificationService
                 $certificate->course->name,
                 $certificate->certificate_number ?? 'N/A',
             ],
-            ['url' => $viewUrl],
+            null,
             ['student_name', 'course_name', 'certificate_number']
         );
     }

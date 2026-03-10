@@ -164,9 +164,9 @@ class WhatsAppTestCommand extends Command
         return match ($template) {
             'account_approved' => ['url' => $url],
             'enrollment_confirmation', 'enrollment_confirmation_2' => null,  // Body only - static button in Meta
-            'fully_paid', 'fully_paid_2' => ['url' => $baseUrl],
-            'assessment_result', 'assessment_result_2' => ['url' => $baseUrl],
-            'certificate_issued', 'certificate_issued_2' => ['url' => url('/student/certificates/1/view')],
+            'fully_paid', 'fully_paid_2' => null,  // Body only - no button in approved Meta template
+            'assessment_result', 'assessment_result_2' => null,  // Body only - no button in approved Meta template
+            'certificate_issued', 'certificate_issued_2' => null,  // Body only - no button in approved Meta template
             default => null,
         };
     }
