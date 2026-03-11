@@ -10,6 +10,7 @@ use App\Models\Batch;
 use App\Models\AssessmentResult;
 use App\Mail\CertificateIssuedMail;
 use App\Services\CertificateTemplateService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,14 @@ use Carbon\Carbon;
 
 class CertificatesController extends Controller
 {
+    public function sample()
+    {
+        $templateService = app(CertificateTemplateService::class);
+        $html = $templateService->generateSampleHtml();
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 20);
@@ -138,23 +147,18 @@ class CertificatesController extends Controller
 
     public function download(Certificate $certificate)
     {
-        // Generate certificate file if it doesn't exist or uses old "Certificate of Completion" format
-        $needsRegeneration = !$certificate->certificate_file_path || !Storage::exists($certificate->certificate_file_path);
-        if (!$needsRegeneration) {
-            $existingContent = Storage::get($certificate->certificate_file_path);
-            $needsRegeneration = $existingContent && str_contains($existingContent, 'CERTIFICATE OF COMPLETION');
-        }
-        if ($needsRegeneration) {
-            $this->generateCertificateFile($certificate);
-        }
-
-        if (!Storage::exists($certificate->certificate_file_path)) {
+        if (!$certificate->is_issued || !$certificate->certificate_number) {
             return redirect()->back()
-                ->with('error', 'Certificate file could not be generated.');
+                ->with('error', 'Certificate must be generated before download.');
         }
 
-        return Storage::download($certificate->certificate_file_path, 
-            'certificate_' . $certificate->certificate_number . '.html');
+        $templateService = app(CertificateTemplateService::class);
+        $html = $templateService->generateHtml($certificate);
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('certificate_' . $certificate->certificate_number . '.pdf');
     }
 
     public function revoke(Certificate $certificate)

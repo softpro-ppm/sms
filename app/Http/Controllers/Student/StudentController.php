@@ -253,29 +253,23 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        // Ensure the certificate belongs to the authenticated student
+
         if (!$student || $certificate->student_id !== $student->id) {
             abort(403, 'Unauthorized access to certificate.');
         }
 
-        // Generate certificate file if it doesn't exist or uses old "Certificate of Completion" format
-        $needsRegeneration = !$certificate->certificate_file_path || !\Storage::exists($certificate->certificate_file_path);
-        if (!$needsRegeneration) {
-            $existingContent = \Storage::get($certificate->certificate_file_path);
-            $needsRegeneration = $existingContent && str_contains($existingContent, 'CERTIFICATE OF COMPLETION');
-        }
-        if ($needsRegeneration) {
-            $this->generateCertificateFile($certificate);
-        }
-
-        if (!\Storage::exists($certificate->certificate_file_path)) {
+        if (!$certificate->is_issued || !$certificate->certificate_number) {
             return redirect()->back()
-                ->with('error', 'Certificate file could not be generated.');
+                ->with('error', 'Certificate is not yet issued.');
         }
 
-        return \Storage::download($certificate->certificate_file_path, 
-            'certificate_' . $certificate->certificate_number . '.html');
+        $templateService = app(CertificateTemplateService::class);
+        $html = $templateService->generateHtml($certificate);
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('certificate_' . $certificate->certificate_number . '.pdf');
     }
 
     public function idCard()
@@ -629,16 +623,6 @@ class StudentController extends Controller
         // Ensure the certificate belongs to the authenticated student
         if (!$student || $certificate->student_id !== $student->id) {
             abort(403, 'Unauthorized access to certificate.');
-        }
-
-        // Generate certificate file if it doesn't exist or uses old "Certificate of Completion" format
-        $needsRegeneration = !$certificate->certificate_file_path || !\Storage::exists($certificate->certificate_file_path);
-        if (!$needsRegeneration) {
-            $existingContent = \Storage::get($certificate->certificate_file_path);
-            $needsRegeneration = $existingContent && str_contains($existingContent, 'CERTIFICATE OF COMPLETION');
-        }
-        if ($needsRegeneration) {
-            $this->generateCertificateFile($certificate);
         }
 
         $certificate->load(['student', 'course', 'batch', 'assessmentResult']);

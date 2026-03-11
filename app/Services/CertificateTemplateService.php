@@ -96,4 +96,54 @@ class CertificateTemplateService
             'certificateTitle' => $certificateTitle,
         ])->render();
     }
+
+    /**
+     * Generate sample certificate HTML for admin preview (no real data).
+     */
+    public function generateSampleHtml(): string
+    {
+        $logoPath = asset('images/logo/Logo_png.png');
+        $logoFile = public_path('images/logo/Logo_png.png');
+        if (file_exists($logoFile)) {
+            $logoData = base64_encode(file_get_contents($logoFile));
+            $logoPath = 'data:image/png;base64,' . $logoData;
+        }
+
+        $certificate = (object) [
+            'certificate_number' => 'CERT' . now()->format('Ym') . '0001',
+        ];
+
+        $student = (object) [
+            'full_name' => 'Sample Student Name',
+            'gender' => 'male',
+            'father_name' => 'Father Name',
+        ];
+
+        $course = (object) ['name' => 'MS Office'];
+        $batch = (object) ['batch_name' => 'MSO-24-2026'];
+
+        $verificationUrl = url('/verify') . '?cert=SAMPLE';
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' . urlencode($verificationUrl);
+
+        return view('certificates.training-certificate', [
+            'certificate' => $certificate,
+            'student' => $student,
+            'course' => $course,
+            'batch' => $batch,
+            'enrollmentNumber' => 'SP20260001',
+            'studentPhotoUrl' => null,
+            'studentPhotoPath' => null,
+            'logoPath' => $logoPath,
+            'salutation' => 'MR.',
+            'parentLabel' => 'S/O.',
+            'parentName' => 'Father Name',
+            'startDate' => '01-01-2026',
+            'endDate' => '15-03-2026',
+            'grade' => 'A',
+            'issueDate' => now()->format('d M Y'),
+            'qrUrl' => config('certificate.show_qr_code', true) ? $qrUrl : null,
+            'isoText' => config('certificate.iso_text', 'AN ISO 9001:2015 CERTIFIED ORGANIZATION'),
+            'certificateTitle' => config('certificate.title', 'CERTIFICATE OF COMPLETION'),
+        ])->render();
+    }
 }

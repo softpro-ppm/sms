@@ -124,7 +124,7 @@ class WhatsAppNotificationService
         return $this->sendTemplate(
             $student->id,
             $phone,
-            'registration_received',
+            'registration_received_2',
             'registration_received',
             [$student->full_name],
             null,

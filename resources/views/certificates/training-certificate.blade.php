@@ -3,124 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTIFICATE OF COMPLETION - {{ $certificate->certificate_number }}</title>
+    <title>Certificate - {{ $certificate->certificate_number }}</title>
     <style>
-        :root {
-            --color-primary: #1a365d;
-            --color-secondary: #2c3e6b;
-            --color-accent: #2563eb;
-            --color-text: #1e293b;
-            --color-muted: #64748b;
-            --color-border: #cbd5e1;
-            --font-heading: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif;
+        @page {
+            size: A4 landscape;
+            margin: 0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        @page {
-            size: A4 landscape;
-            margin: 10mm;
-        }
-
         body {
-            font-family: var(--font-body);
-            background: #e8eef5;
+            font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
+            background: #f5f0e8;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-        }
-
-        .certificate-wrapper {
-            position: relative;
-            width: 277mm;
-            height: 190mm;
-            max-width: 100%;
+            padding: 16px;
         }
 
         .certificate {
             position: relative;
-            width: 277mm;
-            min-height: 190mm;
-            max-height: 190mm;
-            /* A4 landscape: 297mm x 210mm; content area 277x190 with 10mm margins */
-            background: #fff;
-            padding: 12mm 15mm;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            width: 297mm;
+            height: 210mm;
+            background: #faf8f5;
+            padding: 0;
             overflow: hidden;
-            border: 3px double var(--color-secondary);
-            border-radius: 2px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.15);
         }
 
-        .watermark {
+        /* Outer ornamental border */
+        .certificate::before {
+            content: '';
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 120mm;
-            height: auto;
-            opacity: 0.06;
+            top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
+            border: 3px solid #8b7355;
             pointer-events: none;
-            z-index: 0;
+            z-index: 1;
         }
 
-        .certificate > * { position: relative; z-index: 1; }
+        .certificate::after {
+            content: '';
+            position: absolute;
+            top: 15mm; left: 15mm; right: 15mm; bottom: 15mm;
+            border: 1px solid #c4a574;
+            pointer-events: none;
+            z-index: 1;
+        }
 
-        /* Header: Logo | Institute | Photo */
-        .cert-header {
+        /* Corner ornaments */
+        .corner {
+            position: absolute;
+            width: 24mm;
+            height: 24mm;
+            border-color: #8b7355;
+            border-style: solid;
+            border-width: 0;
+            z-index: 2;
+        }
+        .corner-tl { top: 14mm; left: 14mm; border-top-width: 2px; border-left-width: 2px; }
+        .corner-tr { top: 14mm; right: 14mm; border-top-width: 2px; border-right-width: 2px; }
+        .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
+        .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
+
+        .content {
+            position: relative;
+            z-index: 3;
+            padding: 18mm 22mm;
+            height: 100%;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        /* Header: Logo + Institute */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12mm;
             margin-bottom: 8mm;
             padding-bottom: 6mm;
-            border-bottom: 2px solid var(--color-border);
+            border-bottom: 1px solid #c4a574;
         }
 
         .header-logo {
-            width: 28mm;
-            height: auto;
-            flex-shrink: 0;
+            height: 22mm;
+            width: auto;
         }
 
-        .header-center {
-            flex: 1;
+        .institute-block {
             text-align: center;
-            padding: 0 8mm;
         }
 
         .institute-name {
-            font-family: var(--font-heading);
-            font-size: 18pt;
+            font-size: 14pt;
             font-weight: 700;
-            color: var(--color-primary);
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            color: #2c1810;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
         .institute-tagline {
-            font-size: 9pt;
-            color: var(--color-muted);
-            letter-spacing: 1px;
+            font-size: 8pt;
+            color: #6b5344;
+            letter-spacing: 2px;
+            margin-top: 1px;
         }
 
-        .header-website {
-            font-size: 8pt;
-            color: var(--color-accent);
+        .institute-website {
+            font-size: 7pt;
+            color: #8b7355;
             margin-top: 2px;
         }
 
-        .header-right {
-            width: 25mm;
-            flex-shrink: 0;
+        /* Main title */
+        .cert-title {
+            text-align: center;
+            font-size: 28pt;
+            font-weight: 700;
+            color: #2c1810;
+            letter-spacing: 4px;
+            margin-bottom: 4mm;
+            text-transform: uppercase;
+        }
+
+        .cert-subtitle {
+            text-align: center;
+            font-size: 9pt;
+            color: #8b7355;
+            letter-spacing: 6px;
+            margin-bottom: 10mm;
+        }
+
+        /* Body */
+        .cert-body {
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4mm 0;
+        }
+
+        .certify-line {
+            font-size: 11pt;
+            color: #4a3728;
+            margin-bottom: 6mm;
+            font-style: italic;
+        }
+
+        .recipient-name {
+            font-size: 22pt;
+            font-weight: 700;
+            color: #2c1810;
+            margin-bottom: 4mm;
+            padding-bottom: 2mm;
+            border-bottom: 2px solid #8b7355;
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .parent-line {
+            font-size: 10pt;
+            color: #5c4a3a;
+            margin-bottom: 8mm;
+        }
+
+        .course-line {
+            font-size: 12pt;
+            color: #4a3728;
+            line-height: 1.7;
+            max-width: 220mm;
+            margin: 0 auto;
+        }
+
+        .course-name {
+            font-weight: 700;
+            color: #2c1810;
+            font-size: 13pt;
+        }
+
+        .date-grade-line {
+            font-size: 10pt;
+            color: #5c4a3a;
+            margin-top: 6mm;
+        }
+
+        /* Signatures */
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 8mm;
+            padding: 0 15mm;
+        }
+
+        .signature-block {
+            text-align: center;
+            width: 50mm;
+        }
+
+        .signature-line {
+            width: 45mm;
+            height: 12mm;
+            border-bottom: 1px solid #4a3728;
+            margin: 0 auto 3mm;
+        }
+
+        .signature-label {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #2c1810;
+        }
+
+        .signature-org {
+            font-size: 8pt;
+            color: #6b5344;
+            margin-top: 1px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 6mm;
+            padding-top: 4mm;
+            border-top: 1px solid #c4a574;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 6mm;
+        }
+
+        .cert-meta {
+            font-size: 8pt;
+            color: #6b5344;
+        }
+
+        .cert-meta strong {
+            color: #2c1810;
+        }
+
+        .qr-box {
+            width: 16mm;
+            height: 16mm;
+        }
+
+        .qr-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .footer-logo {
+            height: 10mm;
+            object-fit: contain;
+        }
+
+        .iso-text {
+            font-size: 6pt;
+            color: #8b7355;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Photo (optional) */
+        .photo-section {
+            position: absolute;
+            top: 18mm;
+            right: 22mm;
+            z-index: 4;
         }
 
         .photo-box {
-            width: 25mm;
-            height: 30mm;
-            border: 2px solid var(--color-secondary);
-            background: #f8fafc;
+            width: 22mm;
+            height: 28mm;
+            border: 2px solid #8b7355;
+            background: #faf8f5;
             overflow: hidden;
         }
 
@@ -133,298 +300,110 @@
         .photo-placeholder {
             width: 100%;
             height: 100%;
-            background: #f1f5f9;
+            background: #f0ebe3;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 6pt;
-            color: var(--color-muted);
+            color: #8b7355;
         }
 
         .enrollment-badge {
-            margin-top: 3mm;
-            font-size: 8pt;
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-
-        .enrollment-badge span { font-weight: 700; }
-
-        /* Title */
-        .cert-title {
-            font-family: var(--font-heading);
-            font-size: 22pt;
-            font-weight: 700;
-            color: var(--color-primary);
-            text-align: center;
-            margin-bottom: 6mm;
-            letter-spacing: 2px;
-        }
-
-        .cert-ribbon {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
-            color: white;
-            font-size: 9pt;
-            font-weight: 700;
-            padding: 3mm 8mm;
-            margin-bottom: 6mm;
-            letter-spacing: 1px;
-            border-radius: 2px;
-        }
-
-        /* Body */
-        .cert-body {
-            font-size: 11pt;
-            color: var(--color-text);
-            line-height: 1.8;
-            text-align: center;
-            max-width: 220mm;
-            margin: 0 auto 6mm;
-        }
-
-        .cert-body .highlight {
-            font-weight: 700;
-            color: var(--color-primary);
-            font-size: 10pt;
-            margin-bottom: 3mm;
-        }
-
-        .name-line {
-            display: inline;
-            border-bottom: 2px solid var(--color-primary);
-            padding: 0 6px 2px;
-            font-weight: 700;
-            font-size: 12pt;
-        }
-
-        .parent-line {
-            display: inline;
-            border-bottom: 1px solid var(--color-text);
-            padding: 0 6px 2px;
-            font-weight: 600;
-        }
-
-        .course-line {
-            display: inline;
-            border-bottom: 2px solid var(--color-primary);
-            padding: 0 6px 2px;
-            font-weight: 700;
-        }
-
-        .date-line {
-            display: inline;
-            border-bottom: 1px solid var(--color-text);
-            padding: 0 4px 2px;
-        }
-
-        .grade-line {
-            display: inline;
-            border-bottom: 2px solid var(--color-primary);
-            padding: 0 6px 2px;
-            font-weight: 700;
-        }
-
-        .parent-row { margin: 2mm 0; }
-
-        /* Signatures */
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8mm;
-            padding-top: 5mm;
-        }
-
-        .signature-block {
-            text-align: center;
-            width: 45mm;
-        }
-
-        .signature-line {
-            width: 40mm;
-            border-bottom: 1px solid var(--color-text);
-            margin: 0 auto 3mm;
-            height: 15mm;
-        }
-
-        .signature-label {
-            font-size: 9pt;
-            font-weight: 600;
-            color: var(--color-primary);
-        }
-
-        /* Footer */
-        .cert-footer {
-            margin-top: 6mm;
-            padding-top: 5mm;
-            border-top: 1px solid var(--color-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .footer-logos {
-            display: flex;
-            align-items: flex-end;
-            gap: 8mm;
-        }
-
-        .footer-logo-text {
-            font-size: 9pt;
-            font-weight: 700;
-            color: var(--color-primary);
-        }
-
-        .footer-logo-sub {
+            margin-top: 2mm;
             font-size: 7pt;
+            color: #6b5344;
+            font-weight: 600;
             text-align: center;
-            color: var(--color-muted);
-        }
-
-        .softpro-brand {
-            text-align: right;
-        }
-
-        .footer-softpro-logo {
-            height: 12mm;
-            object-fit: contain;
-            margin-bottom: 2px;
-        }
-
-        .iso-text {
-            font-size: 7pt;
-            color: var(--color-muted);
-        }
-
-        .cert-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 4mm;
-            font-size: 8pt;
-            color: var(--color-muted);
-        }
-
-        .cert-meta-left span { font-weight: 600; color: var(--color-primary); }
-        .cert-meta-right span { font-weight: 600; }
-
-        .qr-box {
-            width: 18mm;
-            height: 18mm;
-            flex-shrink: 0;
-        }
-
-        .qr-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
         }
 
         @media print {
             body { background: white; padding: 0; }
-            .certificate-wrapper { max-width: none; box-shadow: none; }
             .certificate { box-shadow: none; }
         }
     </style>
 </head>
 <body>
-    <div class="certificate-wrapper">
-        <div class="certificate">
-            <img src="{{ $logoPath }}" alt="" class="watermark">
+    <div class="certificate">
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
 
-            <header class="cert-header">
-                <div>
-                    <img src="{{ $logoPath }}" alt="SoftPro" class="header-logo">
-                    <div class="enrollment-badge">Enrol. <span>{{ $enrollmentNumber }}</span></div>
-                </div>
-                <div class="header-center">
-                    <h2 class="institute-name">SOFTPRO SKILL SOLUTIONS</h2>
+        @if($studentPhotoUrl)
+        <div class="photo-section">
+            <div class="photo-box">
+                <img src="{{ $studentPhotoPath }}" alt="">
+            </div>
+            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
+        </div>
+        @endif
+
+        <div class="content">
+            <header class="header">
+                <img src="{{ $logoPath }}" alt="SoftPro" class="header-logo">
+                <div class="institute-block">
+                    <h2 class="institute-name">Softpro Skill Solutions</h2>
                     <p class="institute-tagline">Skill Development & Training Institute</p>
-                    <p class="header-website">www.softpro.co.in</p>
+                    <p class="institute-website">www.softpro.co.in</p>
                 </div>
-                @if($studentPhotoUrl)
-                <div class="header-right">
-                    <div class="photo-box">
-                        <img src="{{ $studentPhotoPath }}" alt="Photo">
-                    </div>
-                </div>
-                @endif
             </header>
 
             <h1 class="cert-title">{{ $certificateTitle }}</h1>
-            <div style="text-align:center;">
-                <span class="cert-ribbon">CERTIFIED</span>
-            </div>
+            <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
 
             <div class="cert-body">
-                <p class="highlight">THIS IS TO CERTIFY THAT</p>
-                <p>
-                    {{ $salutation }} <span class="name-line">{{ $student->full_name }}</span>
-                    @if($parentName)
-                    <span class="parent-row"><br>{{ $parentLabel }} <span class="parent-line">{{ $parentName }}</span></span>
+                <p class="certify-line">This is to certify that</p>
+                <p class="recipient-name">{{ $salutation }} {{ $student->full_name }}</p>
+                @if($parentName)
+                <p class="parent-line">{{ $parentLabel }} {{ $parentName }}</p>
+                @endif
+                <p class="course-line">
+                    has successfully completed the course <span class="course-name">{{ $course->name }}</span>
+                    @if($batch)
+                    (Batch: {{ $batch->batch_name }})
                     @endif
+                    conducted by Softpro Skill Solutions during the period {{ $startDate }} to {{ $endDate }}
+                    @if($grade && $grade !== 'N/A')
+                    and has secured grade <strong>{{ $grade }}</strong>
+                    @endif
+                    based on overall performance, attendance and assessment.
                 </p>
-                <p>has successfully completed the course <span class="course-line">{{ $course->name }}</span> conducted by Softpro Skill Solutions during the period <span class="date-line">{{ $startDate }}</span> to <span class="date-line">{{ $endDate }}</span>@if($grade && $grade !== 'N/A') and has secured grade <span class="grade-line">{{ $grade }}</span>@endif based on overall performance, attendance and skills.</p>
+                <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
 
             <div class="signatures">
                 <div class="signature-block">
                     <div class="signature-line"></div>
-                    <div class="signature-label">Seal</div>
+                    <div class="signature-label">Authorized Signatory</div>
+                    <div class="signature-org">Seal</div>
                 </div>
                 <div class="signature-block">
                     <div class="signature-line"></div>
                     <div class="signature-label">Director</div>
-                    <div class="signature-label">SoftPro Skill Solutions</div>
+                    <div class="signature-org">Softpro Skill Solutions</div>
                 </div>
             </div>
 
-            <div class="cert-footer">
-                <div class="footer-logos">
-                    <div>
-                        <div class="footer-logo-text">JAS-ANZ</div>
+            <div class="footer">
+                <div class="footer-left">
+                    <div class="cert-meta">
+                        Certificate No. <strong>{{ $certificate->certificate_number }}</strong>
+                        @if(!$studentPhotoUrl)
+                        &nbsp;|&nbsp; Enrol. <strong>{{ $enrollmentNumber }}</strong>
+                        @endif
                     </div>
-                    <div>
-                        <div class="footer-logo-text">LMS</div>
-                        <div class="footer-logo-sub">LINEAR MANAGEMENT<br>SOLUTIONS</div>
-                    </div>
-                </div>
-                <div class="softpro-brand">
-                    <img src="{{ $logoPath }}" alt="SoftPro" class="footer-softpro-logo">
-                    <div class="iso-text">{{ $isoText }}</div>
-                </div>
-            </div>
-
-            <div class="cert-meta">
-                <div class="cert-meta-left">
-                    Certificate No. <span>{{ $certificate->certificate_number }}</span> &nbsp;|&nbsp; Issue Date: <span>{{ $issueDate }}</span>
-                </div>
-                <div class="cert-meta-right">
                     @if($qrUrl)
                     <div class="qr-box">
-                        <img src="{{ $qrUrl }}" alt="QR Code">
+                        <img src="{{ $qrUrl }}" alt="Verify">
                     </div>
                     @endif
+                </div>
+                <div class="footer-right">
+                    <img src="{{ $logoPath }}" alt="SoftPro" class="footer-logo">
+                    <div class="iso-text">{{ $isoText }}</div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        window.__CERT_DATA__ = {
-            enrollment_no: "{{ $enrollmentNumber }}",
-            certificate_no: "{{ $certificate->certificate_number }}",
-            issue_date: "{{ $issueDate }}",
-            student_name: "{{ $student->full_name }}",
-            parent_name: "{{ $parentName }}",
-            course_name: "{{ $course->name }}",
-            batch_name: "{{ $batch?->batch_name ?? '' }}",
-            from_date: "{{ $startDate }}",
-            to_date: "{{ $endDate }}",
-            grade: "{{ $grade }}",
-            student_photo_url: "{{ $studentPhotoUrl ?? '' }}",
-            qr_url: "{{ $qrUrl ?? '' }}"
-        };
-    </script>
 </body>
 </html>

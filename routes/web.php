@@ -185,6 +185,7 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
 
     // Certificates management
     Route::get('/certificates', [CertificatesController::class, 'index'])->name('certificates.index');
+    Route::get('/certificates/sample', [CertificatesController::class, 'sample'])->name('certificates.sample');
     Route::get('/certificates/create', [CertificatesController::class, 'create'])->name('certificates.create');
     Route::post('/certificates', [CertificatesController::class, 'store'])->name('certificates.store');
     Route::get('/certificates/{certificate}', [CertificatesController::class, 'show'])->name('certificates.show');

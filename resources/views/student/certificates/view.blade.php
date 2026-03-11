@@ -49,7 +49,7 @@
                 <div class="mt-2 text-sm text-blue-700">
                     <ul class="list-disc list-inside space-y-1">
                         <li>This certificate is issued upon successful completion of the course and assessment.</li>
-                        <li>The certificate can be downloaded as an HTML file and printed.</li>
+                        <li>The certificate can be downloaded as a PDF for printing or framing.</li>
                         <li>For verification purposes, please keep your certificate number safe.</li>
                     </ul>
                 </div>

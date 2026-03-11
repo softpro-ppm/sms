@@ -11,7 +11,13 @@
             <h2 class="text-2xl font-bold text-gray-900">Certificate Management</h2>
             <p class="text-gray-600 mt-1">Manage student certificates and achievements</p>
         </div>
-        <div class="mt-4 sm:mt-0">
+        <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+            <a href="{{ route('admin.certificates.sample') }}" 
+               target="_blank"
+               class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-eye mr-2"></i>
+                Sample Certificate
+            </a>
             <a href="{{ route('admin.certificates.create') }}" 
                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg">
                 <i class="fas fa-plus mr-2"></i>
