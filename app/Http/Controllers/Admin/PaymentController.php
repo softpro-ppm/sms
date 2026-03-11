@@ -71,22 +71,21 @@ class PaymentController extends Controller
     public function pending(Request $request)
     {
         // Get all enrollments with pending payments
+        // Use paid_amount/outstanding_amount (includes credit allocations) - NOT sum of payments
         $enrollments = \App\Models\Enrollment::with(['student', 'batch.course', 'payments'])
             ->where('status', 'active')
             ->get()
             ->filter(function ($enrollment) {
-                // Filter enrollments that have pending payments
-                $courseFee = $enrollment->total_fee ?? 0;
-                $approvedAmount = $enrollment->payments->where('status', 'approved')->sum('amount');
-                return $approvedAmount < $courseFee;
+                $outstanding = (float) ($enrollment->outstanding_amount ?? 0);
+                return $outstanding > 0;
             });
 
         $pendingData = [];
         
         foreach ($enrollments as $enrollment) {
-            $courseFee = $enrollment->total_fee ?? 0;
-            $approvedAmount = $enrollment->payments->where('status', 'approved')->sum('amount');
-            $pendingAmount = $courseFee - $approvedAmount;
+            $courseFee = (float) ($enrollment->total_fee ?? 0);
+            $paidAmount = (float) ($enrollment->paid_amount ?? 0);
+            $pendingAmount = (float) ($enrollment->outstanding_amount ?? 0);
             $pendingPayments = $enrollment->payments->where('status', 'pending');
             
             if ($pendingAmount > 0) {
@@ -96,10 +95,10 @@ class PaymentController extends Controller
                     'course' => $enrollment->batch->course,
                     'batch' => $enrollment->batch,
                     'course_fee' => $courseFee,
-                    'approved_amount' => $approvedAmount,
+                    'approved_amount' => $paidAmount,
                     'pending_amount' => $pendingAmount,
                     'pending_payments' => $pendingPayments,
-                    'payment_progress' => $courseFee > 0 ? round(($approvedAmount / $courseFee) * 100, 1) : 0,
+                    'payment_progress' => $courseFee > 0 ? round(($paidAmount / $courseFee) * 100, 1) : 0,
                     'last_payment_date' => $enrollment->payments->max('created_at'),
                 ];
             }
