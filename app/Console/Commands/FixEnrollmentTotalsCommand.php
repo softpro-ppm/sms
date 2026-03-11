@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\PaymentAllocation;
 use App\Services\PaymentAllocationService;
 use Illuminate\Console\Command;
 
@@ -13,7 +14,8 @@ class FixEnrollmentTotalsCommand extends Command
         {--student= : Student ID} 
         {--enrollment= : Enrollment ID} 
         {--fix : Recalculate and update enrollment totals}
-        {--approve-pending : Approve pending payments for the enrollment(s)}';
+        {--approve-pending : Approve pending payments for the enrollment(s)}
+        {--reallocate : Allocate approved payments that have no allocation records}';
 
     protected $description = 'Diagnose and fix enrollment paid_amount/outstanding_amount (recalculate from allocations)';
 
@@ -23,6 +25,7 @@ class FixEnrollmentTotalsCommand extends Command
         $enrollmentId = $this->option('enrollment');
         $applyFix = $this->option('fix');
         $approvePending = $this->option('approve-pending');
+        $reallocate = $this->option('reallocate');
 
         $query = Enrollment::with(['student', 'batch.course', 'payments']);
         if ($enrollmentId) {
@@ -72,6 +75,25 @@ class FixEnrollmentTotalsCommand extends Command
                 }
             }
 
+            // Reallocate: approved payments with no allocations (e.g. approved before allocation ran)
+            if ($reallocate) {
+                $reallocated = 0;
+                foreach ($approvedPayments as $p) {
+                    $allocated = PaymentAllocation::where('payment_id', $p->id)
+                        ->where('enrollment_id', $enrollment->id)
+                        ->sum('allocated_amount');
+                    if ($allocated < (float) $p->amount) {
+                        $allocationService->allocatePayment($p);
+                        $this->info("  ✓ Allocated payment #{$p->id} (₹{$p->amount})");
+                        $fixed++;
+                        $reallocated++;
+                    }
+                }
+                if ($reallocated > 0) {
+                    $enrollment->refresh();
+                }
+            }
+
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
             $totalPaid = (float) $enrollment->total_fee - $totalOutstanding;
 
@@ -80,13 +102,18 @@ class FixEnrollmentTotalsCommand extends Command
 
             if (abs((float) $enrollment->outstanding_amount - $totalOutstanding) > 0.01) {
                 $this->warn("  MISMATCH - needs fix");
-                if ($applyFix) {
+                if ($applyFix || $reallocate) {
                     $enrollment->update([
                         'paid_amount' => $totalPaid,
                         'outstanding_amount' => $totalOutstanding,
                         'is_eligible_for_assessment' => $totalOutstanding <= 0,
                     ]);
-                    $this->info("  ✓ Fixed");
+                    if ($totalOutstanding <= 0) {
+                        Payment::where('enrollment_id', $enrollment->id)
+                            ->where('status', 'approved')
+                            ->update(['payment_type' => 'full']);
+                    }
+                    $this->info("  ✓ Fixed totals");
                     $fixed++;
                 }
             } else {
@@ -96,8 +123,8 @@ class FixEnrollmentTotalsCommand extends Command
 
         if ($fixed > 0) {
             $this->info("\nFixed {$fixed} enrollment(s).");
-        } elseif (!$applyFix && !$approvePending && $enrollments->isNotEmpty()) {
-            $this->warn("\nRun with --fix to recalculate totals, or --approve-pending to approve pending payments.");
+        } elseif (!$applyFix && !$approvePending && !$reallocate && $enrollments->isNotEmpty()) {
+            $this->warn("\nOptions: --fix (recalc totals), --reallocate (allocate unallocated payments), --approve-pending");
         }
 
         return 0;
