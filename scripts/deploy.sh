@@ -29,7 +29,7 @@ git push
 
 echo ""
 echo "=== 5. Pulling on server & clearing config ==="
-$SSH "cd $REMOTE_PATH && git pull && php artisan config:clear"
+$SSH "cd $REMOTE_PATH && git pull && php artisan config:clear && php artisan storage:link 2>/dev/null || true"
 
 echo ""
 echo "✅ Deploy complete."

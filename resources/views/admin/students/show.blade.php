@@ -625,7 +625,7 @@
             document.getElementById('modalPdf').classList.add('hidden');
             const downloadLink = document.getElementById('modalDownload');
             if (downloadLink) {
-                downloadLink.href = url;
+                downloadLink.href = url + (url.includes('?') ? '&' : '?') + 'download=1';
                 downloadLink.classList.remove('hidden');
             }
             

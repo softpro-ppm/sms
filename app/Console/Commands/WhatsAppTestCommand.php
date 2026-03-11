@@ -73,6 +73,7 @@ class WhatsAppTestCommand extends Command
         $loginUrl = url('/login');
         return match ($template) {
             'registration_received' => ['Test Student'],
+            'registration_received_2' => ['REG-2026-000001', '1', 'Test Student'],
             'account_approved' => ['Test Student', 'test@example.com', '9550755039'],
             'registration_complete' => ['Test Student'],
             'enrollment_confirmation', 'enrollment_confirmation_2' => ['Test Student', 'MS Office', 'MSO-1', 'SP20260001', '1900', '1900'],
@@ -88,6 +89,7 @@ class WhatsAppTestCommand extends Command
     {
         return match ($template) {
             'registration_received' => ['student_name'],
+            'registration_received_2' => ['application_id', 'reference_id', 'student_name'],
             'account_approved' => ['customer_name', 'email', 'phone_number'],
             'registration_complete' => ['customer_name'],
             'enrollment_confirmation', 'enrollment_confirmation_2' => ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount'],

@@ -764,19 +764,51 @@ class StudentController extends Controller
         }
     }
 
-    public function viewDocument(StudentDocument $document)
+    public function viewDocument(StudentDocument $document, Request $request)
     {
-        if (!Storage::disk('public')->exists($document->file_path)) {
-            abort(404, 'Document not found');
+        $path = $this->resolveDocumentPath($document);
+        if (!$path) {
+            \Log::warning('Document not found on storage', [
+                'document_id' => $document->id,
+                'file_path' => $document->file_path,
+                'storage_root' => Storage::disk('public')->path(''),
+            ]);
+            abort(404, 'Document not found. File may have been moved or deleted.');
         }
 
-        $path = Storage::disk('public')->path($document->file_path);
-        $mimeType = Storage::disk('public')->mimeType($document->file_path) ?: 'application/octet-stream';
-
-        return response()->file($path, [
+        $mimeType = 'application/octet-stream';
+        if (function_exists('mime_content_type')) {
+            $detected = @mime_content_type($path);
+            if ($detected) {
+                $mimeType = $detected;
+            }
+        }
+        $headers = [
             'Cache-Control' => 'public, max-age=86400',
             'Content-Type' => $mimeType,
-        ]);
+        ];
+
+        if ($request->boolean('download')) {
+            $filename = $document->original_name ?: basename($document->file_path);
+            $headers['Content-Disposition'] = 'attachment; filename="' . addslashes($filename) . '"';
+        }
+
+        return response()->file($path, $headers);
+    }
+
+    /**
+     * Resolve document file path - works on shared hosting where Storage::exists may fail
+     */
+    private function resolveDocumentPath(StudentDocument $document): ?string
+    {
+        if (Storage::disk('public')->exists($document->file_path)) {
+            return Storage::disk('public')->path($document->file_path);
+        }
+        $fallbackPath = storage_path('app/public/' . ltrim($document->file_path, '/'));
+        if (file_exists($fallbackPath)) {
+            return $fallbackPath;
+        }
+        return null;
     }
 
     /**
