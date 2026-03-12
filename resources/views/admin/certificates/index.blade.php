@@ -12,7 +12,7 @@
             <p class="text-gray-600 mt-1">Manage student certificates and achievements</p>
         </div>
         <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
-            <a href="{{ route('admin.certificates.sample') }}" 
+            <a href="{{ url('/admin/certificates/sample') }}" 
                target="_blank"
                class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
                 <i class="fas fa-eye mr-2"></i>

@@ -32,11 +32,11 @@
             box-shadow: 0 12px 48px rgba(0,0,0,0.15);
         }
 
-        /* Outer ornamental border */
+        /* Outer ornamental border - keep content well inside */
         .certificate::before {
             content: '';
             position: absolute;
-            top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
+            top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
             border: 3px solid #8b7355;
             pointer-events: none;
             z-index: 1;
@@ -45,7 +45,7 @@
         .certificate::after {
             content: '';
             position: absolute;
-            top: 15mm; left: 15mm; right: 15mm; bottom: 15mm;
+            top: 13mm; left: 13mm; right: 13mm; bottom: 13mm;
             border: 1px solid #c4a574;
             pointer-events: none;
             z-index: 1;
@@ -69,10 +69,11 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 18mm 22mm;
+            padding: 20mm 24mm 8mm 24mm;
             height: 100%;
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
 
         /* Header: Logo + Institute */
@@ -96,7 +97,7 @@
         }
 
         .institute-name {
-            font-size: 14pt;
+            font-size: 16pt;
             font-weight: 700;
             color: #2c1810;
             letter-spacing: 1.5px;
@@ -104,14 +105,14 @@
         }
 
         .institute-tagline {
-            font-size: 8pt;
+            font-size: 9pt;
             color: #6b5344;
             letter-spacing: 2px;
             margin-top: 1px;
         }
 
         .institute-website {
-            font-size: 7pt;
+            font-size: 9pt;
             color: #8b7355;
             margin-top: 2px;
         }
@@ -138,6 +139,7 @@
         /* Body */
         .cert-body {
             flex: 1;
+            min-height: 0;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -148,6 +150,7 @@
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
+            margin-top: 18mm;
             margin-bottom: 6mm;
             font-style: italic;
         }
@@ -188,6 +191,16 @@
             font-size: 10pt;
             color: #5c4a3a;
             margin-top: 6mm;
+            margin-bottom: 5mm;
+        }
+
+        /* Bottom section: QR centered between Issue Date and footer */
+        .signatures-wrapper {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         /* Signatures */
@@ -195,13 +208,41 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 8mm;
+            margin-top: 18mm;
             padding: 0 15mm;
         }
 
         .signature-block {
             text-align: center;
             width: 50mm;
+        }
+
+        /* Center: QR code only */
+        .signature-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 1;
+        }
+
+        .signature-center .qr-box {
+            width: 18mm;
+            height: 18mm;
+        }
+
+        .signature-center .qr-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-scan-text {
+            font-size: 6pt;
+            color: #6b5344;
+            margin-top: 1mm;
+            text-align: center;
+            letter-spacing: 0.5px;
         }
 
         .signature-line {
@@ -223,56 +264,37 @@
             margin-top: 1px;
         }
 
-        /* Footer */
+        /* Footer - Enrol (left) | ISO (center) | Certificate No. (right) */
         .footer {
             margin-top: 6mm;
-            padding-top: 4mm;
+            padding-top: 6mm;
+            padding-bottom: 8mm;
             border-top: 1px solid #c4a574;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .footer-left {
-            display: flex;
             align-items: center;
-            gap: 6mm;
+            flex-shrink: 0;
+            gap: 8mm;
         }
 
-        .cert-meta {
-            font-size: 8pt;
-            color: #6b5344;
-        }
-
-        .cert-meta strong {
+        .footer-left, .footer-right {
+            font-size: 10pt;
+            font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+            font-weight: 500;
             color: #2c1810;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
         }
 
-        .qr-box {
-            width: 16mm;
-            height: 16mm;
-        }
-
-        .qr-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .footer-right {
-            text-align: right;
-        }
-
-        .footer-logo {
-            height: 10mm;
-            object-fit: contain;
-        }
+        .footer-left { text-align: left; }
+        .footer-right { text-align: right; }
 
         .iso-text {
-            font-size: 6pt;
+            font-size: 9pt;
             color: #8b7355;
-            margin-top: 1px;
             letter-spacing: 0.5px;
+            text-align: center;
+            flex: 1;
         }
 
         /* Photo (optional) */
@@ -362,7 +384,7 @@
                     @if($batch)
                     (Batch: {{ $batch->batch_name }})
                     @endif
-                    conducted by Softpro Skill Solutions during the period {{ $startDate }} to {{ $endDate }}
+                    conducted by Softpro Skill Solutions during the period {{ $startDate }} – {{ $endDate }}
                     @if($grade && $grade !== 'N/A')
                     and has secured grade <strong>{{ $grade }}</strong>
                     @endif
@@ -371,11 +393,20 @@
                 <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
 
+            <div class="signatures-wrapper">
             <div class="signatures">
                 <div class="signature-block">
                     <div class="signature-line"></div>
                     <div class="signature-label">Authorized Signatory</div>
-                    <div class="signature-org">Seal</div>
+                    <div class="signature-org">(Seal)</div>
+                </div>
+                <div class="signature-center">
+                    @if($qrUrl)
+                    <div class="qr-box">
+                        <img src="{{ $qrUrl }}" alt="Verify">
+                    </div>
+                    <div class="qr-scan-text">Scan to Verify Certificate</div>
+                    @endif
                 </div>
                 <div class="signature-block">
                     <div class="signature-line"></div>
@@ -383,25 +414,12 @@
                     <div class="signature-org">Softpro Skill Solutions</div>
                 </div>
             </div>
+            </div>
 
             <div class="footer">
-                <div class="footer-left">
-                    <div class="cert-meta">
-                        Certificate No. <strong>{{ $certificate->certificate_number }}</strong>
-                        @if(!$studentPhotoUrl)
-                        &nbsp;|&nbsp; Enrol. <strong>{{ $enrollmentNumber }}</strong>
-                        @endif
-                    </div>
-                    @if($qrUrl)
-                    <div class="qr-box">
-                        <img src="{{ $qrUrl }}" alt="Verify">
-                    </div>
-                    @endif
-                </div>
-                <div class="footer-right">
-                    <img src="{{ $logoPath }}" alt="SoftPro" class="footer-logo">
-                    <div class="iso-text">{{ $isoText }}</div>
-                </div>
+                <div class="footer-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></div>
+                <div class="iso-text">{{ $isoText }}</div>
+                <div class="footer-right">Certificate No. <strong>{{ $certificate->certificate_number }}</strong></div>
             </div>
         </div>
     </div>

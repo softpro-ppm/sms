@@ -41,22 +41,22 @@ class CertificateTemplateService
 
         // Salutation based on gender
         $salutation = match (strtolower($student->gender ?? '')) {
-            'male' => 'MR.',
-            'female' => 'MS.',
-            default => 'MR. / MS.',
+            'male' => 'Mr.',
+            'female' => 'Ms.',
+            default => 'Mr. / Ms.',
         };
 
-        // Parent label and name (D/O = Daughter of, S/O = Son of)
+        // Parent label and name (D/o = Daughter of, S/o = Son of)
         $parentLabel = match (strtolower($student->gender ?? '')) {
-            'male' => 'S/O.',
-            'female' => 'D/O.',
-            default => 'D/O. S/O.',
+            'male' => 'S/o',
+            'female' => 'D/o',
+            default => 'D/o S/o',
         };
         $parentName = trim($student->father_name ?? '');
 
-        // Batch dates
-        $startDate = $batch?->start_date ? $batch->start_date->format('d-m-Y') : '______';
-        $endDate = $batch?->end_date ? $batch->end_date->format('d-m-Y') : '______';
+        // Batch dates (e.g., 01 Jan 2026 – 15 Mar 2026)
+        $startDate = $batch?->start_date ? $batch->start_date->format('d M Y') : '______';
+        $endDate = $batch?->end_date ? $batch->end_date->format('d M Y') : '______';
 
         // Grade from assessment result
         $grade = $result?->grade ?? 'N/A';
@@ -114,9 +114,9 @@ class CertificateTemplateService
         ];
 
         $student = (object) [
-            'full_name' => 'Sample Student Name',
-            'gender' => 'male',
-            'father_name' => 'Father Name',
+            'full_name' => 'Tejal Gulla',
+            'gender' => 'female',
+            'father_name' => 'Rajesh Gulla',
         ];
 
         $course = (object) ['name' => 'MS Office'];
@@ -134,11 +134,11 @@ class CertificateTemplateService
             'studentPhotoUrl' => null,
             'studentPhotoPath' => null,
             'logoPath' => $logoPath,
-            'salutation' => 'MR.',
-            'parentLabel' => 'S/O.',
-            'parentName' => 'Father Name',
-            'startDate' => '01-01-2026',
-            'endDate' => '15-03-2026',
+            'salutation' => 'Ms.',
+            'parentLabel' => 'D/o',
+            'parentName' => 'Rajesh Gulla',
+            'startDate' => '01 Jan 2026',
+            'endDate' => '15 Mar 2026',
             'grade' => 'A',
             'issueDate' => now()->format('d M Y'),
             'qrUrl' => config('certificate.show_qr_code', true) ? $qrUrl : null,
