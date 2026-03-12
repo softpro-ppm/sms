@@ -187,6 +187,13 @@
             font-size: 13pt;
         }
 
+        .course-dates {
+            font-weight: 700;
+            color: #2c1810;
+            font-size: 12pt;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+        }
+
         .date-grade-line {
             font-size: 10pt;
             color: #5c4a3a;
@@ -375,7 +382,7 @@
 
             <div class="cert-body">
                 <p class="certify-line">This is to certify that</p>
-                <p class="recipient-name">{{ $salutation }} {{ $student->full_name }}</p>
+                <p class="recipient-name">{{ $student->full_name }}</p>
                 @if($parentName)
                 <p class="parent-line">{{ $parentLabel }} {{ $parentName }}</p>
                 @endif
@@ -384,7 +391,7 @@
                     @if($batch)
                     (Batch: {{ $batch->batch_name }})
                     @endif
-                    conducted by Softpro Skill Solutions during the period {{ $startDate }} – {{ $endDate }}
+                    conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
                     @if($grade && $grade !== 'N/A')
                     and has secured grade <strong>{{ $grade }}</strong>
                     @endif
