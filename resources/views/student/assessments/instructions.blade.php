@@ -28,7 +28,7 @@
                     <i class="fas fa-question-circle text-green-600 text-xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-1">Total Questions</h3>
-                <p class="text-2xl font-bold text-green-600">25</p>
+                <p class="text-2xl font-bold text-green-600">{{ $assessment->total_questions ?? 25 }}</p>
             </div>
             
             <div class="bg-yellow-50 p-6 rounded-lg text-center">
@@ -36,7 +36,7 @@
                     <i class="fas fa-percentage text-yellow-600 text-xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-1">Passing Score</h3>
-                <p class="text-2xl font-bold text-yellow-600">35%</p>
+                <p class="text-2xl font-bold text-yellow-600">{{ $assessment->passing_percentage }}%</p>
             </div>
         </div>
 
@@ -64,7 +64,7 @@
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-900">Question Format</h3>
-                        <p class="text-gray-600">This assessment contains <strong>25 multiple-choice questions</strong>. Each question has 4 options (A, B, C, D). Each correct answer carries <strong>4 marks</strong> (Total 100).</p>
+                        <p class="text-gray-600">This assessment contains <strong>{{ $assessment->total_questions ?? 25 }} multiple-choice questions</strong>. Each question has 4 options (A, B, C, D). Each correct answer carries <strong>{{ $assessment->total_questions ? round(100 / $assessment->total_questions, 1) : 4 }} marks</strong> (Total 100).</p>
                     </div>
                 </div>
                 
