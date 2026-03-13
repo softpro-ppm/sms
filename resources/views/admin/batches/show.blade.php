@@ -148,8 +148,16 @@
 
     <!-- Enrolled Students Table -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 class="text-lg font-semibold text-gray-900">Enrolled Students ({{ $batch->enrollments->count() }})</h3>
+            @if($batch->enrollments->count() > 0)
+            <div class="flex-shrink-0 w-full sm:w-72">
+                <input type="text" 
+                       id="studentSearch" 
+                       placeholder="Search by name, email, phone, Aadhar..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm">
+            </div>
+            @endif
         </div>
         
         @if($batch->enrollments->count() > 0)
@@ -174,9 +182,13 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200" id="enrolledStudentsBody">
                     @foreach($batch->enrollments as $enrollment)
-                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                    <tr class="enrollment-row hover:bg-gray-50 transition-colors duration-200" 
+                        data-name="{{ strtolower($enrollment->student->full_name) }}"
+                        data-email="{{ strtolower($enrollment->student->email ?? '') }}"
+                        data-phone="{{ $enrollment->student->phone ?? '' }}"
+                        data-aadhar="{{ $enrollment->student->aadhar_number ?? '' }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
@@ -241,6 +253,20 @@
 </div>
 
 <script>
+    // Search filter for enrolled students table
+    document.getElementById('studentSearch')?.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        const rows = document.querySelectorAll('.enrollment-row');
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const email = row.dataset.email || '';
+            const phone = row.dataset.phone || '';
+            const aadhar = row.dataset.aadhar || '';
+            const match = !query || name.includes(query) || email.includes(query) || phone.includes(query) || aadhar.includes(query);
+            row.style.display = match ? '' : 'none';
+        });
+    });
+
     function dropStudent(enrollmentId) {
         if (confirm('Are you sure you want to drop this student from the batch? This will mark the enrollment as dropped but keep the data.')) {
             // Create a form to submit via POST with _method PATCH
