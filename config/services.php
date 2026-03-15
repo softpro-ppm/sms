@@ -40,8 +40,8 @@ return [
         'api_key' => env('AMS_API_KEY'),
         // Softpro HO project, Student (Income) category, Student Fees subcategory
         'project_id' => env('AMS_PROJECT_ID', 1),
-        'category_id' => env('AMS_CATEGORY_ID', 2),   // Parent of Student Fees
-        'subcategory_id' => env('AMS_SUBCATEGORY_ID', 13), // Student Fees
+        'category_id' => env('AMS_CATEGORY_ID', 13),   // Student income
+        'subcategory_id' => env('AMS_SUBCATEGORY_ID', 62), // Student Fees (id=62)
         'user_id' => env('AMS_USER_ID', 2),
     ],
 

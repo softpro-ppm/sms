@@ -10,8 +10,8 @@ class AmsSyncService
 {
     // Softpro HO, Student (Income), Student Fees - override via config
     protected const DEFAULT_PROJECT_ID = 1;
-    protected const DEFAULT_CATEGORY_ID = 2;
-    protected const DEFAULT_SUBCATEGORY_ID = 13;
+    protected const DEFAULT_CATEGORY_ID = 13;   // Student income
+    protected const DEFAULT_SUBCATEGORY_ID = 62; // Student Fees
     protected const DEFAULT_USER_ID = 2;
 
     /**
