@@ -21,7 +21,7 @@ class AmsSyncService
     public function syncPayment(Payment $payment): bool
     {
         if ($payment->status !== 'approved') {
-            Log::info('AMS sync skipped: payment not approved', ['payment_id' => $payment->id]);
+            Log::error('AMS sync skipped: payment not approved', ['payment_id' => $payment->id]);
             return false;
         }
 
@@ -47,7 +47,7 @@ class AmsSyncService
         $key = config('services.ams.api_key');
 
         if (empty($url) || empty($key)) {
-            Log::info('AMS sync skipped: API URL or key not configured');
+            Log::error('AMS sync skipped: API URL or key not configured');
             return false;
         }
 
@@ -68,11 +68,11 @@ class AmsSyncService
             ])->post($url, $body);
 
             if ($response->successful()) {
-                Log::info('AMS income synced', ['reference' => $body['reference'] ?? null]);
+                Log::error('AMS income synced OK', ['reference' => $body['reference'] ?? null, 'payment_id' => $body['meta']['sms_payment_id'] ?? null]);
                 return true;
             }
 
-            Log::warning('AMS sync failed', [
+            Log::error('AMS sync failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'reference' => $body['reference'] ?? null,
