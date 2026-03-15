@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Services\AmsSyncService;
 use App\Services\PaymentAllocationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
@@ -296,6 +297,13 @@ class PaymentController extends Controller
             \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
         }
 
+        // Sync income to AMS (Option A: sync only on approve)
+        try {
+            app(AmsSyncService::class)->syncPayment($payment);
+        } catch (\Exception $e) {
+            \Log::error('AMS sync failed: ' . $e->getMessage());
+        }
+
         return redirect()->route('admin.payments.index')
             ->with('success', 'Payment approved successfully! Receipt #' . $payment->payment_receipt_number);
     }
@@ -381,6 +389,13 @@ class PaymentController extends Controller
                 app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
             } catch (\Exception $e) {
                 \Log::error('Bulk payment WhatsApp failed: ' . $e->getMessage());
+            }
+
+            // Sync income to AMS (Option A: sync only on approve)
+            try {
+                app(AmsSyncService::class)->syncPayment($payment);
+            } catch (\Exception $e) {
+                \Log::error('AMS sync failed: ' . $e->getMessage());
             }
 
             $approvedCount++;

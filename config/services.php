@@ -35,6 +35,16 @@ return [
         ],
     ],
 
+    'ams' => [
+        'api_url' => env('AMS_API_URL', 'https://ams.softpromis.com/api/income/from-sms'),
+        'api_key' => env('AMS_API_KEY'),
+        // Softpro HO project, Student (Income) category, Student Fees subcategory
+        'project_id' => env('AMS_PROJECT_ID', 1),
+        'category_id' => env('AMS_CATEGORY_ID', 2),   // Parent of Student Fees
+        'subcategory_id' => env('AMS_SUBCATEGORY_ID', 13), // Student Fees
+        'user_id' => env('AMS_USER_ID', 2),
+    ],
+
     'whatsapp' => [
         'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v17.0'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
