@@ -125,7 +125,7 @@ class WhatsAppNotificationService
             $student->id,
             $phone,
             'registration_received_2',
-            'registration_received',
+            'registration_received_2',
             [$student->full_name],
             null,
             ['student_name']
