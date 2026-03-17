@@ -172,9 +172,9 @@
         }
 
         .course-line {
-            font-size: 12pt;
+            font-size: 11pt;
             color: #4a3728;
-            line-height: 1.7;
+            line-height: 1.55;
             max-width: 220mm;
             margin-left: auto;
             margin-right: auto;
