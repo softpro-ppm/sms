@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Certificate;
 use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CertificateTemplateService
 {
@@ -69,11 +70,12 @@ class CertificateTemplateService
         // Issue date
         $issueDate = $certificate->issue_date ? $certificate->issue_date->format('d M Y') : now()->format('d M Y');
 
-        // QR code URL for verification (optional, configurable)
+        // QR code as base64 SVG (no external fetch - avoids DomPDF layout issues, works without Imagick)
         $qrUrl = null;
         if (config('certificate.show_qr_code', true)) {
             $verificationUrl = url('/verify') . '?cert=' . urlencode($certificate->certificate_number);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' . urlencode($verificationUrl);
+            $qrSvg = QrCode::format('svg')->size(80)->margin(1)->generate($verificationUrl);
+            $qrUrl = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
         }
 
         // Configurable ISO text and title
@@ -127,8 +129,12 @@ class CertificateTemplateService
         $course = (object) ['name' => 'MS Office'];
         $batch = (object) ['batch_name' => 'MSO-24-2026'];
 
-        $verificationUrl = url('/verify') . '?cert=SAMPLE';
-        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' . urlencode($verificationUrl);
+        $qrUrl = null;
+        if (config('certificate.show_qr_code', true)) {
+            $verificationUrl = url('/verify') . '?cert=SAMPLE';
+            $qrSvg = QrCode::format('svg')->size(80)->margin(1)->generate($verificationUrl);
+            $qrUrl = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        }
 
         return view('certificates.training-certificate', [
             'certificate' => $certificate,
@@ -146,7 +152,7 @@ class CertificateTemplateService
             'endDate' => '15 Mar 2026',
             'grade' => 'A',
             'issueDate' => now()->format('d M Y'),
-            'qrUrl' => config('certificate.show_qr_code', true) ? $qrUrl : null,
+            'qrUrl' => $qrUrl,
             'isoText' => config('certificate.iso_text', 'AN ISO 9001:2015 CERTIFIED ORGANIZATION'),
             'certificateTitle' => config('certificate.title', 'CERTIFICATE OF COMPLETION'),
         ])->render();
