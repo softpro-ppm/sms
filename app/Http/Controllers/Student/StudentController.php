@@ -11,6 +11,7 @@ use App\Models\Certificate;
 use App\Models\QuestionBank;
 use App\Mail\AssessmentResultMail;
 use App\Mail\CertificateIssuedMail;
+use App\Services\CertificatePdfService;
 use App\Services\CertificateTemplateService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -271,7 +272,14 @@ class StudentController extends Controller
         $pdf->loadHTML($html);
         $pdf->setPaper('a4', 'landscape');
 
-        return $pdf->download('certificate_' . $certificate->certificate_number . '.pdf');
+        $pdfContent = $pdf->output();
+        $pdfContent = CertificatePdfService::keepFirstPageOnly($pdfContent);
+
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="certificate_' . $certificate->certificate_number . '.pdf"',
+            'Content-Length' => strlen($pdfContent),
+        ]);
     }
 
     public function idCard()
