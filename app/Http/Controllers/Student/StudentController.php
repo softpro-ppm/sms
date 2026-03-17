@@ -268,6 +268,7 @@ class StudentController extends Controller
 
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('a4', 'landscape');
+        $pdf->getDomPDF()->getOptions()->setIsRemoteEnabled(true); // QR code loads from external URL
 
         return $pdf->download('certificate_' . $certificate->certificate_number . '.pdf');
     }

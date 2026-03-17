@@ -10,26 +10,27 @@
             margin: 0;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; }
 
         body {
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #f5f0e8;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 16px;
+            text-align: center;
         }
 
+        /* Table-based layout for DomPDF compatibility (no flexbox support) */
         .certificate {
+            display: inline-block;
             position: relative;
+            text-align: left;
             width: 297mm;
             height: 210mm;
             background: #faf8f5;
             padding: 0;
             overflow: hidden;
             box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+            page-break-inside: avoid;
         }
 
         /* Outer ornamental border - keep content well inside */
@@ -71,29 +72,32 @@
             z-index: 3;
             padding: 20mm 24mm 8mm 24mm;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
         }
 
-        /* Header: Logo + Institute */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12mm;
+        /* Header: Logo + Institute - table for DomPDF */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 8mm;
             padding-bottom: 6mm;
             border-bottom: 1px solid #c4a574;
+        }
+        .header-table td {
+            vertical-align: middle;
+            padding: 0;
+        }
+        .header-table td:first-child {
+            text-align: right;
+            padding-right: 12mm;
+            width: 1%;
+        }
+        .header-table td:last-child {
+            text-align: center;
         }
 
         .header-logo {
             height: 22mm;
             width: auto;
-        }
-
-        .institute-block {
-            text-align: center;
         }
 
         .institute-name {
@@ -136,14 +140,9 @@
             margin-bottom: 10mm;
         }
 
-        /* Body */
+        /* Body - block layout */
         .cert-body {
-            flex: 1;
-            min-height: 0;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             padding: 4mm 0;
         }
 
@@ -163,8 +162,6 @@
             padding-bottom: 2mm;
             border-bottom: 2px solid #8b7355;
             display: inline-block;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .parent-line {
@@ -178,7 +175,8 @@
             color: #4a3728;
             line-height: 1.7;
             max-width: 220mm;
-            margin: 0 auto;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .course-name {
@@ -201,47 +199,39 @@
             margin-bottom: 5mm;
         }
 
-        /* Bottom section: QR centered between Issue Date and footer */
-        .signatures-wrapper {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* Signatures */
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
+        /* Signatures - table for DomPDF */
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 18mm;
-            padding: 0 15mm;
         }
+        .signatures-table td {
+            vertical-align: bottom;
+            text-align: center;
+            width: 33%;
+        }
+        .signatures-table td:first-child { text-align: center; }
+        .signatures-table td:last-child { text-align: center; }
 
         .signature-block {
             text-align: center;
             width: 50mm;
+            margin: 0 auto;
         }
 
-        /* Center: QR code only */
         .signature-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            flex: 1;
+            text-align: center;
         }
 
         .signature-center .qr-box {
             width: 18mm;
             height: 18mm;
+            margin: 0 auto;
         }
 
         .signature-center .qr-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            width: 18mm;
+            height: 18mm;
         }
 
         .qr-scan-text {
@@ -271,38 +261,25 @@
             margin-top: 1px;
         }
 
-        /* Footer - Enrol (left) | ISO (center) | Certificate No. (right) */
-        .footer {
+        /* Footer - table for DomPDF */
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 6mm;
             padding-top: 6mm;
-            padding-bottom: 8mm;
             border-top: 1px solid #c4a574;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-            gap: 8mm;
         }
-
-        .footer-left, .footer-right {
+        .footer-table td {
+            padding: 6mm 0 8mm 0;
             font-size: 10pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
             color: #2c1810;
             letter-spacing: 0.3px;
-            flex-shrink: 0;
         }
-
-        .footer-left { text-align: left; }
-        .footer-right { text-align: right; }
-
-        .iso-text {
-            font-size: 9pt;
-            color: #8b7355;
-            letter-spacing: 0.5px;
-            text-align: center;
-            flex: 1;
-        }
+        .footer-table td:first-child { text-align: left; width: 33%; }
+        .footer-table td:nth-child(2) { text-align: center; font-size: 9pt; color: #8b7355; }
+        .footer-table td:last-child { text-align: right; width: 33%; }
 
         /* Photo (optional) */
         .photo-section {
@@ -321,20 +298,8 @@
         }
 
         .photo-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .photo-placeholder {
-            width: 100%;
-            height: 100%;
-            background: #f0ebe3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 6pt;
-            color: #8b7355;
+            width: 22mm;
+            height: 28mm;
         }
 
         .enrollment-badge {
@@ -346,7 +311,7 @@
         }
 
         @media print {
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; margin: 0; }
             .certificate { box-shadow: none; }
         }
     </style>
@@ -368,14 +333,16 @@
         @endif
 
         <div class="content">
-            <header class="header">
-                <img src="{{ $logoPath }}" alt="SoftPro" class="header-logo">
-                <div class="institute-block">
-                    <h2 class="institute-name">Softpro Skill Solutions</h2>
-                    <p class="institute-tagline">Skill Development & Training Institute</p>
-                    <p class="institute-website">www.softpro.co.in</p>
-                </div>
-            </header>
+            <table class="header-table">
+                <tr>
+                    <td><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
+                    <td>
+                        <div class="institute-name">Softpro Skill Solutions</div>
+                        <div class="institute-tagline">Skill Development &amp; Training Institute</div>
+                        <div class="institute-website">www.softpro.co.in</div>
+                    </td>
+                </tr>
+            </table>
 
             <h1 class="cert-title">{{ $certificateTitle }}</h1>
             <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
@@ -400,34 +367,42 @@
                 <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
 
-            <div class="signatures-wrapper">
-            <div class="signatures">
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-label">Authorized Signatory</div>
-                    <div class="signature-org">(Seal)</div>
-                </div>
-                <div class="signature-center">
-                    @if($qrUrl)
-                    <div class="qr-box">
-                        <img src="{{ $qrUrl }}" alt="Verify">
-                    </div>
-                    <div class="qr-scan-text">Scan to Verify Certificate</div>
-                    @endif
-                </div>
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-label">Director</div>
-                    <div class="signature-org">Softpro Skill Solutions</div>
-                </div>
-            </div>
-            </div>
+            <table class="signatures-table">
+                <tr>
+                    <td>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Authorized Signatory</div>
+                            <div class="signature-org">(Seal)</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-center">
+                            @if($qrUrl)
+                            <div class="qr-box">
+                                <img src="{{ $qrUrl }}" alt="Verify">
+                            </div>
+                            <div class="qr-scan-text">Scan to Verify Certificate</div>
+                            @endif
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Director</div>
+                            <div class="signature-org">Softpro Skill Solutions</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
 
-            <div class="footer">
-                <div class="footer-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></div>
-                <div class="iso-text">{{ $isoText }}</div>
-                <div class="footer-right">Certificate No. <strong>{{ $certificate->certificate_number }}</strong></div>
-            </div>
+            <table class="footer-table">
+                <tr>
+                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                    <td>{{ $isoText }}</td>
+                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>

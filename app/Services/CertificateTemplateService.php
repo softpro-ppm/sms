@@ -22,13 +22,18 @@ class CertificateTemplateService
             ->first();
         $enrollmentNumber = $enrollment?->enrollment_number ?? 'N/A';
 
-        // Student photo: use absolute path for DomPDF, URL for browser
+        // Student photo: use base64 data URI (like logo) for reliable loading in browser and DomPDF
         $photoDoc = $student->documents()->where('document_type', 'photo')->first();
         $studentPhotoUrl = null;
         $studentPhotoPath = null;
         if ($photoDoc && Storage::disk('public')->exists($photoDoc->file_path)) {
-            $studentPhotoUrl = asset('storage/' . $photoDoc->file_path);
-            $studentPhotoPath = asset('storage/' . $photoDoc->file_path);
+            $photoFile = Storage::disk('public')->path($photoDoc->file_path);
+            if (file_exists($photoFile)) {
+                $photoData = base64_encode(file_get_contents($photoFile));
+                $mime = mime_content_type($photoFile) ?: 'image/jpeg';
+                $studentPhotoPath = 'data:' . $mime . ';base64,' . $photoData;
+                $studentPhotoUrl = $studentPhotoPath;
+            }
         }
 
         // Logo: use data URI for reliable loading in browser, PDF, and saved HTML
