@@ -266,9 +266,11 @@ class StudentController extends Controller
         $templateService = app(CertificateTemplateService::class);
         $html = $templateService->generateHtml($certificate);
 
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('a4', 'landscape');
+        $pdf = app('dompdf.wrapper');
+        $pdf->getDomPDF()->getOptions()->setDefaultMediaType('print'); // Apply @media print rules (no body padding)
         $pdf->getDomPDF()->getOptions()->setIsRemoteEnabled(true); // QR code loads from external URL
+        $pdf->loadHTML($html);
+        $pdf->setPaper('a4', 'landscape');
 
         return $pdf->download('certificate_' . $certificate->certificate_number . '.pdf');
     }

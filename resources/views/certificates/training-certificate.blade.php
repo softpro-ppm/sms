@@ -12,9 +12,10 @@
 
         * { margin: 0; padding: 0; }
 
-        body {
+        html, body {
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #f5f0e8;
+            margin: 0;
             padding: 16px;
             text-align: center;
         }
@@ -70,7 +71,7 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 20mm 24mm 8mm 24mm;
+            padding: 18mm 22mm 6mm 22mm;
             height: 100%;
         }
 
@@ -149,8 +150,8 @@
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 18mm;
-            margin-bottom: 6mm;
+            margin-top: 12mm;
+            margin-bottom: 4mm;
             font-style: italic;
         }
 
@@ -203,7 +204,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 18mm;
+            margin-top: 10mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -265,12 +266,12 @@
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6mm;
-            padding-top: 6mm;
+            margin-top: 4mm;
+            padding-top: 4mm;
             border-top: 1px solid #c4a574;
         }
         .footer-table td {
-            padding: 6mm 0 8mm 0;
+            padding: 4mm 0 6mm 0;
             font-size: 10pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
@@ -311,7 +312,11 @@
         }
 
         @media print {
-            body { background: white; padding: 0; margin: 0; }
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white;
+            }
             .certificate { box-shadow: none; }
         }
     </style>
