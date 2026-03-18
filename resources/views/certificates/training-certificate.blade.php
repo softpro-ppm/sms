@@ -82,15 +82,15 @@
         }
 
         /*
-         * BOTTOM SECTION: anchored to bottom of certificate.
-         * bottom: 18mm = 5mm above inner border (inner border at 13mm from bottom → at 197mm from top)
-         * Certificate bottom is 210mm, so bottom-section bottom edge = 210-18 = 192mm from top
-         * That is 197-192 = 5mm clear of the inner border. Safe!
+         * BOTTOM SECTION: positioned from the TOP (DomPDF does not support `bottom` in abs positioning).
+         * top: 158mm → section spans 158mm–191mm from certificate top.
+         * Inner border bottom is at 197mm from top. Safe gap = 6mm above inner border.
+         * Sections: signatures ~22mm + footer ~11mm = ~33mm total. 158+33=191mm < 197mm. ✓
          */
         .bottom-section {
             position: absolute;
             z-index: 3;
-            bottom: 18mm;
+            top: 158mm;
             left: 18mm;
             right: 18mm;
         }
