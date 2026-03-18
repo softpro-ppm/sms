@@ -16,7 +16,7 @@
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #ffffff;
             margin: 0;
-            padding: 8px;
+            padding: 4px;
             text-align: center;
         }
 
@@ -38,7 +38,7 @@
         .certificate::before {
             content: '';
             position: absolute;
-            top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
+            top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
             border: 3px solid #8b7355;
             pointer-events: none;
             z-index: 1;
@@ -47,7 +47,7 @@
         .certificate::after {
             content: '';
             position: absolute;
-            top: 13mm; left: 13mm; right: 13mm; bottom: 13mm;
+            top: 15mm; left: 15mm; right: 15mm; bottom: 15mm;
             border: 1px solid #c4a574;
             pointer-events: none;
             z-index: 1;
@@ -63,15 +63,16 @@
             border-width: 0;
             z-index: 2;
         }
-        .corner-tl { top: 14mm; left: 14mm; border-top-width: 2px; border-left-width: 2px; }
-        .corner-tr { top: 14mm; right: 14mm; border-top-width: 2px; border-right-width: 2px; }
-        .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
-        .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
+        .corner-tl { top: 16mm; left: 16mm; border-top-width: 2px; border-left-width: 2px; }
+        .corner-tr { top: 16mm; right: 16mm; border-top-width: 2px; border-right-width: 2px; }
+        .corner-bl { bottom: 16mm; left: 16mm; border-bottom-width: 2px; border-left-width: 2px; }
+        .corner-br { bottom: 16mm; right: 16mm; border-bottom-width: 2px; border-right-width: 2px; }
 
+        /* Content: start well below inner border (20mm), balanced bottom padding */
         .content {
             position: relative;
             z-index: 3;
-            padding: 10mm 18mm 6mm 18mm;
+            padding: 20mm 18mm 16mm 18mm;
             box-sizing: border-box;
         }
 
@@ -79,8 +80,9 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4mm;
-            padding-bottom: 3mm;
+            margin-top: 2mm;
+            margin-bottom: 6mm;
+            padding-bottom: 4mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
@@ -102,7 +104,7 @@
         }
 
         .header-logo {
-            height: 22mm;
+            height: 20mm;
             width: auto;
         }
 
@@ -149,7 +151,7 @@
         /* Body - block layout */
         .cert-body {
             text-align: center;
-            padding: 4mm 0;
+            padding: 6mm 0 8mm 0;
         }
 
         .certify-line {
@@ -209,7 +211,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4mm;
+            margin-top: 8mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -271,8 +273,8 @@
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 2mm;
-            padding-top: 2mm;
+            margin-top: 6mm;
+            padding-top: 4mm;
             border-top: 1px solid #c4a574;
             page-break-inside: avoid;
         }
