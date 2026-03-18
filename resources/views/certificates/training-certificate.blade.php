@@ -68,23 +68,23 @@
         .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
         .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
 
-        /* Content: fixed height 180mm (inside inner border) */
+        /* Content: inside inner border. Height = 184mm (inner) - 16mm (safe bottom) = 168mm */
         .content {
             position: relative;
             z-index: 3;
-            height: 180mm;
-            padding: 0 18mm;
+            height: 168mm;
+            padding: 14mm 18mm 0 18mm;
         }
 
         /* Top section: flows from top */
         .top-section {
-            padding-top: 5mm;
+            padding-top: 3mm;
         }
 
-        /* Bottom section: anchored ~20mm above bottom border */
+        /* Bottom section: anchored with 15mm safe margin above inner border */
         .bottom-section {
             position: absolute;
-            bottom: 6mm;
+            bottom: 0;
             left: 0;
             right: 0;
         }
@@ -163,7 +163,7 @@
         /* Body */
         .cert-body {
             text-align: center;
-            padding: 2mm 0 2mm 0;
+            padding: 2mm 0 1mm 0;
         }
 
         .certify-line {
@@ -216,7 +216,7 @@
             font-size: 10pt;
             color: #5c4a3a;
             margin-top: 2mm;
-            margin-bottom: 0;
+            margin-bottom: 2mm;
         }
 
 
@@ -224,7 +224,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4mm;
+            margin-top: 2mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -280,16 +280,17 @@
             margin-top: 1px;
         }
 
-        /* Footer - just above bottom border */
+        /* Footer - below signatures, clearly inside 15mm safe zone */
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 3mm;
-            padding-top: 2mm;
+            margin-top: 4mm;
+            padding-top: 3mm;
+            padding-bottom: 2mm;
             border-top: 1px solid #c4a574;
         }
         .footer-table td {
-            padding: 1mm 0;
+            padding: 1mm 0 0 0;
             font-size: 9pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
