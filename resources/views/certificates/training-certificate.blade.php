@@ -10,17 +10,17 @@
             margin: 0;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; }
 
         html, body {
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #ffffff;
             margin: 0;
-            padding: 0;
+            padding: 8px;
             text-align: center;
         }
 
-        /* A4 landscape: 297mm x 210mm */
+        /* Table-based layout for DomPDF compatibility (no flexbox support) */
         .certificate {
             display: inline-block;
             position: relative;
@@ -28,12 +28,13 @@
             width: 297mm;
             height: 210mm;
             background: #ffffff;
+            padding: 0;
             overflow: hidden;
             box-shadow: 0 12px 48px rgba(0,0,0,0.15);
             page-break-inside: avoid;
         }
 
-        /* Outer ornamental border: 10mm from edges */
+        /* Outer ornamental border - keep content well inside */
         .certificate::before {
             content: '';
             position: absolute;
@@ -43,7 +44,6 @@
             z-index: 1;
         }
 
-        /* Inner ornamental border: 13mm from edges */
         .certificate::after {
             content: '';
             position: absolute;
@@ -68,39 +68,20 @@
         .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
         .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
 
-        /*
-         * TOP CONTENT: anchored to top of certificate, inside inner border.
-         * top: 15mm = 2mm gap above inner border (inner border at 13mm)
-         * left/right: 18mm = 5mm inside inner border (inner border at 13mm)
-         */
         .content {
-            position: absolute;
-            top: 15mm;
-            left: 18mm;
-            right: 18mm;
+            position: relative;
             z-index: 3;
+            padding: 14mm 18mm 8mm 18mm;
+            height: 100%;
+            box-sizing: border-box;
         }
 
-        /*
-         * BOTTOM SECTION: positioned from the TOP (DomPDF does not support `bottom` in abs positioning).
-         * top: 158mm → section spans 158mm–191mm from certificate top.
-         * Inner border bottom is at 197mm from top. Safe gap = 6mm above inner border.
-         * Sections: signatures ~22mm + footer ~11mm = ~33mm total. 158+33=191mm < 197mm. ✓
-         */
-        .bottom-section {
-            position: absolute;
-            z-index: 3;
-            top: 158mm;
-            left: 18mm;
-            right: 18mm;
-        }
-
-        /* Header: Logo + Institute + Photo */
+        /* Header: Logo + Institute + Photo - table for DomPDF (no absolute positioning) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 3mm;
-            padding-bottom: 3mm;
+            margin-bottom: 6mm;
+            padding-bottom: 4mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
@@ -122,7 +103,7 @@
         }
 
         .header-logo {
-            height: 20mm;
+            height: 22mm;
             width: auto;
         }
 
@@ -150,11 +131,11 @@
         /* Main title */
         .cert-title {
             text-align: center;
-            font-size: 26pt;
+            font-size: 28pt;
             font-weight: 700;
             color: #2c1810;
             letter-spacing: 4px;
-            margin-bottom: 2mm;
+            margin-bottom: 4mm;
             text-transform: uppercase;
         }
 
@@ -163,20 +144,20 @@
             font-size: 9pt;
             color: #8b7355;
             letter-spacing: 6px;
-            margin-bottom: 3mm;
+            margin-bottom: 6mm;
         }
 
-        /* Body */
+        /* Body - block layout */
         .cert-body {
             text-align: center;
-            padding: 2mm 0 1mm 0;
+            padding: 4mm 0;
         }
 
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 2mm;
-            margin-bottom: 1mm;
+            margin-top: 6mm;
+            margin-bottom: 3mm;
             font-style: italic;
         }
 
@@ -184,7 +165,7 @@
             font-size: 22pt;
             font-weight: 700;
             color: #2c1810;
-            margin-bottom: 1mm;
+            margin-bottom: 4mm;
             padding-bottom: 2mm;
             border-bottom: 2px solid #8b7355;
             display: inline-block;
@@ -193,13 +174,13 @@
         .parent-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-bottom: 2mm;
+            margin-bottom: 4mm;
         }
 
         .course-line {
             font-size: 11pt;
             color: #4a3728;
-            line-height: 1.5;
+            line-height: 1.55;
             max-width: 220mm;
             margin-left: auto;
             margin-right: auto;
@@ -221,21 +202,23 @@
         .date-grade-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-top: 2mm;
-            margin-bottom: 0;
+            margin-top: 6mm;
+            margin-bottom: 5mm;
         }
 
-        /* Signatures table */
+        /* Signatures - table for DomPDF */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 0;
+            margin-top: 6mm;
         }
         .signatures-table td {
             vertical-align: bottom;
             text-align: center;
             width: 33%;
         }
+        .signatures-table td:first-child { text-align: center; }
+        .signatures-table td:last-child { text-align: center; }
 
         .signature-block {
             text-align: center;
@@ -268,9 +251,9 @@
 
         .signature-line {
             width: 45mm;
-            height: 8mm;
+            height: 12mm;
             border-bottom: 1px solid #4a3728;
-            margin: 0 auto 2mm;
+            margin: 0 auto 3mm;
         }
 
         .signature-label {
@@ -285,18 +268,17 @@
             margin-top: 1px;
         }
 
-        /* Footer: sits directly below signatures, clearly inside safe zone */
+        /* Footer - table for DomPDF */
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 3mm;
+            margin-top: 2mm;
             padding-top: 2mm;
-            padding-bottom: 0;
             border-top: 1px solid #c4a574;
         }
         .footer-table td {
-            padding: 1mm 0 0 0;
-            font-size: 9pt;
+            padding: 4mm 0 6mm 0;
+            font-size: 10pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
             color: #2c1810;
@@ -306,7 +288,7 @@
         .footer-table td:nth-child(2) { text-align: center; font-size: 9pt; color: #8b7355; }
         .footer-table td:last-child { text-align: right; width: 33%; }
 
-        /* Photo in header */
+        /* Photo in header (table cell - DomPDF compatible) */
         .photo-cell {
             text-align: center;
         }
@@ -352,7 +334,6 @@
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
 
-        <!-- Top content: flows naturally from top, inside inner border -->
         <div class="content">
             <table class="header-table">
                 <tr>
@@ -381,7 +362,9 @@
             <div class="cert-body">
                 <p class="certify-line">This is to certify that</p>
                 <p class="recipient-name">{{ $student->full_name }}</p>
-                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
+                @if($parentName)
+                <p class="parent-line">{{ $parentLabel }} {{ $parentName }}</p>
+                @endif
                 <p class="course-line">
                     has successfully completed the course <span class="course-name">{{ $course->name }}</span>
                     @if($batch)
@@ -395,10 +378,7 @@
                 </p>
                 <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
-        </div>
 
-        <!-- Bottom section: anchored 18mm from certificate bottom edge (5mm above inner border) -->
-        <div class="bottom-section">
             <table class="signatures-table">
                 <tr>
                     <td>

@@ -29,7 +29,7 @@ git push
 
 echo ""
 echo "=== 5. Pulling on server & clearing config ==="
-$SSH "cd $REMOTE_PATH && git fetch origin && git reset --hard origin/main && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && php artisan package:discover && php artisan config:clear && php artisan view:clear && php artisan cache:clear && (php artisan storage:link 2>/dev/null || true)"
+$SSH "cd $REMOTE_PATH && git pull && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && php artisan package:discover && php artisan config:clear && php artisan view:clear && php artisan cache:clear && (php artisan storage:link 2>/dev/null || true)"
 
 echo ""
 echo "✅ Deploy complete."

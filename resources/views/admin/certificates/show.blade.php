@@ -32,7 +32,7 @@
                     <div class="rounded-lg border border-gray-200 overflow-auto bg-gray-100" style="max-height: 900px;">
                         <iframe src="{{ route('admin.certificates.preview', $certificate) }}"
                                 class="border-0 bg-white shadow-sm block"
-                                style="min-width: 1130px; width: 1130px; height: 800px;"
+                                style="min-width: 1100px; width: 1100px; height: 778px;"
                                 title="Certificate Preview"></iframe>
                     </div>
                 </div>

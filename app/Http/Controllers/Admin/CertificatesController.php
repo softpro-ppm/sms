@@ -105,9 +105,9 @@ class CertificatesController extends Controller
         $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
 
         $templateService = app(CertificateTemplateService::class);
-        $certificateHtml = $templateService->generateHtml($certificate);
+        $html = $templateService->generateHtml($certificate);
 
-        return view('certificates.preview-wrapper', ['certificateHtml' => $certificateHtml]);
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
 
     public function generate(Certificate $certificate)
@@ -153,34 +153,16 @@ class CertificatesController extends Controller
                 ->with('error', 'Certificate must be generated before download.');
         }
 
-        // Serve stored PDF if available (avoids 504 timeout on shared hosting)
-        $filePath = $certificate->certificate_file_path;
-        if ($filePath && str_ends_with($filePath, '.pdf') && Storage::exists($filePath)) {
-            $pdfContent = Storage::get($filePath);
-            return response($pdfContent, 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="certificate_' . $certificate->certificate_number . '.pdf"',
-                'Content-Length' => strlen($pdfContent),
-            ]);
-        }
-
-        // Fallback: generate on-the-fly (e.g. for certificates created before PDF storage)
-        set_time_limit(120);
         $templateService = app(CertificateTemplateService::class);
         $html = $templateService->generateHtml($certificate);
 
         $pdf = app('dompdf.wrapper');
-        $pdf->getDomPDF()->getOptions()->setDefaultMediaType('print');
+        $pdf->getDomPDF()->getOptions()->setDefaultMediaType('print'); // Apply @media print rules (no body padding)
         $pdf->loadHTML($html);
         $pdf->setPaper('a4', 'landscape');
 
         $pdfContent = $pdf->output();
         $pdfContent = CertificatePdfService::keepFirstPageOnly($pdfContent);
-
-        // Store for future downloads
-        $filePath = 'certificates/certificate_' . $certificate->certificate_number . '.pdf';
-        Storage::put($filePath, $pdfContent);
-        $certificate->update(['certificate_file_path' => $filePath]);
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
@@ -305,23 +287,20 @@ class CertificatesController extends Controller
     private function generateCertificateFile(Certificate $certificate)
     {
         $templateService = app(CertificateTemplateService::class);
+
+        // Generate HTML content using Training Certification template
         $htmlContent = $templateService->generateHtml($certificate);
-
-        $pdf = app('dompdf.wrapper');
-        $pdf->getDomPDF()->getOptions()->setDefaultMediaType('print');
-        $pdf->loadHTML($htmlContent);
-        $pdf->setPaper('a4', 'landscape');
-
-        $pdfContent = $pdf->output();
-        $pdfContent = CertificatePdfService::keepFirstPageOnly($pdfContent);
-
-        $fileName = 'certificate_' . $certificate->certificate_number . '.pdf';
+        
+        // Create file path
+        $fileName = 'certificate_' . $certificate->certificate_number . '.html';
         $filePath = 'certificates/' . $fileName;
-
-        Storage::put($filePath, $pdfContent);
-
+        
+        // Store the file
+        Storage::put($filePath, $htmlContent);
+        
+        // Update certificate with file path
         $certificate->update(['certificate_file_path' => $filePath]);
-
+        
         return $filePath;
     }
 
