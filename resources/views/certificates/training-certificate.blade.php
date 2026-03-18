@@ -16,7 +16,7 @@
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #ffffff;
             margin: 0;
-            padding: 8px;
+            padding: 0;
             text-align: center;
         }
 
@@ -33,7 +33,7 @@
             page-break-inside: avoid;
         }
 
-        /* Outer ornamental border */
+        /* Outer ornamental border: 10mm from edges */
         .certificate::before {
             content: '';
             position: absolute;
@@ -43,7 +43,7 @@
             z-index: 1;
         }
 
-        /* Inner ornamental border */
+        /* Inner ornamental border: 13mm from edges */
         .certificate::after {
             content: '';
             position: absolute;
@@ -68,25 +68,31 @@
         .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
         .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
 
-        /* Content: inside inner border. Height = 184mm (inner) - 16mm (safe bottom) = 168mm */
+        /*
+         * TOP CONTENT: anchored to top of certificate, inside inner border.
+         * top: 15mm = 2mm gap above inner border (inner border at 13mm)
+         * left/right: 18mm = 5mm inside inner border (inner border at 13mm)
+         */
         .content {
-            position: relative;
+            position: absolute;
+            top: 15mm;
+            left: 18mm;
+            right: 18mm;
             z-index: 3;
-            height: 168mm;
-            padding: 14mm 18mm 0 18mm;
         }
 
-        /* Top section: flows from top */
-        .top-section {
-            padding-top: 3mm;
-        }
-
-        /* Bottom section: anchored with 15mm safe margin above inner border */
+        /*
+         * BOTTOM SECTION: anchored to bottom of certificate.
+         * bottom: 18mm = 5mm above inner border (inner border at 13mm from bottom → at 197mm from top)
+         * Certificate bottom is 210mm, so bottom-section bottom edge = 210-18 = 192mm from top
+         * That is 197-192 = 5mm clear of the inner border. Safe!
+         */
         .bottom-section {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            z-index: 3;
+            bottom: 18mm;
+            left: 18mm;
+            right: 18mm;
         }
 
         /* Header: Logo + Institute + Photo */
@@ -216,15 +222,14 @@
             font-size: 10pt;
             color: #5c4a3a;
             margin-top: 2mm;
-            margin-bottom: 2mm;
+            margin-bottom: 0;
         }
 
-
-        /* Signatures - table for DomPDF */
+        /* Signatures table */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 2mm;
+            margin-bottom: 0;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -280,13 +285,13 @@
             margin-top: 1px;
         }
 
-        /* Footer - below signatures, clearly inside 15mm safe zone */
+        /* Footer: sits directly below signatures, clearly inside safe zone */
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4mm;
-            padding-top: 3mm;
-            padding-bottom: 2mm;
+            margin-top: 3mm;
+            padding-top: 2mm;
+            padding-bottom: 0;
             border-top: 1px solid #c4a574;
         }
         .footer-table td {
@@ -347,89 +352,89 @@
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
 
+        <!-- Top content: flows naturally from top, inside inner border -->
         <div class="content">
-            <div class="top-section">
-                <table class="header-table">
-                            <tr>
-                                <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
-                                <td class="col-institute">
-                                    <div class="institute-name">Softpro Skill Solutions</div>
-                                    <div class="institute-tagline">Skill Development &amp; Training Institute</div>
-                                    <div class="institute-website">www.softpro.co.in</div>
-                                </td>
-                                <td class="col-photo">
-                                    @if($studentPhotoUrl)
-                                    <div class="photo-cell">
-                                        <div class="photo-box">
-                                            <img src="{{ $studentPhotoPath }}" alt="">
-                                        </div>
-                                        <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
-                                    </div>
-                                    @endif
-                                </td>
-                            </tr>
-                        </table>
-
-                        <h1 class="cert-title">{{ $certificateTitle }}</h1>
-                        <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
-
-                        <div class="cert-body">
-                            <p class="certify-line">This is to certify that</p>
-                            <p class="recipient-name">{{ $student->full_name }}</p>
-                            <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
-                            <p class="course-line">
-                                has successfully completed the course <span class="course-name">{{ $course->name }}</span>
-                                @if($batch)
-                                (Batch: {{ $batch->batch_name }})
-                                @endif
-                                conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
-                                @if($grade && $grade !== 'N/A')
-                                and has secured grade <strong>{{ $grade }}</strong>
-                                @endif
-                                based on overall performance, attendance and assessment.
-                            </p>
-                            <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
+            <table class="header-table">
+                <tr>
+                    <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
+                    <td class="col-institute">
+                        <div class="institute-name">Softpro Skill Solutions</div>
+                        <div class="institute-tagline">Skill Development &amp; Training Institute</div>
+                        <div class="institute-website">www.softpro.co.in</div>
+                    </td>
+                    <td class="col-photo">
+                        @if($studentPhotoUrl)
+                        <div class="photo-cell">
+                            <div class="photo-box">
+                                <img src="{{ $studentPhotoPath }}" alt="">
+                            </div>
+                            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
                         </div>
-            </div>
+                        @endif
+                    </td>
+                </tr>
+            </table>
 
-            <div class="bottom-section">
-                            <table class="signatures-table">
-                                <tr>
-                                    <td>
-                                        <div class="signature-block">
-                                            <div class="signature-line"></div>
-                                            <div class="signature-label">Authorized Signatory</div>
-                                            <div class="signature-org">(Seal)</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="signature-center">
-                                            @if($qrUrl)
-                                            <div class="qr-box">
-                                                <img src="{{ $qrUrl }}" alt="Verify">
-                                            </div>
-                                            <div class="qr-scan-text">Scan to Verify Certificate</div>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="signature-block">
-                                            <div class="signature-line"></div>
-                                            <div class="signature-label">Director</div>
-                                            <div class="signature-org">Softpro Skill Solutions</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+            <h1 class="cert-title">{{ $certificateTitle }}</h1>
+            <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
 
-                            <table class="footer-table">
-                                <tr>
-                                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                                    <td>{{ $isoText }}</td>
-                                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
-                                </tr>
-                            </table>
+            <div class="cert-body">
+                <p class="certify-line">This is to certify that</p>
+                <p class="recipient-name">{{ $student->full_name }}</p>
+                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
+                <p class="course-line">
+                    has successfully completed the course <span class="course-name">{{ $course->name }}</span>
+                    @if($batch)
+                    (Batch: {{ $batch->batch_name }})
+                    @endif
+                    conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
+                    @if($grade && $grade !== 'N/A')
+                    and has secured grade <strong>{{ $grade }}</strong>
+                    @endif
+                    based on overall performance, attendance and assessment.
+                </p>
+                <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
+        </div>
+
+        <!-- Bottom section: anchored 18mm from certificate bottom edge (5mm above inner border) -->
+        <div class="bottom-section">
+            <table class="signatures-table">
+                <tr>
+                    <td>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Authorized Signatory</div>
+                            <div class="signature-org">(Seal)</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-center">
+                            @if($qrUrl)
+                            <div class="qr-box">
+                                <img src="{{ $qrUrl }}" alt="Verify">
+                            </div>
+                            <div class="qr-scan-text">Scan to Verify Certificate</div>
+                            @endif
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-label">Director</div>
+                            <div class="signature-org">Softpro Skill Solutions</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="footer-table">
+                <tr>
+                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                    <td>{{ $isoText }}</td>
+                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>
