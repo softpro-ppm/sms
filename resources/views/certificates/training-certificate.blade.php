@@ -10,17 +10,17 @@
             margin: 0;
         }
 
-        * { margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #ffffff;
             margin: 0;
-            padding: 4px;
+            padding: 8px;
             text-align: center;
         }
 
-        /* Table-based layout for DomPDF compatibility (no flexbox support) */
+        /* A4 landscape: 297mm x 210mm */
         .certificate {
             display: inline-block;
             position: relative;
@@ -28,26 +28,26 @@
             width: 297mm;
             height: 210mm;
             background: #ffffff;
-            padding: 0;
             overflow: hidden;
             box-shadow: 0 12px 48px rgba(0,0,0,0.15);
             page-break-inside: avoid;
         }
 
-        /* Outer ornamental border - keep content well inside */
+        /* Outer ornamental border */
         .certificate::before {
             content: '';
             position: absolute;
-            top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
+            top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
             border: 3px solid #8b7355;
             pointer-events: none;
             z-index: 1;
         }
 
+        /* Inner ornamental border */
         .certificate::after {
             content: '';
             position: absolute;
-            top: 15mm; left: 15mm; right: 15mm; bottom: 15mm;
+            top: 13mm; left: 13mm; right: 13mm; bottom: 13mm;
             border: 1px solid #c4a574;
             pointer-events: none;
             z-index: 1;
@@ -63,26 +63,38 @@
             border-width: 0;
             z-index: 2;
         }
-        .corner-tl { top: 16mm; left: 16mm; border-top-width: 2px; border-left-width: 2px; }
-        .corner-tr { top: 16mm; right: 16mm; border-top-width: 2px; border-right-width: 2px; }
-        .corner-bl { bottom: 16mm; left: 16mm; border-bottom-width: 2px; border-left-width: 2px; }
-        .corner-br { bottom: 16mm; right: 16mm; border-bottom-width: 2px; border-right-width: 2px; }
+        .corner-tl { top: 14mm; left: 14mm; border-top-width: 2px; border-left-width: 2px; }
+        .corner-tr { top: 14mm; right: 14mm; border-top-width: 2px; border-right-width: 2px; }
+        .corner-bl { bottom: 14mm; left: 14mm; border-bottom-width: 2px; border-left-width: 2px; }
+        .corner-br { bottom: 14mm; right: 14mm; border-bottom-width: 2px; border-right-width: 2px; }
 
-        /* Content: start well below inner border (20mm), balanced bottom padding */
+        /* Content: fixed height 180mm (inside inner border) */
         .content {
             position: relative;
             z-index: 3;
-            padding: 20mm 18mm 16mm 18mm;
-            box-sizing: border-box;
+            height: 180mm;
+            padding: 0 18mm;
         }
 
-        /* Header: Logo + Institute + Photo - table for DomPDF (no absolute positioning) */
+        /* Top section: flows from top */
+        .top-section {
+            padding-top: 5mm;
+        }
+
+        /* Bottom section: anchored ~20mm above bottom border */
+        .bottom-section {
+            position: absolute;
+            bottom: 6mm;
+            left: 0;
+            right: 0;
+        }
+
+        /* Header: Logo + Institute + Photo */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 2mm;
-            margin-bottom: 6mm;
-            padding-bottom: 4mm;
+            margin-bottom: 3mm;
+            padding-bottom: 3mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
@@ -132,11 +144,11 @@
         /* Main title */
         .cert-title {
             text-align: center;
-            font-size: 28pt;
+            font-size: 26pt;
             font-weight: 700;
             color: #2c1810;
             letter-spacing: 4px;
-            margin-bottom: 4mm;
+            margin-bottom: 2mm;
             text-transform: uppercase;
         }
 
@@ -145,20 +157,20 @@
             font-size: 9pt;
             color: #8b7355;
             letter-spacing: 6px;
-            margin-bottom: 4mm;
+            margin-bottom: 3mm;
         }
 
-        /* Body - block layout */
+        /* Body */
         .cert-body {
             text-align: center;
-            padding: 6mm 0 8mm 0;
+            padding: 2mm 0 2mm 0;
         }
 
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 4mm;
-            margin-bottom: 2mm;
+            margin-top: 2mm;
+            margin-bottom: 1mm;
             font-style: italic;
         }
 
@@ -166,7 +178,7 @@
             font-size: 22pt;
             font-weight: 700;
             color: #2c1810;
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
             padding-bottom: 2mm;
             border-bottom: 2px solid #8b7355;
             display: inline-block;
@@ -175,13 +187,13 @@
         .parent-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-bottom: 3mm;
+            margin-bottom: 2mm;
         }
 
         .course-line {
             font-size: 11pt;
             color: #4a3728;
-            line-height: 1.55;
+            line-height: 1.5;
             max-width: 220mm;
             margin-left: auto;
             margin-right: auto;
@@ -203,23 +215,22 @@
         .date-grade-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-top: 4mm;
-            margin-bottom: 3mm;
+            margin-top: 2mm;
+            margin-bottom: 0;
         }
+
 
         /* Signatures - table for DomPDF */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8mm;
+            margin-top: 4mm;
         }
         .signatures-table td {
             vertical-align: bottom;
             text-align: center;
             width: 33%;
         }
-        .signatures-table td:first-child { text-align: center; }
-        .signatures-table td:last-child { text-align: center; }
 
         .signature-block {
             text-align: center;
@@ -269,17 +280,16 @@
             margin-top: 1px;
         }
 
-        /* Footer - table for DomPDF */
+        /* Footer - just above bottom border */
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6mm;
-            padding-top: 4mm;
+            margin-top: 3mm;
+            padding-top: 2mm;
             border-top: 1px solid #c4a574;
-            page-break-inside: avoid;
         }
         .footer-table td {
-            padding: 1mm 0 2mm 0;
+            padding: 1mm 0;
             font-size: 9pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
@@ -290,7 +300,7 @@
         .footer-table td:nth-child(2) { text-align: center; font-size: 9pt; color: #8b7355; }
         .footer-table td:last-child { text-align: right; width: 33%; }
 
-        /* Photo in header (table cell - DomPDF compatible) */
+        /* Photo in header */
         .photo-cell {
             text-align: center;
         }
@@ -337,84 +347,88 @@
         <div class="corner corner-br"></div>
 
         <div class="content">
-            <table class="header-table">
-                <tr>
-                    <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
-                    <td class="col-institute">
-                        <div class="institute-name">Softpro Skill Solutions</div>
-                        <div class="institute-tagline">Skill Development &amp; Training Institute</div>
-                        <div class="institute-website">www.softpro.co.in</div>
-                    </td>
-                    <td class="col-photo">
-                        @if($studentPhotoUrl)
-                        <div class="photo-cell">
-                            <div class="photo-box">
-                                <img src="{{ $studentPhotoPath }}" alt="">
-                            </div>
-                            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
+            <div class="top-section">
+                <table class="header-table">
+                            <tr>
+                                <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
+                                <td class="col-institute">
+                                    <div class="institute-name">Softpro Skill Solutions</div>
+                                    <div class="institute-tagline">Skill Development &amp; Training Institute</div>
+                                    <div class="institute-website">www.softpro.co.in</div>
+                                </td>
+                                <td class="col-photo">
+                                    @if($studentPhotoUrl)
+                                    <div class="photo-cell">
+                                        <div class="photo-box">
+                                            <img src="{{ $studentPhotoPath }}" alt="">
+                                        </div>
+                                        <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
+                                    </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h1 class="cert-title">{{ $certificateTitle }}</h1>
+                        <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
+
+                        <div class="cert-body">
+                            <p class="certify-line">This is to certify that</p>
+                            <p class="recipient-name">{{ $student->full_name }}</p>
+                            <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
+                            <p class="course-line">
+                                has successfully completed the course <span class="course-name">{{ $course->name }}</span>
+                                @if($batch)
+                                (Batch: {{ $batch->batch_name }})
+                                @endif
+                                conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
+                                @if($grade && $grade !== 'N/A')
+                                and has secured grade <strong>{{ $grade }}</strong>
+                                @endif
+                                based on overall performance, attendance and assessment.
+                            </p>
+                            <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
                         </div>
-                        @endif
-                    </td>
-                </tr>
-            </table>
-
-            <h1 class="cert-title">{{ $certificateTitle }}</h1>
-            <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
-
-            <div class="cert-body">
-                <p class="certify-line">This is to certify that</p>
-                <p class="recipient-name">{{ $student->full_name }}</p>
-                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
-                <p class="course-line">
-                    has successfully completed the course <span class="course-name">{{ $course->name }}</span>
-                    @if($batch)
-                    (Batch: {{ $batch->batch_name }})
-                    @endif
-                    conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
-                    @if($grade && $grade !== 'N/A')
-                    and has secured grade <strong>{{ $grade }}</strong>
-                    @endif
-                    based on overall performance, attendance and assessment.
-                </p>
-                <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
 
-            <table class="signatures-table">
-                <tr>
-                    <td>
-                        <div class="signature-block">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Authorized Signatory</div>
-                            <div class="signature-org">(Seal)</div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="signature-center">
-                            @if($qrUrl)
-                            <div class="qr-box">
-                                <img src="{{ $qrUrl }}" alt="Verify">
-                            </div>
-                            <div class="qr-scan-text">Scan to Verify Certificate</div>
-                            @endif
-                        </div>
-                    </td>
-                    <td>
-                        <div class="signature-block">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Director</div>
-                            <div class="signature-org">Softpro Skill Solutions</div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+            <div class="bottom-section">
+                            <table class="signatures-table">
+                                <tr>
+                                    <td>
+                                        <div class="signature-block">
+                                            <div class="signature-line"></div>
+                                            <div class="signature-label">Authorized Signatory</div>
+                                            <div class="signature-org">(Seal)</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="signature-center">
+                                            @if($qrUrl)
+                                            <div class="qr-box">
+                                                <img src="{{ $qrUrl }}" alt="Verify">
+                                            </div>
+                                            <div class="qr-scan-text">Scan to Verify Certificate</div>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="signature-block">
+                                            <div class="signature-line"></div>
+                                            <div class="signature-label">Director</div>
+                                            <div class="signature-org">Softpro Skill Solutions</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
 
-            <table class="footer-table">
-                <tr>
-                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                    <td>{{ $isoText }}</td>
-                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
-                </tr>
-            </table>
+                            <table class="footer-table">
+                                <tr>
+                                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                                    <td>{{ $isoText }}</td>
+                                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                                </tr>
+                            </table>
+            </div>
         </div>
     </div>
 </body>
