@@ -16,7 +16,7 @@
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #f5f0e8;
             margin: 0;
-            padding: 16px;
+            padding: 8px;
             text-align: center;
         }
 
@@ -71,29 +71,35 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 18mm 22mm 6mm 22mm;
+            padding: 14mm 18mm 8mm 18mm;
             height: 100%;
+            box-sizing: border-box;
         }
 
-        /* Header: Logo + Institute - table for DomPDF */
+        /* Header: Logo + Institute + Photo - table for DomPDF (no absolute positioning) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8mm;
-            padding-bottom: 6mm;
+            margin-bottom: 6mm;
+            padding-bottom: 4mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
             vertical-align: middle;
             padding: 0;
         }
-        .header-table td:first-child {
+        .header-table .col-logo {
             text-align: right;
-            padding-right: 12mm;
+            padding-right: 8mm;
             width: 1%;
         }
-        .header-table td:last-child {
+        .header-table .col-institute {
             text-align: center;
+        }
+        .header-table .col-photo {
+            text-align: left;
+            padding-left: 8mm;
+            width: 1%;
         }
 
         .header-logo {
@@ -138,7 +144,7 @@
             font-size: 9pt;
             color: #8b7355;
             letter-spacing: 6px;
-            margin-bottom: 10mm;
+            margin-bottom: 6mm;
         }
 
         /* Body - block layout */
@@ -150,8 +156,8 @@
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 12mm;
-            margin-bottom: 4mm;
+            margin-top: 6mm;
+            margin-bottom: 3mm;
             font-style: italic;
         }
 
@@ -168,7 +174,7 @@
         .parent-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-bottom: 8mm;
+            margin-bottom: 4mm;
         }
 
         .course-line {
@@ -204,7 +210,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10mm;
+            margin-top: 6mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -266,8 +272,8 @@
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4mm;
-            padding-top: 4mm;
+            margin-top: 2mm;
+            padding-top: 2mm;
             border-top: 1px solid #c4a574;
         }
         .footer-table td {
@@ -282,29 +288,25 @@
         .footer-table td:nth-child(2) { text-align: center; font-size: 9pt; color: #8b7355; }
         .footer-table td:last-child { text-align: right; width: 33%; }
 
-        /* Photo (optional) */
-        .photo-section {
-            position: absolute;
-            top: 18mm;
-            right: 22mm;
-            z-index: 4;
+        /* Photo in header (table cell - DomPDF compatible) */
+        .photo-cell {
+            text-align: center;
         }
-
         .photo-box {
             width: 22mm;
             height: 28mm;
             border: 2px solid #8b7355;
             background: #faf8f5;
             overflow: hidden;
+            margin: 0 auto;
         }
-
         .photo-box img {
             width: 22mm;
             height: 28mm;
+            object-fit: cover;
         }
-
         .enrollment-badge {
-            margin-top: 2mm;
+            margin-top: 1mm;
             font-size: 7pt;
             color: #6b5344;
             font-weight: 600;
@@ -328,23 +330,24 @@
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
 
-        @if($studentPhotoUrl)
-        <div class="photo-section">
-            <div class="photo-box">
-                <img src="{{ $studentPhotoPath }}" alt="">
-            </div>
-            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
-        </div>
-        @endif
-
         <div class="content">
             <table class="header-table">
                 <tr>
-                    <td><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
-                    <td>
+                    <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
+                    <td class="col-institute">
                         <div class="institute-name">Softpro Skill Solutions</div>
                         <div class="institute-tagline">Skill Development &amp; Training Institute</div>
                         <div class="institute-website">www.softpro.co.in</div>
+                    </td>
+                    <td class="col-photo">
+                        @if($studentPhotoUrl)
+                        <div class="photo-cell">
+                            <div class="photo-box">
+                                <img src="{{ $studentPhotoPath }}" alt="">
+                            </div>
+                            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
+                        </div>
+                        @endif
                     </td>
                 </tr>
             </table>

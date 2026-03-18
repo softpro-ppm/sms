@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Certificate;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CertificateTemplateService
 {
@@ -70,12 +72,11 @@ class CertificateTemplateService
         // Issue date
         $issueDate = $certificate->issue_date ? $certificate->issue_date->format('d M Y') : now()->format('d M Y');
 
-        // QR code as base64 SVG (no external fetch - avoids DomPDF layout issues, works without Imagick)
+        // QR code as base64 PNG (DomPDF has poor SVG support; PNG via GD works reliably)
         $qrUrl = null;
         if (config('certificate.show_qr_code', true)) {
             $verificationUrl = url('/verify') . '?cert=' . urlencode($certificate->certificate_number);
-            $qrSvg = QrCode::format('svg')->size(80)->margin(1)->generate($verificationUrl);
-            $qrUrl = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            $qrUrl = $this->generateQrCodePng($verificationUrl);
         }
 
         // Configurable ISO text and title
@@ -102,6 +103,19 @@ class CertificateTemplateService
             'isoText' => $isoText,
             'certificateTitle' => $certificateTitle,
         ])->render();
+    }
+
+    /**
+     * Generate QR code as base64 PNG data URI (DomPDF-compatible, uses GD).
+     */
+    private function generateQrCodePng(string $url): string
+    {
+        $options = new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'scale' => 8,
+            'outputBase64' => true,
+        ]);
+        return (new QRCode($options))->render($url);
     }
 
     /**
@@ -132,8 +146,7 @@ class CertificateTemplateService
         $qrUrl = null;
         if (config('certificate.show_qr_code', true)) {
             $verificationUrl = url('/verify') . '?cert=SAMPLE';
-            $qrSvg = QrCode::format('svg')->size(80)->margin(1)->generate($verificationUrl);
-            $qrUrl = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            $qrUrl = $this->generateQrCodePng($verificationUrl);
         }
 
         return view('certificates.training-certificate', [

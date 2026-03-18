@@ -29,10 +29,10 @@
                     <h3 class="text-lg font-medium text-gray-900">Certificate Preview</h3>
                 </div>
                 <div class="p-6">
-                    <div class="rounded-lg border border-gray-200 overflow-auto" style="max-height: 900px;">
+                    <div class="rounded-lg border border-gray-200 overflow-auto bg-gray-100" style="max-height: 900px;">
                         <iframe src="{{ route('admin.certificates.preview', $certificate) }}"
-                                class="w-full border-0"
-                                style="height: 860px; min-height: 800px;"
+                                class="border-0 bg-white shadow-sm block"
+                                style="min-width: 1100px; width: 1100px; height: 778px;"
                                 title="Certificate Preview"></iframe>
                     </div>
                 </div>
