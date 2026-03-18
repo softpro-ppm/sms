@@ -14,7 +14,7 @@
 
         html, body {
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
-            background: #f5f0e8;
+            background: #ffffff;
             margin: 0;
             padding: 8px;
             text-align: center;
@@ -27,7 +27,7 @@
             text-align: left;
             width: 297mm;
             height: 210mm;
-            background: #faf8f5;
+            background: #ffffff;
             padding: 0;
             overflow: hidden;
             box-shadow: 0 12px 48px rgba(0,0,0,0.15);
@@ -296,7 +296,7 @@
             width: 22mm;
             height: 28mm;
             border: 2px solid #8b7355;
-            background: #faf8f5;
+            background: #ffffff;
             overflow: hidden;
             margin: 0 auto;
         }
@@ -317,9 +317,13 @@
             html, body {
                 margin: 0 !important;
                 padding: 0 !important;
-                background: white;
+                background: #ffffff !important;
             }
-            .certificate { box-shadow: none; }
+            .certificate {
+                box-shadow: none;
+                background: #ffffff !important;
+            }
+            .photo-box { background: #ffffff !important; }
         }
     </style>
 </head>
