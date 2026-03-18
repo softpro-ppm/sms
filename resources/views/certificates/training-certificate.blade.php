@@ -71,8 +71,7 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 14mm 18mm 8mm 18mm;
-            height: 100%;
+            padding: 10mm 18mm 6mm 18mm;
             box-sizing: border-box;
         }
 
@@ -80,8 +79,8 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6mm;
-            padding-bottom: 4mm;
+            margin-bottom: 4mm;
+            padding-bottom: 3mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
@@ -144,7 +143,7 @@
             font-size: 9pt;
             color: #8b7355;
             letter-spacing: 6px;
-            margin-bottom: 6mm;
+            margin-bottom: 4mm;
         }
 
         /* Body - block layout */
@@ -156,8 +155,8 @@
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 6mm;
-            margin-bottom: 3mm;
+            margin-top: 4mm;
+            margin-bottom: 2mm;
             font-style: italic;
         }
 
@@ -165,7 +164,7 @@
             font-size: 22pt;
             font-weight: 700;
             color: #2c1810;
-            margin-bottom: 4mm;
+            margin-bottom: 2mm;
             padding-bottom: 2mm;
             border-bottom: 2px solid #8b7355;
             display: inline-block;
@@ -174,7 +173,7 @@
         .parent-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-bottom: 4mm;
+            margin-bottom: 3mm;
         }
 
         .course-line {
@@ -202,15 +201,15 @@
         .date-grade-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-top: 6mm;
-            margin-bottom: 5mm;
+            margin-top: 4mm;
+            margin-bottom: 3mm;
         }
 
         /* Signatures - table for DomPDF */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6mm;
+            margin-top: 4mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -251,9 +250,9 @@
 
         .signature-line {
             width: 45mm;
-            height: 12mm;
+            height: 8mm;
             border-bottom: 1px solid #4a3728;
-            margin: 0 auto 3mm;
+            margin: 0 auto 2mm;
         }
 
         .signature-label {
@@ -275,10 +274,11 @@
             margin-top: 2mm;
             padding-top: 2mm;
             border-top: 1px solid #c4a574;
+            page-break-inside: avoid;
         }
         .footer-table td {
-            padding: 4mm 0 6mm 0;
-            font-size: 10pt;
+            padding: 1mm 0 2mm 0;
+            font-size: 9pt;
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
             font-weight: 500;
             color: #2c1810;
@@ -362,9 +362,7 @@
             <div class="cert-body">
                 <p class="certify-line">This is to certify that</p>
                 <p class="recipient-name">{{ $student->full_name }}</p>
-                @if($parentName)
-                <p class="parent-line">{{ $parentLabel }} {{ $parentName }}</p>
-                @endif
+                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '_______________' }}</p>
                 <p class="course-line">
                     has successfully completed the course <span class="course-name">{{ $course->name }}</span>
                     @if($batch)

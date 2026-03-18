@@ -105,9 +105,9 @@ class CertificatesController extends Controller
         $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
 
         $templateService = app(CertificateTemplateService::class);
-        $html = $templateService->generateHtml($certificate);
+        $certificateHtml = $templateService->generateHtml($certificate);
 
-        return response($html, 200, ['Content-Type' => 'text/html']);
+        return view('certificates.preview-wrapper', ['certificateHtml' => $certificateHtml]);
     }
 
     public function generate(Certificate $certificate)
