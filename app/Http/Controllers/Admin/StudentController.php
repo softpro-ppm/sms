@@ -34,7 +34,7 @@ class StudentController extends Controller
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
         $search = trim((string) $request->get('search', ''));
 
-        $studentsQuery = Student::with(['user', 'enrollments.batch.course'])
+        $studentsQuery = Student::with(['user', 'enrollments.batch.course', 'documents'])
             ->withCount(['enrollments' => function($query) {
                 $query->where('status', 'active');
             }]);
@@ -65,13 +65,20 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['user', 'enrollments.batch.course', 'payments', 'assessmentResults.assessment']);
+        $student->load(['user', 'enrollments.batch.course', 'payments', 'assessmentResults.assessment', 'documents']);
         
         return view('admin.students.show', compact('student'));
     }
 
     public function approve(Student $student)
     {
+        // Photo is mandatory before approval
+        $photoDoc = $student->documents()->where('document_type', 'photo')->first();
+        if (!$photoDoc || !Storage::disk('public')->exists($photoDoc->file_path)) {
+            return redirect()->back()
+                ->with('error', 'Student photo is required before approval. Please upload a photo first.');
+        }
+
         // Update student status
         $student->update([
             'status' => 'approved',

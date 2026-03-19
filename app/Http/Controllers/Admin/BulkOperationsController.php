@@ -15,6 +15,7 @@ use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class BulkOperationsController extends Controller
 {
@@ -32,12 +33,18 @@ class BulkOperationsController extends Controller
             'student_ids.*' => 'exists:students,id'
         ]);
 
-        $students = Student::whereIn('id', $request->student_ids)->get();
+        $students = Student::whereIn('id', $request->student_ids)->with('documents')->get();
         $approvedCount = 0;
+        $skippedNoPhoto = 0;
 
-        DB::transaction(function () use ($students, &$approvedCount) {
+        DB::transaction(function () use ($students, &$approvedCount, &$skippedNoPhoto) {
             foreach ($students as $student) {
                 if ($student->status !== 'approved') {
+                    $photoDoc = $student->documents->where('document_type', 'photo')->first();
+                    if (!$photoDoc || !Storage::disk('public')->exists($photoDoc->file_path)) {
+                        $skippedNoPhoto++;
+                        continue;
+                    }
                     $student->update([
                         'status' => 'approved',
                         'approved_at' => now()
@@ -62,10 +69,16 @@ class BulkOperationsController extends Controller
             }
         });
 
+        $message = "Successfully approved {$approvedCount} students.";
+        if ($skippedNoPhoto > 0) {
+            $message .= " {$skippedNoPhoto} skipped (photo required).";
+        }
+
         return response()->json([
             'success' => true,
-            'message' => "Successfully approved {$approvedCount} students.",
-            'approved_count' => $approvedCount
+            'message' => $message,
+            'approved_count' => $approvedCount,
+            'skipped_no_photo' => $skippedNoPhoto
         ]);
     }
 

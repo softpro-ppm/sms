@@ -11,7 +11,26 @@
             <h2 class="text-2xl font-bold text-gray-900">{{ $student->full_name }}</h2>
             <p class="text-gray-600 mt-1">Aadhar: {{ $student->aadhar_number }} • Student ID: #{{ $student->id }}</p>
         </div>
-        <div class="mt-4 sm:mt-0 flex space-x-3">
+        <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+            @if($student->status === 'pending')
+                @php $hasPhoto = $student->documents->where('document_type', 'photo')->isNotEmpty(); @endphp
+                @if($hasPhoto)
+                    <form action="{{ route('admin.students.approve', $student) }}" method="POST" class="inline">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200">
+                            <i class="fas fa-check mr-2"></i>
+                            Approve Student
+                        </button>
+                    </form>
+                @else
+                    <div class="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 font-medium rounded-lg border border-amber-300">
+                        <i class="fas fa-camera mr-2"></i>
+                        Upload photo to approve
+                    </div>
+                @endif
+            @endif
             <a href="{{ route('admin.students.edit', $student) }}" 
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-edit mr-2"></i>
@@ -170,7 +189,7 @@
             </div>
 
             <!-- Documents Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <div id="documents" class="bg-white rounded-xl shadow-lg p-6">
                 <div class="flex items-center mb-6">
                     <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-file-alt text-white text-xl"></i>

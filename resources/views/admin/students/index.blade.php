@@ -232,15 +232,24 @@
                                 </a>
                                 
                                 @if($student->status === 'pending')
-                                    <form method="POST" action="{{ route('admin.students.approve', $student) }}" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" 
-                                                class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                                title="Approve Student">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
+                                    @php $hasPhoto = $student->documents->where('document_type', 'photo')->isNotEmpty(); @endphp
+                                    @if($hasPhoto)
+                                        <form method="POST" action="{{ route('admin.students.approve', $student) }}" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                                    title="Approve Student">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.students.show', $student) }}#documents" 
+                                           class="text-amber-600 hover:text-amber-700 inline-block"
+                                           title="Upload photo first to approve">
+                                            <i class="fas fa-camera"></i>
+                                        </a>
+                                    @endif
                                     <form method="POST" action="{{ route('admin.students.reject', $student) }}" class="inline">
                                         @csrf
                                         @method('PATCH')
