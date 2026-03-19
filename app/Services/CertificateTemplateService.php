@@ -73,9 +73,10 @@ class CertificateTemplateService
         $issueDate = $certificate->issue_date ? $certificate->issue_date->format('d M Y') : now()->format('d M Y');
 
         // QR code as base64 PNG (DomPDF has poor SVG support; PNG via GD works reliably)
+        // Links directly to student verification page - no need to enter enrollment/name/email/phone
         $qrUrl = null;
-        if (config('certificate.show_qr_code', true)) {
-            $verificationUrl = url('/verify') . '?cert=' . urlencode($certificate->certificate_number);
+        if (config('certificate.show_qr_code', true) && $enrollmentNumber !== 'N/A') {
+            $verificationUrl = url('/verify/' . urlencode($enrollmentNumber));
             $qrUrl = $this->generateQrCodePng($verificationUrl);
         }
 
@@ -145,7 +146,7 @@ class CertificateTemplateService
 
         $qrUrl = null;
         if (config('certificate.show_qr_code', true)) {
-            $verificationUrl = url('/verify') . '?cert=SAMPLE';
+            $verificationUrl = url('/verify/SP20260001');
             $qrUrl = $this->generateQrCodePng($verificationUrl);
         }
 

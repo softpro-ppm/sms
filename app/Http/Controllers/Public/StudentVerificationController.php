@@ -14,6 +14,7 @@ class StudentVerificationController extends Controller
     /**
      * Verify student by enrollment number (public, no login).
      * Used as QR code target: /verify/{enrollment_no}
+     * Direct link from certificate/ID card QR - shows full verification result without search.
      */
     public function verifyByEnrollment(string $enrollment_no)
     {
@@ -26,14 +27,13 @@ class StudentVerificationController extends Controller
         }
 
         $student = $enrollment->student;
-        $batch = $enrollment->batch;
-        $startDate = $batch?->start_date;
-        $startDateFormatted = $startDate ? $startDate->timezone('Asia/Kolkata')->format('d-m-Y') : null;
-        $validTillFormatted = $startDate
-            ? $startDate->timezone('Asia/Kolkata')->copy()->addYear()->format('d-m-Y')
-            : null;
+        $student->load([
+            'enrollments.batch.course',
+            'assessmentResults.assessment',
+            'documents'
+        ]);
 
-        return view('public.verify-show', compact('student', 'enrollment', 'startDateFormatted', 'validTillFormatted'));
+        return view('public.student-verification-result', compact('student'));
     }
 
     /**

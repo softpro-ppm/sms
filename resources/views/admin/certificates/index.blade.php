@@ -277,8 +277,21 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200">
-                    {{ $certificates->links() }}
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    @if($certificates->hasPages())
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-sm text-gray-700">
+                                Showing {{ $certificates->firstItem() }} to {{ $certificates->lastItem() }} of {{ $certificates->total() }} results
+                            </div>
+                            <div class="flex items-center">
+                                {{ $certificates->withQueryString()->links() }}
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center text-sm text-gray-500">
+                            Showing {{ $certificates->count() }} of {{ $certificates->total() }} certificate{{ $certificates->total() !== 1 ? 's' : '' }}
+                        </div>
+                    @endif
                 </div>
             @else
                 <div class="text-center py-12">
@@ -303,12 +316,20 @@
 
 @section('scripts')
 <script>
-    // Auto-submit form when course changes
+    // Auto-submit form when filters change
     document.getElementById('course_id').addEventListener('change', function() {
         this.form.submit();
     });
 
     document.getElementById('batch_id').addEventListener('change', function() {
+        this.form.submit();
+    });
+
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+
+    document.getElementById('per_page').addEventListener('change', function() {
         this.form.submit();
     });
 
