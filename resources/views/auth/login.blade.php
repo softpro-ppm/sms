@@ -10,6 +10,13 @@
             <p class="text-gray-600 mt-1">Sign in to your account</p>
         </div>
 
+        @if (session('status'))
+            <div class="max-w-2xl mx-auto mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-3">
+                <i class="fas fa-check-circle text-green-600 text-xl flex-shrink-0"></i>
+                {{ session('status') }}
+            </div>
+        @endif
+
         <!-- Mobile/Tablet: Tabs (visible only below lg) | Desktop: both forms visible -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12" x-data="{ activeTab: 'student' }">
             <!-- Tabs: Mobile/Tablet only -->
@@ -129,7 +136,7 @@
                                 <input name="remember" type="checkbox" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
                                 <span class="ml-2 text-sm text-gray-700">Remember me</span>
                             </label>
-                            <a href="#" class="text-sm font-medium text-gray-900 hover:text-amber-600">Forgot password?</a>
+                            <a href="{{ route('password.request') }}" class="text-sm font-medium text-gray-900 hover:text-amber-600">Forgot password?</a>
                         </div>
                         <button type="submit" class="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
                             <i class="fas fa-sign-in-alt"></i> Sign in
