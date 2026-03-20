@@ -16,21 +16,19 @@
             font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
             background: #ffffff;
             margin: 0;
-            padding: 8px;
-            text-align: center;
+            padding: 0;
+            text-align: left;
         }
 
-        /* Table-based layout for DomPDF compatibility (no flexbox support) */
+        /* Block layout for DomPDF - inline-block/overflow can cause blank content */
         .certificate {
-            display: inline-block;
+            display: block;
             position: relative;
             text-align: left;
             width: 297mm;
-            height: 210mm;
+            min-height: 210mm;
             background: #ffffff;
             padding: 0;
-            overflow: hidden;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.15);
             page-break-inside: avoid;
         }
 
@@ -72,8 +70,6 @@
             position: relative;
             z-index: 3;
             padding: 12mm 18mm 12mm 18mm;
-            height: 100%;
-            box-sizing: border-box;
         }
 
         /* Header: Logo + Institute + Photo - table for DomPDF (no absolute positioning) */
