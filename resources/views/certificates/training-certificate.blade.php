@@ -72,6 +72,16 @@
             padding: 12mm 18mm 12mm 18mm;
         }
 
+        /* Main layout table: header | body+signatures (centered) | footer */
+        .cert-layout-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .cert-layout-table td {
+            padding: 0;
+            vertical-align: top;
+        }
+
         /* Header: Logo + Institute + Photo - table for DomPDF (no absolute positioning) */
         .header-table {
             width: 100%;
@@ -208,7 +218,7 @@
             margin-bottom: 1mm;
         }
 
-        /* Footer row - inside body for PDF fit */
+        /* Footer row - below signatures, at bottom */
         .cert-footer-row {
             width: 100%;
             border-collapse: collapse;
@@ -216,8 +226,8 @@
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-weight: 500;
             color: #2c1810;
-            margin-top: 2mm;
-            padding-top: 1mm;
+            margin-top: 4mm;
+            padding-top: 2mm;
             border-top: 1px solid #c4a574;
         }
         .cert-footer-row td {
@@ -232,7 +242,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4mm;
+            margin-top: 6mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -337,80 +347,91 @@
         <div class="corner corner-br"></div>
 
         <div class="content">
-            <table class="header-table">
+            <table class="cert-layout-table" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                    <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
-                    <td class="col-institute">
-                        <div class="institute-name">Softpro Skill Solutions</div>
-                        <div class="institute-tagline">Skill Development &amp; Training Institute</div>
-                        <div class="institute-website">www.softpro.co.in</div>
-                    </td>
-                    <td class="col-photo">
-                        @if($studentPhotoUrl)
-                        <div class="photo-cell">
-                            <div class="photo-box">
-                                <img src="{{ $studentPhotoPath }}" alt="">
-                            </div>
-                            <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
-                        </div>
-                        @endif
+                    <td>
+                        <table class="header-table">
+                            <tr>
+                                <td class="col-logo"><img src="{{ $logoPath }}" alt="SoftPro" class="header-logo"></td>
+                                <td class="col-institute">
+                                    <div class="institute-name">Softpro Skill Solutions</div>
+                                    <div class="institute-tagline">Skill Development &amp; Training Institute</div>
+                                    <div class="institute-website">www.softpro.co.in</div>
+                                </td>
+                                <td class="col-photo">
+                                    @if($studentPhotoUrl)
+                                    <div class="photo-cell">
+                                        <div class="photo-box">
+                                            <img src="{{ $studentPhotoPath }}" alt="">
+                                        </div>
+                                        <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
+                                    </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
-            </table>
-
-            <h1 class="cert-title">{{ $certificateTitle }}</h1>
-            <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
-
-            <div class="cert-body">
-                <p class="certify-line">This is to certify that</p>
-                <p class="recipient-name">{{ $student->full_name }}</p>
-                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '—' }}</p>
-                <p class="course-line">
-                    has successfully completed the course <span class="course-name">{{ $course->name }}</span>
-                    @if($batch)
-                    (Batch: {{ $batch->batch_name }})
-                    @endif
-                    conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
-                    @if($grade && $grade !== 'N/A')
-                    and has secured grade <strong>{{ $grade }}</strong>
-                    @endif
-                    based on overall performance, attendance and assessment.
-                </p>
-                <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
-                <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                        <td>{{ $isoText }}</td>
-                        <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
-                    </tr>
-                </table>
-            </div>
-
-            <table class="signatures-table">
+                <tr>
+                    <td style="height: 125mm; vertical-align: middle;">
+                        <h1 class="cert-title">{{ $certificateTitle }}</h1>
+                        <p class="cert-subtitle">◆ Certificate of Achievement ◆</p>
+                        <div class="cert-body">
+                            <p class="certify-line">This is to certify that</p>
+                            <p class="recipient-name">{{ $student->full_name }}</p>
+                            <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '—' }}</p>
+                            <p class="course-line">
+                                has successfully completed the course <span class="course-name">{{ $course->name }}</span>
+                                @if($batch)
+                                (Batch: {{ $batch->batch_name }})
+                                @endif
+                                conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
+                                @if($grade && $grade !== 'N/A')
+                                and has secured grade <strong>{{ $grade }}</strong>
+                                @endif
+                                based on overall performance, attendance and assessment.
+                            </p>
+                            <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
+                        </div>
+                        <table class="signatures-table">
+                            <tr>
+                                <td>
+                                    <div class="signature-block">
+                                        <div class="signature-line"></div>
+                                        <div class="signature-label">Authorized Signatory</div>
+                                        <div class="signature-org">(Seal)</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="signature-center">
+                                        @if($qrUrl)
+                                        <div class="qr-box">
+                                            <img src="{{ $qrUrl }}" alt="Verify">
+                                        </div>
+                                        <div class="qr-scan-text">Scan to Verify Certificate</div>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="signature-block">
+                                        <div class="signature-line"></div>
+                                        <div class="signature-label">Director</div>
+                                        <div class="signature-org">Softpro Skill Solutions</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
                 <tr>
                     <td>
-                        <div class="signature-block">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Authorized Signatory</div>
-                            <div class="signature-org">(Seal)</div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="signature-center">
-                            @if($qrUrl)
-                            <div class="qr-box">
-                                <img src="{{ $qrUrl }}" alt="Verify">
-                            </div>
-                            <div class="qr-scan-text">Scan to Verify Certificate</div>
-                            @endif
-                        </div>
-                    </td>
-                    <td>
-                        <div class="signature-block">
-                            <div class="signature-line"></div>
-                            <div class="signature-label">Director</div>
-                            <div class="signature-org">Softpro Skill Solutions</div>
-                        </div>
+                        <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                                <td>{{ $isoText }}</td>
+                                <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
