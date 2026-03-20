@@ -71,7 +71,7 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 14mm 18mm 8mm 18mm;
+            padding: 12mm 18mm 12mm 18mm;
             height: 100%;
             box-sizing: border-box;
         }
@@ -80,8 +80,8 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6mm;
-            padding-bottom: 4mm;
+            margin-bottom: 0;
+            padding-bottom: 1mm;
             border-bottom: 1px solid #c4a574;
         }
         .header-table td {
@@ -135,7 +135,8 @@
             font-weight: 700;
             color: #2c1810;
             letter-spacing: 4px;
-            margin-bottom: 4mm;
+            margin-top: 0;
+            margin-bottom: 0;
             text-transform: uppercase;
         }
 
@@ -144,20 +145,21 @@
             font-size: 9pt;
             color: #8b7355;
             letter-spacing: 6px;
-            margin-bottom: 6mm;
+            margin-top: 0;
+            margin-bottom: 1mm;
         }
 
-        /* Body - block layout */
+        /* Body - block layout, tight spacing to fit A4 */
         .cert-body {
             text-align: center;
-            padding: 4mm 0;
+            padding: 1mm 0;
         }
 
         .certify-line {
             font-size: 11pt;
             color: #4a3728;
-            margin-top: 6mm;
-            margin-bottom: 3mm;
+            margin-top: 0;
+            margin-bottom: 0;
             font-style: italic;
         }
 
@@ -165,8 +167,9 @@
             font-size: 22pt;
             font-weight: 700;
             color: #2c1810;
-            margin-bottom: 4mm;
-            padding-bottom: 2mm;
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-bottom: 1mm;
             border-bottom: 2px solid #8b7355;
             display: inline-block;
         }
@@ -174,16 +177,19 @@
         .parent-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-bottom: 4mm;
+            margin-top: 0;
+            margin-bottom: 1mm;
         }
 
         .course-line {
             font-size: 11pt;
             color: #4a3728;
-            line-height: 1.55;
+            line-height: 1.4;
             max-width: 220mm;
             margin-left: auto;
             margin-right: auto;
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
         .course-name {
@@ -202,15 +208,35 @@
         .date-grade-line {
             font-size: 10pt;
             color: #5c4a3a;
-            margin-top: 6mm;
-            margin-bottom: 5mm;
+            margin-top: 2mm;
+            margin-bottom: 1mm;
         }
+
+        /* Footer row - inside body for PDF fit */
+        .cert-footer-row {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-weight: 500;
+            color: #2c1810;
+            margin-top: 2mm;
+            padding-top: 1mm;
+            border-top: 1px solid #c4a574;
+        }
+        .cert-footer-row td {
+            padding: 2mm 0;
+            letter-spacing: 0.3px;
+        }
+        .cert-footer-row td:first-child { text-align: left; width: 33%; }
+        .cert-footer-row td:nth-child(2) { text-align: center; font-size: 8pt; color: #8b7355; }
+        .cert-footer-row td:last-child { text-align: right; width: 33%; }
 
         /* Signatures - table for DomPDF */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6mm;
+            margin-top: 4mm;
         }
         .signatures-table td {
             vertical-align: bottom;
@@ -267,26 +293,6 @@
             color: #6b5344;
             margin-top: 1px;
         }
-
-        /* Footer - table for DomPDF */
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2mm;
-            padding-top: 2mm;
-            border-top: 1px solid #c4a574;
-        }
-        .footer-table td {
-            padding: 4mm 0 6mm 0;
-            font-size: 10pt;
-            font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
-            font-weight: 500;
-            color: #2c1810;
-            letter-spacing: 0.3px;
-        }
-        .footer-table td:first-child { text-align: left; width: 33%; }
-        .footer-table td:nth-child(2) { text-align: center; font-size: 9pt; color: #8b7355; }
-        .footer-table td:last-child { text-align: right; width: 33%; }
 
         /* Photo in header (table cell - DomPDF compatible) */
         .photo-cell {
@@ -362,9 +368,7 @@
             <div class="cert-body">
                 <p class="certify-line">This is to certify that</p>
                 <p class="recipient-name">{{ $student->full_name }}</p>
-                @if($parentName)
-                <p class="parent-line">{{ $parentLabel }} {{ $parentName }}</p>
-                @endif
+                <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '—' }}</p>
                 <p class="course-line">
                     has successfully completed the course <span class="course-name">{{ $course->name }}</span>
                     @if($batch)
@@ -377,6 +381,13 @@
                     based on overall performance, attendance and assessment.
                 </p>
                 <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
+                <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                        <td>{{ $isoText }}</td>
+                        <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                    </tr>
+                </table>
             </div>
 
             <table class="signatures-table">
@@ -405,14 +416,6 @@
                             <div class="signature-org">Softpro Skill Solutions</div>
                         </div>
                     </td>
-                </tr>
-            </table>
-
-            <table class="footer-table">
-                <tr>
-                    <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                    <td>{{ $isoText }}</td>
-                    <td>Certificate No. <strong>{{ $certificate->certificate_number }}</strong></td>
                 </tr>
             </table>
         </div>

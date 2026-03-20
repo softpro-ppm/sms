@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.pwa-meta')
     <title>@yield('title', 'Student Management System') - Admin Panel</title>
     
     <!-- Fonts -->
@@ -410,6 +411,17 @@
                     @yield('content')
                 </div>
             </main>
+            <!-- Footer -->
+            <footer class="border-t border-gray-200 bg-white py-3 px-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <nav class="flex flex-wrap gap-4 text-sm">
+                        <a href="{{ route('verify.index') }}" class="text-gray-600 hover:text-gray-900" target="_blank">Verify Student</a>
+                        <a href="{{ route('privacy') }}" class="text-gray-600 hover:text-gray-900" target="_blank">Privacy</a>
+                        <a href="{{ route('terms') }}" class="text-gray-600 hover:text-gray-900" target="_blank">Terms</a>
+                    </nav>
+                    <p class="text-sm text-gray-500">© {{ date('Y') }} Student Management System</p>
+                </div>
+            </footer>
         </div>
     </div>
     

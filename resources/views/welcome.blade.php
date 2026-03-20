@@ -103,8 +103,11 @@
         </div>
     </div>
 
-    <footer class="py-4 text-center">
-        <p class="text-sm text-gray-600">© {{ date('Y') }} Student Management System. All rights reserved.</p>
+    <footer class="py-6 border-t border-gray-200 bg-white">
+        <div class="container mx-auto px-4">
+            @include('partials.footer-menu')
+            <p class="text-center text-sm text-gray-500">© {{ date('Y') }} Student Management System. All rights reserved.</p>
+        </div>
     </footer>
 </body>
 </html>
