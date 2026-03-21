@@ -98,9 +98,9 @@
             vertical-align: middle;
         }
         .header-logo {
-            height: 13mm;
+            height: 18mm;
             width: auto;
-            max-height: 13mm;
+            max-height: 18mm;
             vertical-align: middle;
         }
         .institute-name {
@@ -224,7 +224,7 @@
             margin: 0;
         }
 
-        /* ========== BLOCK 8: QR (12mm below issue date; +4mm breathing space) ========== */
+        /* ========== BLOCK 8: QR (12mm below issue date; +4mm space) ========== */
         .qr-block {
             margin-top: 12mm;
             min-height: 18mm;
@@ -251,7 +251,8 @@
         /* Left sig at 70mm, Right sig at 227mm from page left */
         .signature-block-wrapper {
             margin-top: 16mm;
-            height: 12mm;
+            margin-bottom: 0;
+            min-height: 12mm;
             position: relative;
         }
         .signatures-table {
@@ -283,13 +284,12 @@
             margin-top: 0.5px;
         }
 
-        /* ========== BLOCK 10: FOOTER (no divider; +6mm space from signatures, +3mm toward bottom) ========== */
+        /* ========== BLOCK 10: FOOTER (flow-based; +6mm from signatures; clear separation) ========== */
         .footer-block {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 177mm;
-            padding-top: 0;
+            margin-top: 12mm;
+            padding-top: 3mm;
+            padding-bottom: 2mm;
+            border-top: 1px solid #c4a574;
         }
         .cert-footer-row {
             width: 100%;
