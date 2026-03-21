@@ -219,26 +219,33 @@
         }
         .date-grade-line { font-size: 10pt; color: #5c4a3a; }
 
-        /* 8) QR: top 122mm - centered wrapper with QR + caption together */
+        /* 8) QR: top 122mm - single centered block (QR + caption) */
         .qr-wrapper {
             position: absolute;
             top: 122mm;
             left: 50%;
             transform: translateX(-50%);
-            width: 24mm;
+            width: 18mm;
             text-align: center;
         }
         .qr-wrapper .qr-box {
-            width: 16mm;
-            height: 16mm;
-            display: block;
+            width: 15mm;
+            height: 15mm;
             text-align: center;
         }
-        .qr-wrapper .qr-box img { width: 16mm; height: 16mm; }
+        .qr-wrapper .qr-box img {
+            width: 15mm;
+            height: 15mm;
+        }
         .qr-wrapper .qr-scan-text {
             font-size: 6pt;
             color: #6b5344;
             letter-spacing: 0.5px;
+            padding-top: 2.5mm;
+            width: 15mm;
+            display: inline-block;
+            text-align: center;
+            line-height: 1.3;
         }
 
         /* 9) SIGNATURES: top 148mm, height 20mm - same baseline */
@@ -389,7 +396,7 @@
                 <div class="qr-box">
                     <img src="{{ $qrUrl }}" alt="Verify">
                 </div>
-                <div class="qr-scan-text">Scan to Verify Certificate</div>
+                <div class="qr-scan-text">Scan to Verify<br>Certificate</div>
             </div>
             @endif
 
