@@ -124,9 +124,9 @@
             margin-top: 0.5mm;
         }
 
-        /* ========== BLOCK 2: MAIN TITLE (12mm below header divider, height 18mm) ========== */
+        /* ========== BLOCK 2: MAIN TITLE (14mm below header; +2mm for middle content shift) ========== */
         .title-block {
-            margin-top: 12mm;
+            margin-top: 14mm;
             height: 18mm;
             text-align: center;
         }
@@ -224,9 +224,9 @@
             margin: 0;
         }
 
-        /* ========== BLOCK 8: QR (8mm below issue date, total height 18mm) ========== */
+        /* ========== BLOCK 8: QR (12mm below issue date; +4mm breathing space) ========== */
         .qr-block {
-            margin-top: 8mm;
+            margin-top: 12mm;
             min-height: 18mm;
             height: 18mm;
             text-align: center;
@@ -247,10 +247,10 @@
             letter-spacing: 0.5px;
         }
 
-        /* ========== BLOCK 9: SIGNATURES (10mm below QR, height 12mm) ========== */
+        /* ========== BLOCK 9: SIGNATURES (16mm below QR; +6mm separate layer) ========== */
         /* Left sig at 70mm, Right sig at 227mm from page left */
         .signature-block-wrapper {
-            margin-top: 10mm;
+            margin-top: 16mm;
             height: 12mm;
             position: relative;
         }
@@ -283,14 +283,13 @@
             margin-top: 0.5px;
         }
 
-        /* ========== BLOCK 10: FOOTER (at 182mm from page top; content top is 14mm) ========== */
+        /* ========== BLOCK 10: FOOTER (no divider; +6mm space from signatures, +3mm toward bottom) ========== */
         .footer-block {
             position: absolute;
             left: 0;
             right: 0;
-            top: 168mm;
-            border-top: 1px solid #c4a574;
-            padding-top: 3mm;
+            top: 177mm;
+            padding-top: 0;
         }
         .cert-footer-row {
             width: 100%;
