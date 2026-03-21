@@ -184,12 +184,16 @@
         }
         .parent-line { font-size: 10pt; color: #5c4a3a; }
 
-        /* 6) PARAGRAPH: top 80mm, height 28mm - table for centering without transform */
-        .section-paragraph {
+        /* 6) BODY TEXT BLOCK: paragraph + issue date centered as one unit */
+        .body-text-wrapper {
             position: absolute;
             top: 80mm;
-            left: 0;
-            right: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150mm;
+            text-align: center;
+        }
+        .section-paragraph {
             height: 28mm;
         }
         .section-paragraph table {
@@ -208,12 +212,8 @@
             font-family: 'DejaVu Sans', Arial, sans-serif;
         }
 
-        /* 7) ISSUE DATE: top 110mm, height 8mm */
+        /* 7) ISSUE DATE: inside body-text-wrapper */
         .section-issue {
-            position: absolute;
-            top: 110mm;
-            left: 0;
-            right: 0;
             height: 8mm;
             text-align: center;
         }
@@ -229,12 +229,12 @@
             text-align: center;
         }
         .qr-wrapper .qr-box {
-            width: 14mm;
-            height: 14mm;
+            width: 16mm;
+            height: 16mm;
             display: block;
             text-align: center;
         }
-        .qr-wrapper .qr-box img { width: 14mm; height: 14mm; }
+        .qr-wrapper .qr-box img { width: 16mm; height: 16mm; }
         .qr-wrapper .qr-scan-text {
             font-size: 6pt;
             color: #6b5344;
@@ -361,26 +361,26 @@
                 <p class="parent-line">{{ $parentLabel }} {{ $parentName ?: '—' }}</p>
             </div>
 
-            <!-- 6) PARAGRAPH: top 80mm -->
-            <div class="section-paragraph">
-                <table align="center" style="width: 150mm" cellpadding="0" cellspacing="0"><tr><td align="center">
-                <p class="course-line">
-                    has successfully completed the course <span class="course-name">{{ $course->name }}</span>
-                    @if($batch)
-                    (Batch: {{ $batch->batch_name }})
-                    @endif
-                    conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
-                    @if($grade && $grade !== 'N/A')
-                    and has secured grade <strong>{{ $grade }}</strong>
-                    @endif
-                    based on overall performance, attendance and assessment.
-                </p>
-                </td></tr></table>
-            </div>
-
-            <!-- 7) ISSUE DATE: top 110mm -->
-            <div class="section-issue">
-                <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
+            <!-- 6) BODY TEXT BLOCK: paragraph + issue date centered together -->
+            <div class="body-text-wrapper">
+                <div class="section-paragraph">
+                    <table style="width: 100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+                    <p class="course-line">
+                        has successfully completed the course <span class="course-name">{{ $course->name }}</span>
+                        @if($batch)
+                        (Batch: {{ $batch->batch_name }})
+                        @endif
+                        conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
+                        @if($grade && $grade !== 'N/A')
+                        and has secured grade <strong>{{ $grade }}</strong>
+                        @endif
+                        based on overall performance, attendance and assessment.
+                    </p>
+                    </td></tr></table>
+                </div>
+                <div class="section-issue">
+                    <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
+                </div>
             </div>
 
             <!-- 8) QR: top 122mm - centered wrapper -->
