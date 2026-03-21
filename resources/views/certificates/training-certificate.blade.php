@@ -64,7 +64,7 @@
         .content {
             position: relative;
             z-index: 3;
-            padding: 14mm 16mm 14mm 16mm;
+            padding: 14mm 16mm 10mm 16mm;
         }
 
         /* Table layout: fits all content on single page (DomPDF strips page 2) */
@@ -96,7 +96,7 @@
         .institute-tagline { font-size: 9pt; color: #6b5344; letter-spacing: 2px; }
         .institute-website { font-size: 9pt; color: #8b7355; }
 
-        /* BODY ROW: fixed height so QR+Signatures+Footer stay on page 1 */
+        /* BODY ROW: fixed height so all content stays on page 1 */
         .body-cell {
             height: 130mm;
             vertical-align: middle;
@@ -150,11 +150,11 @@
             font-size: 12pt;
             font-family: 'DejaVu Sans', Arial, sans-serif;
         }
-        .date-grade-line { font-size: 10pt; color: #5c4a3a; margin: 0 0 8mm 0; }
+        .date-grade-line { font-size: 10pt; color: #5c4a3a; margin: 0 0 10mm 0; }
 
         /* QR BLOCK */
         .qr-block {
-            margin: 0 auto 14mm auto;
+            margin: 0 auto 18mm auto;
             text-align: center;
         }
         .qr-box {
@@ -174,7 +174,7 @@
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8mm;
+            margin-bottom: 12mm;
         }
         .signatures-table td { vertical-align: bottom; text-align: center; padding: 0; width: 33%; }
         .signature-block { text-align: center; display: inline-block; }
@@ -186,7 +186,12 @@
         .signature-label { font-size: 9pt; font-weight: 600; color: #2c1810; }
         .signature-org { font-size: 8pt; color: #6b5344; }
 
-        /* FOOTER */
+        /* FOOTER - inside body so it always renders */
+        .footer-block {
+            margin-top: 0;
+            padding-top: 4mm;
+            border-top: 1px solid #c4a574;
+        }
         .cert-footer-row {
             width: 100%;
             border-collapse: collapse;
@@ -194,10 +199,8 @@
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-weight: 500;
             color: #2c1810;
-            border-top: 1px solid #c4a574;
-            padding-top: 3mm;
         }
-        .cert-footer-row td { padding: 0; letter-spacing: 0.3px; }
+        .cert-footer-row td { padding: 2mm 0; letter-spacing: 0.3px; }
         .cert-footer-row td:first-child { text-align: left; width: 33%; }
         .cert-footer-row td:nth-child(2) { text-align: center; font-size: 8pt; color: #8b7355; }
         .cert-footer-row td:last-child { text-align: right; width: 33%; }
@@ -305,18 +308,17 @@
                                     </td>
                                 </tr>
                             </table>
+
+                            <div class="footer-block">
+                                <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                                        <td>{{ $isoText }}</td>
+                                        <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                                <td>{{ $isoText }}</td>
-                                <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
-                            </tr>
-                        </table>
                     </td>
                 </tr>
             </table>
