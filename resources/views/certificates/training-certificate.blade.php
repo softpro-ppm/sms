@@ -153,8 +153,10 @@
         }
         .date-grade-line { font-size: 10pt; color: #5c4a3a; margin: 0 0 10mm 0; }
 
-        /* QR BLOCK */
+        /* QR BLOCK - center aligned for DomPDF */
         .qr-block {
+            display: block;
+            width: 100%;
             margin: 0 auto 18mm auto;
             text-align: center;
         }
@@ -171,14 +173,18 @@
             letter-spacing: 0.5px;
         }
 
-        /* SIGNATURES */
+        /* SIGNATURES - explicit column widths for DomPDF */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 12mm;
+            table-layout: fixed;
         }
-        .signatures-table td { vertical-align: bottom; text-align: center; padding: 0; width: 33%; }
-        .signature-block { text-align: center; display: inline-block; }
+        .signatures-table td { vertical-align: bottom; text-align: center; padding: 0 4mm; }
+        .sig-td-left { width: 35%; text-align: center; }
+        .sig-td-center { width: 30%; }
+        .sig-td-right { width: 35%; text-align: center; }
+        .signature-block { text-align: center; }
         .signature-line {
             width: 36mm;
             border-bottom: 1px solid #4a3728;
@@ -201,10 +207,11 @@
             font-weight: 500;
             color: #2c1810;
         }
-        .cert-footer-row td { padding: 2mm 0; letter-spacing: 0.3px; }
-        .cert-footer-row td:first-child { text-align: left; width: 33%; }
-        .cert-footer-row td:nth-child(2) { text-align: center; font-size: 8pt; color: #8b7355; }
-        .cert-footer-row td:last-child { text-align: right; width: 33%; }
+        .cert-footer-row { table-layout: fixed; width: 100%; }
+        .cert-footer-row td { padding: 2mm 4mm; letter-spacing: 0.3px; }
+        .cert-footer-row .ft-left { width: 33%; text-align: left; }
+        .cert-footer-row .ft-center { width: 34%; text-align: center; font-size: 8pt; color: #8b7355; }
+        .cert-footer-row .ft-right { width: 33%; text-align: right; }
 
         .photo-cell { text-align: center; }
         .photo-box {
@@ -292,15 +299,15 @@
 
                             <table class="signatures-table" width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
-                                    <td>
+                                    <td class="sig-td-left">
                                         <div class="signature-block">
                                             <div class="signature-line"></div>
                                             <div class="signature-label">Authorized Signatory</div>
                                             <div class="signature-org">(Seal)</div>
                                         </div>
                                     </td>
-                                    <td></td>
-                                    <td>
+                                    <td class="sig-td-center">&nbsp;</td>
+                                    <td class="sig-td-right">
                                         <div class="signature-block">
                                             <div class="signature-line"></div>
                                             <div class="signature-label">Director</div>
@@ -313,9 +320,9 @@
                             <div class="footer-block">
                                 <table class="cert-footer-row" width="100%" cellpadding="0" cellspacing="0">
                                     <tr>
-                                        <td>Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
-                                        <td>{{ $isoText }}</td>
-                                        <td>Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
+                                        <td class="ft-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></td>
+                                        <td class="ft-center">{{ $isoText }}</td>
+                                        <td class="ft-right">Cert No. <strong>{{ $certificate->certificate_number }}</strong></td>
                                     </tr>
                                 </table>
                             </div>
