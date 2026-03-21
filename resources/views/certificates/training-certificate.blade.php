@@ -65,11 +65,11 @@
         .corner-bl { bottom: 9mm; left: 9mm; border-bottom-width: 2px; border-left-width: 2px; }
         .corner-br { bottom: 9mm; right: 9mm; border-bottom-width: 2px; border-right-width: 2px; }
 
-        /* Content area: 14mm top, 16mm sides, 14mm bottom (inside inner border) */
+        /* Content area: 14mm top, 16mm sides; 18mm bottom for ~8-10mm gap to inner border */
         .content {
             position: relative;
             z-index: 3;
-            padding: 14mm 16mm 14mm 16mm;
+            padding: 14mm 16mm 18mm 16mm;
         }
 
         /* ========== BLOCK 1: HEADER (starts 14mm from content top, height 24mm) ========== */
@@ -98,9 +98,9 @@
             vertical-align: middle;
         }
         .header-logo {
-            height: 18mm;
+            height: 20mm;
             width: auto;
-            max-height: 18mm;
+            max-height: 20mm;
             vertical-align: middle;
         }
         .institute-name {
@@ -124,9 +124,9 @@
             margin-top: 0.5mm;
         }
 
-        /* ========== BLOCK 2: MAIN TITLE (14mm below header; +2mm for middle content shift) ========== */
+        /* ========== BLOCK 2: MAIN TITLE (18mm below header; +4mm for vertical balance) ========== */
         .title-block {
-            margin-top: 14mm;
+            margin-top: 18mm;
             height: 18mm;
             text-align: center;
         }
@@ -247,10 +247,9 @@
             letter-spacing: 0.5px;
         }
 
-        /* ========== BLOCK 9: SIGNATURES (16mm below QR; +6mm separate layer) ========== */
-        /* Left sig at 70mm, Right sig at 227mm from page left */
+        /* ========== BLOCK 9: SIGNATURES (18mm below QR; symmetrical left/right) ========== */
         .signature-block-wrapper {
-            margin-top: 16mm;
+            margin-top: 18mm;
             margin-bottom: 0;
             min-height: 12mm;
             position: relative;
@@ -284,11 +283,11 @@
             margin-top: 0.5px;
         }
 
-        /* ========== BLOCK 10: FOOTER (flow-based; +6mm from signatures; clear separation) ========== */
+        /* ========== BLOCK 10: FOOTER (12mm below signatures; ~8-10mm from inner bottom border) ========== */
         .footer-block {
             margin-top: 12mm;
             padding-top: 3mm;
-            padding-bottom: 2mm;
+            padding-bottom: 4mm;
             border-top: 1px solid #c4a574;
         }
         .cert-footer-row {
