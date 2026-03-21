@@ -219,38 +219,29 @@
         }
         .date-grade-line { font-size: 10pt; color: #5c4a3a; }
 
-        /* 8) QR: top 122mm, height 22mm */
-        .section-qr {
+        /* 8) QR: top 122mm - centered wrapper with QR + caption together */
+        .qr-wrapper {
             position: absolute;
             top: 122mm;
-            left: 0;
-            right: 0;
-            height: 22mm;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24mm;
             text-align: center;
         }
-        .qr-box {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
+        .qr-wrapper .qr-box {
             width: 14mm;
             height: 14mm;
+            display: block;
             text-align: center;
         }
-        .qr-box img { width: 14mm; height: 14mm; }
-        .qr-scan-text {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 16mm;
+        .qr-wrapper .qr-box img { width: 14mm; height: 14mm; }
+        .qr-wrapper .qr-scan-text {
             font-size: 6pt;
-            text-align: center;
             color: #6b5344;
             letter-spacing: 0.5px;
-            white-space: nowrap;
         }
 
-        /* 9) SIGNATURES: top 148mm, height 20mm */
+        /* 9) SIGNATURES: top 148mm, height 20mm - same baseline */
         .section-signatures {
             position: absolute;
             top: 148mm;
@@ -258,19 +249,21 @@
             right: 0;
             height: 20mm;
         }
-        .sig-left {
+        .signature-left {
             position: absolute;
             left: 0;
             bottom: 0;
             width: 40%;
             text-align: center;
+            vertical-align: bottom;
         }
-        .sig-right {
+        .signature-right {
             position: absolute;
             right: 0;
             bottom: 0;
             width: 40%;
             text-align: center;
+            vertical-align: bottom;
         }
         .signature-line {
             width: 36mm;
@@ -280,30 +273,29 @@
         .signature-label { font-size: 9pt; font-weight: 600; color: #2c1810; }
         .signature-org { font-size: 8pt; color: #6b5344; }
 
-        /* 10) FOOTER: bottom 0, height 10mm */
+        /* 10) FOOTER: absolute block near bottom, relative to certificate */
         .section-footer {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            left: 20mm;
+            right: 20mm;
+            bottom: 12mm;
             height: 10mm;
-            border-top: 1px solid #c4a574;
             font-size: 9pt;
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-weight: 500;
             color: #2c1810;
+            z-index: 4;
         }
         .footer-left {
             position: absolute;
             left: 0;
-            top: 3mm;
-            font-size: 9pt;
+            top: 2mm;
         }
         .footer-center {
             position: absolute;
             left: 33%;
             right: 33%;
-            top: 3mm;
+            top: 2mm;
             font-size: 8pt;
             color: #8b7355;
             text-align: center;
@@ -311,8 +303,7 @@
         .footer-right {
             position: absolute;
             right: 0;
-            top: 3mm;
-            font-size: 9pt;
+            top: 2mm;
             text-align: right;
         }
 
@@ -392,36 +383,36 @@
                 <p class="date-grade-line">Issue Date: {{ $issueDate }}</p>
             </div>
 
-            <!-- 8) QR: top 122mm -->
-            <div class="section-qr">
-                @if($qrUrl)
+            <!-- 8) QR: top 122mm - centered wrapper -->
+            @if($qrUrl)
+            <div class="qr-wrapper">
                 <div class="qr-box">
                     <img src="{{ $qrUrl }}" alt="Verify">
                 </div>
                 <div class="qr-scan-text">Scan to Verify Certificate</div>
-                @endif
             </div>
+            @endif
 
             <!-- 9) SIGNATURES: top 148mm -->
             <div class="section-signatures">
-                <div class="sig-left">
+                <div class="signature-left">
                     <div class="signature-line"></div>
                     <div class="signature-label">Authorized Signatory</div>
                     <div class="signature-org">(Seal)</div>
                 </div>
-                <div class="sig-right">
+                <div class="signature-right">
                     <div class="signature-line"></div>
                     <div class="signature-label">Director</div>
                     <div class="signature-org">Softpro Skill Solutions</div>
                 </div>
             </div>
+        </div>
 
-            <!-- 10) FOOTER: bottom 0 -->
-            <div class="section-footer">
-                <span class="footer-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></span>
-                <span class="footer-center">{{ $isoText }}</span>
-                <span class="footer-right">Cert No. <strong>{{ $certificate->certificate_number }}</strong></span>
-            </div>
+        <!-- 10) FOOTER: absolute, relative to certificate -->
+        <div class="section-footer">
+            <span class="footer-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></span>
+            <span class="footer-center">{{ $isoText }}</span>
+            <span class="footer-right">Cert No. <strong>{{ $certificate->certificate_number }}</strong></span>
         </div>
     </div>
 </body>
