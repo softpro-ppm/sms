@@ -96,14 +96,15 @@
         .institute-tagline { font-size: 9pt; color: #6b5344; letter-spacing: 2px; }
         .institute-website { font-size: 9pt; color: #8b7355; }
 
-        /* BODY ROW: fixed height so all content stays on page 1 */
+        /* BODY ROW: height must fit title+paragraph+QR+signatures+footer (DomPDF clips overflow) */
         .body-cell {
-            height: 130mm;
-            vertical-align: middle;
+            height: 155mm;
+            vertical-align: top;
             padding: 0;
         }
         .body-inner {
             text-align: center;
+            padding-top: 4mm;
         }
 
         .cert-title {
