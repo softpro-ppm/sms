@@ -98,9 +98,9 @@
             vertical-align: middle;
         }
         .header-logo {
-            height: 20mm;
+            height: 22mm;
             width: auto;
-            max-height: 20mm;
+            max-height: 22mm;
             vertical-align: middle;
         }
         .institute-name {
@@ -124,9 +124,9 @@
             margin-top: 0.5mm;
         }
 
-        /* ========== BLOCK 2: MAIN TITLE (18mm below header; +4mm for vertical balance) ========== */
+        /* ========== BLOCK 2: MAIN TITLE (22mm below header; +4mm for vertical balance) ========== */
         .title-block {
-            margin-top: 18mm;
+            margin-top: 22mm;
             height: 18mm;
             text-align: center;
         }
@@ -224,21 +224,21 @@
             margin: 0;
         }
 
-        /* ========== BLOCK 8: QR (12mm below issue date; +4mm space) ========== */
+        /* ========== BLOCK 8: QR (10mm below issue date; 12-14mm size, center aligned) ========== */
         .qr-block {
-            margin-top: 12mm;
+            margin-top: 10mm;
             min-height: 18mm;
             height: 18mm;
             text-align: center;
         }
         .qr-box {
-            width: 13mm;
-            height: 13mm;
+            width: 14mm;
+            height: 14mm;
             margin: 0 auto;
         }
         .qr-box img {
-            width: 13mm;
-            height: 13mm;
+            width: 14mm;
+            height: 14mm;
         }
         .qr-scan-text {
             font-size: 6pt;
@@ -298,7 +298,7 @@
             font-weight: 500;
             color: #2c1810;
         }
-        .cert-footer-row td { padding: 0; letter-spacing: 0.3px; }
+        .cert-footer-row td { padding: 0; letter-spacing: 0.3px; vertical-align: middle; }
         .cert-footer-row td:first-child { text-align: left; width: 33%; }
         .cert-footer-row td:nth-child(2) { text-align: center; font-size: 8pt; color: #8b7355; }
         .cert-footer-row td:last-child { text-align: right; width: 33%; }
