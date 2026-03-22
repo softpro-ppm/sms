@@ -525,7 +525,7 @@
                         <div>
                             <p class="font-semibold text-gray-800 mb-0.5">Contact:</p>
                             <p><i class="fas fa-phone mr-1"></i>PH: 7799773656</p>
-                            <p><i class="fas fa-envelope mr-1"></i>skill.softpro@gmail.com</p>
+                            <p><i class="fas fa-envelope mr-1"></i>info@softpro.co.in</p>
                             <p><i class="fas fa-globe mr-1"></i>www.softproskills.com</p>
                         </div>
                     </div>

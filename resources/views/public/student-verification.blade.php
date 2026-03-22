@@ -106,7 +106,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600">
                     <div>
                         <p><i class="fas fa-phone mr-2"></i>Phone: 7799773656</p>
-                        <p><i class="fas fa-envelope mr-2"></i>Email: skill.softpro@gmail.com</p>
+                        <p><i class="fas fa-envelope mr-2"></i>Email: info@softpro.co.in</p>
                     </div>
                     <div>
                         <p><i class="fas fa-map-marker-alt mr-2"></i>Parvathipuram Manyam</p>

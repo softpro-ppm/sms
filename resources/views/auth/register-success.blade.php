@@ -81,7 +81,7 @@
             </div>
             <div class="flex items-center space-x-2">
                 <i class="fas fa-envelope w-4"></i>
-                <span>skill.softpro@gmail.com</span>
+                <span>info@softpro.co.in</span>
             </div>
         </div>
     </div>
