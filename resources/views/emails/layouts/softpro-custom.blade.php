@@ -8,7 +8,8 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; }
         .email-container { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
         .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 24px; text-align: center; }
-        .header img { height: 50px; width: auto; max-width: 180px; display: block; margin: 0 auto 12px; }
+        .header-logo-wrap { display: inline-block; background: #ffffff; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
+        .header-logo-wrap img { height: 50px; width: auto; max-width: 180px; display: block; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 600; }
         .header p { margin: 8px 0 0; opacity: 0.95; font-size: 14px; }
         .content { padding: 28px; }
@@ -32,7 +33,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset('images/logo/Logo_png.png') }}" alt="Softpro">
+            <div class="header-logo-wrap"><img src="{{ asset('images/logo/Logo_png.png') }}" alt="Softpro"></div>
             {!! $header ?? '' !!}
         </div>
         <div class="content">
