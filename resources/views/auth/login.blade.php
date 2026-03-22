@@ -148,8 +148,9 @@
     </div>
 </div>
 
-<!-- Error popup modal (black/yellow/white theme) -->
-<div x-data="{ showError: {{ $errors->any() ? 'true' : 'false' }} }"
+@if($errors->any())
+<!-- Error popup modal (only rendered when there are errors - prevents stuck overlay) -->
+<div x-data="{ showError: true }"
      x-show="showError"
      x-cloak
      x-transition:enter="transition ease-out duration-200"
@@ -160,19 +161,11 @@
      x-transition:leave-end="opacity-0"
      class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <!-- Backdrop -->
-    <div x-show="showError"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         @click="showError = false"
+    <div @click="showError = false"
          class="absolute inset-0 bg-gray-900/60"></div>
 
     <!-- Modal -->
-    <div x-show="showError"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         class="relative bg-white rounded-xl shadow-2xl border-2 border-gray-900 max-w-sm w-full overflow-hidden">
+    <div class="relative bg-white rounded-xl shadow-2xl border-2 border-gray-900 max-w-sm w-full overflow-hidden">
         <!-- Header (black) -->
         <div class="bg-gray-900 px-6 py-4 flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg bg-amber-400 flex items-center justify-center flex-shrink-0">
@@ -194,6 +187,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <style>[x-cloak] { display: none !important; }</style>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
