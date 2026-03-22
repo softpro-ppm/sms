@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\SelfRegistrationAcknowledgementMail;
 use App\Models\Student;
+use App\Models\TrainingPartner;
 use App\Services\WhatsAppNotificationService;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -43,8 +44,10 @@ class RegisterController extends Controller
                 ->withInput($request->except('whatsapp_number'));
         }
 
-        // Create student record
+        // Create student record (public registration defaults to HQ for now)
+        $hqId = TrainingPartner::where('code', 'HQ')->value('id');
         $student = Student::create([
+            'training_partner_id' => $hqId,
             'aadhar_number' => $request->aadhar_number,
             'full_name' => $request->full_name,
             'father_name' => $request->father_name,

@@ -293,8 +293,11 @@ class StudentController extends Controller
         }
 
         try {
+            $trainingPartnerId = auth()->user()->training_partner_id
+                ?? \App\Models\TrainingPartner::where('code', 'HQ')->value('id');
             // Create student record - Admin/Reception registration is always approved
             $student = Student::create([
+                'training_partner_id' => $trainingPartnerId,
                 'aadhar_number' => $request->aadhar_number,
                 'full_name' => $request->full_name,
                 'father_name' => $request->father_name,

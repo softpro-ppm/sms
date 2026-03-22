@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'student_id',
+        'training_partner_id',
         'is_active'
     ];
 
@@ -57,6 +58,11 @@ class User extends Authenticatable
         return $this->belongsTo(Student::class);
     }
 
+    public function trainingPartner(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPartner::class);
+    }
+
     // Accessors
     public function getIsAdminAttribute(): bool
     {
@@ -76,5 +82,10 @@ class User extends Authenticatable
     public function getCanApprovePaymentsAttribute(): bool
     {
         return $this->is_admin;
+    }
+
+    public function getIsSuperAdminAttribute(): bool
+    {
+        return $this->role === 'super_admin';
     }
 }
