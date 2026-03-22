@@ -47,6 +47,14 @@ class CertificateTemplateService
             $logoPath = 'data:image/png;base64,' . $logoData;
         }
 
+        // Director signature: base64 for DomPDF
+        $directorSignaturePath = null;
+        $directorSigFile = public_path('images/signatures/director-signature.png');
+        if (file_exists($directorSigFile)) {
+            $sigData = base64_encode(file_get_contents($directorSigFile));
+            $directorSignaturePath = 'data:image/png;base64,' . $sigData;
+        }
+
         // Salutation based on gender
         $salutation = match (strtolower($student->gender ?? '')) {
             'male' => 'Mr.',
@@ -103,6 +111,7 @@ class CertificateTemplateService
             'qrUrl' => $qrUrl,
             'isoText' => $isoText,
             'certificateTitle' => $certificateTitle,
+            'directorSignaturePath' => $directorSignaturePath,
         ])->render();
     }
 
@@ -169,6 +178,9 @@ class CertificateTemplateService
             'qrUrl' => $qrUrl,
             'isoText' => config('certificate.iso_text', 'AN ISO 9001:2015 CERTIFIED ORGANIZATION'),
             'certificateTitle' => config('certificate.title', 'CERTIFICATE OF COMPLETION'),
+            'directorSignaturePath' => file_exists(public_path('images/signatures/director-signature.png'))
+                ? 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/signatures/director-signature.png')))
+                : null,
         ])->render();
     }
 }

@@ -272,9 +272,55 @@
             text-align: center;
             vertical-align: bottom;
         }
+        .signature-sig-line {
+            display: block;
+            text-align: center;
+            margin-bottom: 0.5mm;
+        }
+        .signature-sig-line .signature-line-bar {
+            width: 36mm;
+            margin: 0 auto;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .signature-sig-line .signature-line-bar td {
+            width: 36mm;
+            border-bottom: 1px solid #4a3728;
+            height: 3mm;
+            line-height: 0;
+            font-size: 0;
+        }
+        .signature-sig-line .signature-img {
+            display: block;
+            height: 25.5mm;
+            width: auto;
+            margin: 0 auto -7mm auto;
+        }
+        .signature-line-wrap {
+            margin-bottom: 0.5mm;
+            text-align: center;
+        }
+        .signature-line-wrap .signature-line-bar {
+            width: 36mm;
+            margin: 0 auto;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .signature-line-wrap .signature-line-bar td {
+            width: 36mm;
+            border-bottom: 1px solid #4a3728;
+            height: 3mm;
+            line-height: 0;
+            font-size: 0;
+        }
         .signature-line {
             width: 36mm;
             border-bottom: 1px solid #4a3728;
+            display: inline-block;
+        }
+        .signature-img {
+            height: 24mm;
+            width: auto;
             display: inline-block;
         }
         .signature-label { font-size: 9pt; font-weight: 600; color: #2c1810; }
@@ -403,12 +449,19 @@
             <!-- 9) SIGNATURES: top 148mm -->
             <div class="section-signatures">
                 <div class="signature-left">
-                    <div class="signature-line"></div>
+                    <div class="signature-line-wrap">
+                        <table class="signature-line-bar" cellpadding="0" cellspacing="0"><tr><td>&nbsp;</td></tr></table>
+                    </div>
                     <div class="signature-label">Authorized Signatory</div>
                     <div class="signature-org">(Seal)</div>
                 </div>
                 <div class="signature-right">
-                    <div class="signature-line"></div>
+                    <div class="signature-sig-line">
+                        @if(isset($directorSignaturePath) && $directorSignaturePath)
+                        <img src="{{ $directorSignaturePath }}" alt="Director Signature" class="signature-img">
+                        @endif
+                        <table class="signature-line-bar" cellpadding="0" cellspacing="0"><tr><td>&nbsp;</td></tr></table>
+                    </div>
                     <div class="signature-label">Director</div>
                     <div class="signature-org">Softpro Skill Solutions</div>
                 </div>

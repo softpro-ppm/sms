@@ -32,7 +32,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ config('app.url') }}/images/logo/softpro-logo.PNG" alt="Softpro">
+            <img src="{{ asset('images/logo/Logo_png.png') }}" alt="Softpro">
             {!! $header ?? '' !!}
         </div>
         <div class="content">
