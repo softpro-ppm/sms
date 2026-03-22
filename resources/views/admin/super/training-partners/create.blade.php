@@ -35,6 +35,15 @@
                 </div>
             </div>
 
+            <div>
+                <label for="student_approval_deduction" class="block text-sm font-medium text-gray-700 mb-2">Student Approval Deduction (₹)</label>
+                <input type="number" id="student_approval_deduction" name="student_approval_deduction" value="{{ old('student_approval_deduction', 0) }}" min="0" step="0.01"
+                       class="block w-full max-w-xs px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 @error('student_approval_deduction') border-red-500 @enderror"
+                       placeholder="0">
+                <p class="mt-1 text-xs text-gray-500">Amount deducted from TP wallet when a student is approved. HQ has no deduction (use 0).</p>
+                @error('student_approval_deduction')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Name <span class="text-red-500">*</span></label>

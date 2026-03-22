@@ -75,6 +75,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Wallet</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deduction</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
@@ -99,6 +100,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm">₹{{ number_format($partner->wallet_balance, 2) }}</td>
+                        <td class="px-6 py-4 text-sm">{{ $partner->is_hq ? '—' : '₹' . number_format($partner->student_approval_deduction ?? 0, 2) }}</td>
                         <td class="px-6 py-4 text-sm">
                             {{ $partner->users_count }} staff, {{ $partner->students_count }} students
                         </td>
@@ -118,7 +120,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">No training partners found.</td>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">No training partners found.</td>
                     </tr>
                     @endforelse
                 </tbody>

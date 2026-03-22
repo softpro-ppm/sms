@@ -235,6 +235,7 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
 // Super Admin routes (Platform owner – Training Partner management)
 Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.super.')->group(function () {
     Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
+    Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::resource('training-partners', TrainingPartnerController::class)->names('training-partners');
 });
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
+use App\Models\TrainingPartner;
 use App\Models\User;
 use App\Models\Course;
 use App\Models\Batch;
@@ -77,6 +78,28 @@ class StudentController extends Controller
         if (!$photoDoc || !Storage::disk('public')->exists($photoDoc->file_path)) {
             return redirect()->back()
                 ->with('error', 'Student photo is required before approval. Please upload a photo first.');
+        }
+
+        // Wallet deduction for STANDARD TPs only (HQ has no deduction)
+        $partner = $student->trainingPartner;
+        if ($partner && $partner->is_standard && $partner->student_approval_deduction > 0) {
+            $amount = (float) $partner->student_approval_deduction;
+            if ($partner->wallet_balance < $amount) {
+                return redirect()->back()
+                    ->with('error', "Insufficient wallet balance for {$partner->name}. Required: ₹{$amount}, Available: ₹" . number_format($partner->wallet_balance, 2));
+            }
+            DB::transaction(function () use ($partner, $student, $amount) {
+                $newBalance = $partner->wallet_balance - $amount;
+                $partner->decrement('wallet_balance', $amount);
+                $partner->walletTransactions()->create([
+                    'amount' => -$amount,
+                    'type' => 'student_approval',
+                    'reference_type' => 'Student',
+                    'reference_id' => $student->id,
+                    'description' => "Student approval: {$student->full_name}",
+                    'balance_after' => $newBalance,
+                ]);
+            });
         }
 
         // Update student status
@@ -314,6 +337,30 @@ class StudentController extends Controller
                 'status' => 'approved', // Admin/Reception registration is always approved
                 'approved_at' => now(),
             ]);
+
+            // Wallet deduction for STANDARD TPs only (HQ has no deduction)
+            $partner = $student->trainingPartner;
+            if ($partner && $partner->is_standard && $partner->student_approval_deduction > 0) {
+                $amount = (float) $partner->student_approval_deduction;
+                if ($partner->wallet_balance < $amount) {
+                    $student->delete();
+                    return redirect()->back()
+                        ->with('error', "Insufficient wallet balance for {$partner->name}. Required: ₹{$amount}, Available: ₹" . number_format($partner->wallet_balance, 2))
+                        ->withInput();
+                }
+                DB::transaction(function () use ($partner, $student, $amount) {
+                    $newBalance = $partner->wallet_balance - $amount;
+                    $partner->decrement('wallet_balance', $amount);
+                    $partner->walletTransactions()->create([
+                        'amount' => -$amount,
+                        'type' => 'student_approval',
+                        'reference_type' => 'Student',
+                        'reference_id' => $student->id,
+                        'description' => "Student approval: {$student->full_name}",
+                        'balance_after' => $newBalance,
+                    ]);
+                });
+            }
         } catch (\Illuminate\Database\QueryException $e) {
             return redirect()->back()
                 ->withErrors(['email' => 'Email already exists. Please use a different email.'])

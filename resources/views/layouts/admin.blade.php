@@ -145,6 +145,11 @@
             background-color: rgba(255, 255, 255, 0.2);
             border-right: 4px solid #fbbf24;
         }
+
+        /* Force-hide mobile overlay on desktop - prevents stuck overlay bug */
+        @media (min-width: 1024px) {
+            .mobile-sidebar-overlay { display: none !important; pointer-events: none !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -443,8 +448,9 @@
             </footer>
         </div>
 
-        <!-- Mobile Sidebar Overlay (inside x-data scope) -->
-        <div x-show="sidebarOpen"
+        <!-- Mobile Sidebar Overlay (inside x-data scope; hidden on desktop via .mobile-sidebar-overlay) -->
+        <div class="mobile-sidebar-overlay"
+             x-show="sidebarOpen"
              x-cloak
              x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
@@ -452,7 +458,7 @@
              x-transition:leave="transition-opacity ease-linear duration-300"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:!hidden opacity-0 pointer-events-none"
+             class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 opacity-0 pointer-events-none"
              :class="sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
              @click="sidebarOpen = false"></div>
     </div>

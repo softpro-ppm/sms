@@ -22,12 +22,19 @@ class TrainingPartner extends Model
         'contact_phone',
         'contact_email',
         'wallet_balance',
+        'student_approval_deduction',
         'status',
     ];
 
     protected $casts = [
         'wallet_balance' => 'decimal:2',
+        'student_approval_deduction' => 'decimal:2',
     ];
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(PartnerWalletTransaction::class);
+    }
 
     public function users(): HasMany
     {

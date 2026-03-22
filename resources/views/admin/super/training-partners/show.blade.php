@@ -10,7 +10,11 @@
             <h2 class="text-2xl font-bold text-gray-900">{{ $trainingPartner->name }}</h2>
             <p class="text-gray-600 mt-1">{{ $trainingPartner->code }} • {{ $trainingPartner->type }}</p>
         </div>
-        <div class="mt-4 sm:mt-0 flex gap-3">
+        <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+            <button type="button" onclick="document.getElementById('rechargeModal').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <i class="fas fa-plus-circle mr-2"></i>Recharge
+            </button>
             <a href="{{ route('admin.super.training-partners.edit', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-edit mr-2"></i>Edit
@@ -22,10 +26,15 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
             <p class="text-sm font-medium text-gray-600">Wallet Balance</p>
             <p class="text-2xl font-bold text-gray-900">₹{{ number_format($trainingPartner->wallet_balance, 2) }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+            <p class="text-sm font-medium text-gray-600">Student Approval Deduction</p>
+            <p class="text-2xl font-bold {{ $trainingPartner->student_approval_deduction > 0 ? 'text-amber-600' : 'text-gray-500' }}">₹{{ number_format($trainingPartner->student_approval_deduction ?? 0, 2) }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ $trainingPartner->is_hq ? 'HQ: No deduction' : 'Per approved student' }}</p>
         </div>
         <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
             <p class="text-sm font-medium text-gray-600">Status</p>
@@ -104,6 +113,76 @@
             @else
             <p class="px-6 py-4 text-sm text-gray-500">No students yet.</p>
             @endif
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="font-semibold text-gray-900">Wallet Transactions</h3>
+        </div>
+        @if($trainingPartner->walletTransactions && $trainingPartner->walletTransactions->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance After</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($trainingPartner->walletTransactions as $tx)
+                    <tr>
+                        <td class="px-6 py-3 text-sm text-gray-600">{{ $tx->created_at->format('d M Y H:i') }}</td>
+                        <td class="px-6 py-3 text-sm">{{ ucfirst(str_replace('_', ' ', $tx->type)) }}</td>
+                        <td class="px-6 py-3 text-sm font-medium {{ $tx->amount >= 0 ? 'text-green-600' : 'text-red-600' }}">{{ $tx->amount >= 0 ? '+' : '' }}₹{{ number_format($tx->amount, 2) }}</td>
+                        <td class="px-6 py-3 text-sm">{{ $tx->balance_after !== null ? '₹' . number_format($tx->balance_after, 2) : '—' }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-600">{{ $tx->description ?? '—' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <p class="px-6 py-4 text-sm text-gray-500">No transactions yet.</p>
+        @endif
+    </div>
+</div>
+
+<!-- Recharge Modal -->
+<div id="rechargeModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-900/60" onclick="document.getElementById('rechargeModal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recharge Wallet</h3>
+            <form method="POST" action="{{ route('admin.super.training-partners.recharge', $trainingPartner) }}">
+                @csrf
+                <div class="space-y-4">
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount (₹) <span class="text-red-500">*</span></label>
+                        <input type="number" id="amount" name="amount" required min="0.01" step="0.01"
+                               class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                               placeholder="0.00">
+                        @error('amount')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                        <input type="text" id="description" name="description"
+                               class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                               placeholder="e.g. Initial funding">
+                        @error('description')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('rechargeModal').classList.add('hidden')"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-plus-circle mr-2"></i>Recharge
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

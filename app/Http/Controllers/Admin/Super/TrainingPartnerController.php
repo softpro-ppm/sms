@@ -62,6 +62,7 @@ class TrainingPartnerController extends Controller
             'type' => ['required', 'in:HQ,STANDARD'],
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:20|unique:training_partners,code',
+            'student_approval_deduction' => 'nullable|numeric|min:0',
             'district' => 'nullable|string|max:100',
             'mandal' => 'nullable|string|max:100',
             'address' => 'nullable|string',
@@ -91,7 +92,37 @@ class TrainingPartnerController extends Controller
         $trainingPartner->loadCount(['users', 'students']);
         $trainingPartner->load(['users', 'students' => fn ($q) => $q->latest()->limit(10)]);
 
+        $trainingPartner->load(['walletTransactions' => fn ($q) => $q->latest()->limit(20)]);
+
         return view('admin.super.training-partners.show', compact('trainingPartner'));
+    }
+
+    public function recharge(Request $request, TrainingPartner $trainingPartner)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $amount = (float) $request->amount;
+        $newBalance = $trainingPartner->wallet_balance + $amount;
+
+        $trainingPartner->increment('wallet_balance', $amount);
+        $trainingPartner->walletTransactions()->create([
+            'amount' => $amount,
+            'type' => 'recharge',
+            'description' => $request->description ?: 'Wallet recharge by Super Admin',
+            'balance_after' => $newBalance,
+        ]);
+
+        return redirect()->back()
+            ->with('success', "Recharged ₹" . number_format($amount, 2) . " to {$trainingPartner->name}. New balance: ₹" . number_format($newBalance, 2));
     }
 
     public function edit(TrainingPartner $trainingPartner)
@@ -105,6 +136,7 @@ class TrainingPartnerController extends Controller
             'type' => ['required', 'in:HQ,STANDARD'],
             'name' => 'required|string|max:255',
             'code' => ['required', 'string', 'max:20', Rule::unique('training_partners', 'code')->ignore($trainingPartner->id)],
+            'student_approval_deduction' => 'nullable|numeric|min:0',
             'district' => 'nullable|string|max:100',
             'mandal' => 'nullable|string|max:100',
             'address' => 'nullable|string',
