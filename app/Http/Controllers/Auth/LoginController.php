@@ -49,7 +49,7 @@ class LoginController extends Controller
                     ->withInput($request->except('password'));
             }
 
-            if ($scope === 'staff' && !in_array($user->role, ['admin', 'reception'], true)) {
+            if ($scope === 'staff' && !in_array($user->role, ['admin', 'reception', 'super_admin'], true)) {
                 Auth::logout();
                 return redirect()->back()
                     ->withErrors(['email' => 'Please use the Student login section for this account.'])
@@ -62,6 +62,7 @@ class LoginController extends Controller
             return match($user->role) {
                 'admin' => redirect()->route('admin.dashboard'),
                 'reception' => redirect()->route('admin.dashboard'),
+                'super_admin' => redirect()->route('admin.super.dashboard'),
                 'student' => redirect()->route('student.dashboard'),
                 default => redirect()->route('home')
             };

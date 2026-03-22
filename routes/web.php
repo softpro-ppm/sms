@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppLogsController;
+use App\Http\Controllers\Admin\Super\SuperDashboardController;
+use App\Http\Controllers\Admin\Super\TrainingPartnerController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -228,6 +230,12 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
         Route::post('/settings/users/{user}/change-password', [UserManagementController::class, 'changePassword'])->name('settings.users.change-password.post');
     });
     
+});
+
+// Super Admin routes (Platform owner – Training Partner management)
+Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.super.')->group(function () {
+    Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
+    Route::resource('training-partners', TrainingPartnerController::class)->names('training-partners');
 });
 
 // Reception routes (same as admin but without payment approval)

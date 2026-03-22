@@ -172,6 +172,24 @@
             <!-- Navigation -->
             <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-6">
                 <ul class="space-y-2">
+                    @if(auth()->user()->is_super_admin)
+                    {{-- Super Admin navigation --}}
+                    <li>
+                        <a href="{{ route('admin.super.dashboard') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-tachometer-alt w-5 h-5 mr-3"></i>
+                            <span>Super Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.super.training-partners.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.training-partners.*') ? 'active' : '' }}">
+                            <i class="fas fa-building w-5 h-5 mr-3"></i>
+                            <span>Training Partners</span>
+                        </a>
+                    </li>
+                    @else
+                    {{-- Admin / Reception navigation --}}
                     <li>
                         <a href="{{ route('admin.dashboard') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -283,6 +301,7 @@
                             <span>Settings</span>
                         </a>
                     </li>
+                    @endif
                     @endif
                 </ul>
             </nav>

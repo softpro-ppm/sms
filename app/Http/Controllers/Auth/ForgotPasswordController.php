@@ -27,7 +27,7 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if ($user && !in_array($user->role, ['admin', 'reception'], true)) {
+        if ($user && !in_array($user->role, ['admin', 'reception', 'super_admin'], true)) {
             return back()->withErrors([
                 'email' => 'Password reset is only available for staff accounts (Reception/Admin). Please use the Student login section for student accounts.',
             ])->withInput($request->only('email'));

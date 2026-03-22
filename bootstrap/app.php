@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\PreventAuthPageCaching::class);
     })
