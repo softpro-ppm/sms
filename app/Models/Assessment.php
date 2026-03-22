@@ -108,36 +108,42 @@ class Assessment extends Model
             return [];
         }
 
-        $subjects = $questionPool->groupBy('subject');
-        $subjectNames = $subjects->keys();
+        // Pass guarantee: 60-80% of questions should have correct_answer = 'A'
+        $questionsWithA = $questionPool->filter(fn ($q) => strtoupper($q->correct_answer ?? '') === 'A');
+        $questionsNotA = $questionPool->filter(fn ($q) => strtoupper($q->correct_answer ?? '') !== 'A');
 
-        $minPerSubject = ($subjectNames->count() * 2 <= $count) ? 2 : 1;
+        $minWithA = (int) ceil($count * 0.60); // 15 for count=25
+        $maxWithA = (int) floor($count * 0.80); // 20 for count=25
+        $targetWithA = min($questionsWithA->count(), rand($minWithA, $maxWithA));
+        $targetNotA = $count - $targetWithA;
+
         $sets = [];
 
         for ($setIndex = 0; $setIndex < $setCount; $setIndex++) {
             $selected = collect();
             $usedIds = [];
 
-            foreach ($subjectNames as $subject) {
-                $available = $subjects[$subject]
-                    ->whereNotIn('id', $usedIds)
-                    ->shuffle();
+            // Pick questions with correct_answer A (60-80% of paper)
+            $availableA = $questionsWithA->whereNotIn('id', $usedIds)->shuffle();
+            $pickedA = $availableA->take(min($targetWithA, $availableA->count()));
+            $selected = $selected->merge($pickedA);
+            $usedIds = array_merge($usedIds, $pickedA->pluck('id')->all());
 
-                $take = min($minPerSubject, $available->count());
-                if ($take > 0) {
-                    $picked = $available->take($take);
-                    $selected = $selected->merge($picked);
-                    $usedIds = array_merge($usedIds, $picked->pluck('id')->all());
-                }
-            }
-
+            // Fill remaining with other questions (B/C/D)
             $remaining = $count - $selected->count();
             if ($remaining > 0) {
-                $remainingPool = $questionPool
+                $remainingPool = $questionsNotA
                     ->whereNotIn('id', $usedIds)
                     ->shuffle()
                     ->take($remaining);
                 $selected = $selected->merge($remainingPool);
+                $usedIds = array_merge($usedIds, $remainingPool->pluck('id')->all());
+                // If still short, fill from any unused questions
+                $stillRemaining = $count - $selected->count();
+                if ($stillRemaining > 0) {
+                    $fillPool = $questionPool->whereNotIn('id', $usedIds)->shuffle()->take($stillRemaining);
+                    $selected = $selected->merge($fillPool);
+                }
             }
 
             $sets[] = $selected->shuffle()->values();
