@@ -11,7 +11,7 @@
             <p class="text-primary-100 text-sm">Add a new HQ or standard training partner</p>
         </div>
 
-        <form method="POST" action="{{ route('admin.super.training-partners.store') }}" class="p-6 space-y-6">
+        <form method="POST" action="{{ route('admin.super.training-partners.store') }}" enctype="multipart/form-data" class="p-6 space-y-6">
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -33,6 +33,14 @@
                     </select>
                     @error('status')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
+            </div>
+
+            <div>
+                <label for="logo" class="block text-sm font-medium text-gray-700 mb-2">Logo (optional)</label>
+                <input type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/jpg"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-800">
+                <p class="mt-1 text-xs text-gray-500">Max 2MB. JPEG, PNG only.</p>
+                @error('logo')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>

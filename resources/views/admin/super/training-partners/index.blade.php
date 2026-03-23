@@ -37,6 +37,10 @@
             <p class="text-sm text-gray-600">Standard</p>
             <p class="text-2xl font-bold text-teal-600">{{ $stats['standard'] }}</p>
         </div>
+        <div class="bg-white rounded-xl shadow p-4">
+            <p class="text-sm text-gray-600">Pending</p>
+            <p class="text-2xl font-bold text-amber-600">{{ $stats['pending'] ?? 0 }}</p>
+        </div>
     </div>
 
     <!-- Table -->
@@ -55,6 +59,7 @@
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
                 <select name="per_page" class="px-3 py-2 border border-gray-300 rounded-lg">
                     @foreach([10,20,50,100] as $n)
@@ -95,7 +100,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $partner->status === 'active' ? 'bg-green-100 text-green-800' : ($partner->status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $partner->status === 'active' ? 'bg-green-100 text-green-800' : ($partner->status === 'suspended' ? 'bg-red-100 text-red-800' : ($partner->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
                                 {{ ucfirst($partner->status) }}
                             </span>
                         </td>

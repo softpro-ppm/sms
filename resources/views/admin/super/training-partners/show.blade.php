@@ -11,10 +11,23 @@
             <p class="text-gray-600 mt-1">{{ $trainingPartner->code }} • {{ $trainingPartner->type }}</p>
         </div>
         <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
+            @if($trainingPartner->status === 'pending')
+            <button type="button" onclick="document.getElementById('approveModal').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <i class="fas fa-check mr-2"></i>Approve
+            </button>
+            <form method="POST" action="{{ route('admin.super.training-partners.reject', $trainingPartner) }}" class="inline" onsubmit="return confirm('Reject this partner?')">
+                @csrf
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <i class="fas fa-times mr-2"></i>Reject
+                </button>
+            </form>
+            @else
             <button type="button" onclick="document.getElementById('rechargeModal').classList.remove('hidden')"
                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                 <i class="fas fa-plus-circle mr-2"></i>Recharge
             </button>
+            @endif
             <a href="{{ route('admin.super.training-partners.edit', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-edit mr-2"></i>Edit
@@ -38,7 +51,7 @@
         </div>
         <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
             <p class="text-sm font-medium text-gray-600">Status</p>
-            <span class="inline-flex px-2 py-1 text-sm font-medium rounded-full {{ $trainingPartner->status === 'active' ? 'bg-green-100 text-green-800' : ($trainingPartner->status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+            <span class="inline-flex px-2 py-1 text-sm font-medium rounded-full {{ $trainingPartner->status === 'active' ? 'bg-green-100 text-green-800' : ($trainingPartner->status === 'suspended' ? 'bg-red-100 text-red-800' : ($trainingPartner->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
                 {{ ucfirst($trainingPartner->status) }}
             </span>
         </div>
@@ -51,6 +64,13 @@
             <p class="text-2xl font-bold text-purple-600">{{ $trainingPartner->students_count }}</p>
         </div>
     </div>
+
+    @if($trainingPartner->logo_path)
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Logo</h3>
+        <img src="{{ asset('storage/' . $trainingPartner->logo_path) }}" alt="{{ $trainingPartner->name }}" class="h-24 object-contain">
+    </div>
+    @endif
 
     @if($trainingPartner->address || $trainingPartner->district || $trainingPartner->contact_name)
     <div class="bg-white rounded-xl shadow-lg p-6">
@@ -150,6 +170,36 @@
         @endif
     </div>
 </div>
+
+@if($trainingPartner->status === 'pending')
+<!-- Approve Modal -->
+<div id="approveModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-900/60" onclick="document.getElementById('approveModal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Approve Partner</h3>
+            <p class="text-sm text-gray-600 mb-4">Set the student approval deduction amount (₹) to deduct from this partner's wallet when each student is approved.</p>
+            <form method="POST" action="{{ route('admin.super.training-partners.approve', $trainingPartner) }}">
+                @csrf
+                <div class="mb-4">
+                    <label for="approve_deduction" class="block text-sm font-medium text-gray-700 mb-2">Student Approval Deduction (₹) <span class="text-red-500">*</span></label>
+                    <input type="number" id="approve_deduction" name="student_approval_deduction" required min="0" step="0.01"
+                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                           placeholder="0.00">
+                    @error('student_approval_deduction')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('approveModal').classList.add('hidden')"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-check mr-2"></i>Approve
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Recharge Modal -->
 <div id="rechargeModal" class="fixed inset-0 z-50 hidden overflow-y-auto">

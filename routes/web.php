@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Public\StudentVerificationController;
+use App\Http\Controllers\Public\PartnerRegistrationController;
 
 // Public routes - home shows split login (Student left, Reception/Admin right)
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('home');
@@ -54,6 +55,10 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middl
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/register/success', [RegisterController::class, 'success'])->name('register.success');
+
+Route::get('/register/partner', [PartnerRegistrationController::class, 'showRegistrationForm'])->name('partner.register');
+Route::post('/register/partner', [PartnerRegistrationController::class, 'register']);
+Route::get('/register/partner/success', [PartnerRegistrationController::class, 'success'])->name('partner.register.success');
 
 // Public Student Verification - Search page at /verify
 Route::get('/verify', [StudentVerificationController::class, 'index'])->name('verify.index');
@@ -236,6 +241,8 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
 Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.super.')->group(function () {
     Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
+    Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
+    Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');
     Route::resource('training-partners', TrainingPartnerController::class)->names('training-partners');
 });
 

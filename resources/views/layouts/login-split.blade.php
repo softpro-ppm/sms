@@ -64,9 +64,10 @@
             <img src="{{ asset('images/logo/Logo_png.png') }}" alt="SOFTPRO" class="h-10 w-auto bg-white rounded-lg p-1">
             <span class="font-bold text-xl">SOFTPRO</span>
         </a>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
             <a href="{{ route('verify.index') }}" class="bg-amber-400 text-black px-4 py-2 rounded font-medium hover:bg-amber-300 transition-colors">Verify Student</a>
             <a href="{{ route('register') }}" class="border border-amber-400 text-amber-400 px-4 py-2 rounded font-medium hover:bg-amber-400 hover:text-black transition-colors">Register</a>
+            <a href="{{ route('partner.register') }}" class="border border-gray-500 text-gray-300 px-4 py-2 rounded font-medium hover:bg-gray-700 hover:text-white transition-colors">Become a Partner</a>
         </div>
     </header>
 

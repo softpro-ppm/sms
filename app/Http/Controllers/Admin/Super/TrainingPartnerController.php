@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Super;
 use App\Http\Controllers\Controller;
 use App\Models\TrainingPartner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -33,7 +34,7 @@ class TrainingPartnerController extends Controller
             $query->where('type', $type);
         }
 
-        if ($status !== '' && in_array($status, ['active', 'suspended', 'pending'], true)) {
+        if ($status !== '' && in_array($status, ['active', 'suspended', 'pending', 'rejected'], true)) {
             $query->where('status', $status);
         }
 
@@ -44,6 +45,7 @@ class TrainingPartnerController extends Controller
         $stats = [
             'total' => TrainingPartner::count(),
             'active' => TrainingPartner::where('status', 'active')->count(),
+            'pending' => TrainingPartner::where('status', 'pending')->count(),
             'hq' => TrainingPartner::where('type', 'HQ')->count(),
             'standard' => TrainingPartner::where('type', 'STANDARD')->count(),
         ];
@@ -62,6 +64,7 @@ class TrainingPartnerController extends Controller
             'type' => ['required', 'in:HQ,STANDARD'],
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:20|unique:training_partners,code',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'student_approval_deduction' => 'nullable|numeric|min:0',
             'district' => 'nullable|string|max:100',
             'mandal' => 'nullable|string|max:100',
@@ -81,7 +84,12 @@ class TrainingPartnerController extends Controller
                 ->withInput();
         }
 
-        TrainingPartner::create($validator->validated());
+        $data = $validator->validated();
+        unset($data['logo']);
+        if ($request->hasFile('logo')) {
+            $data['logo_path'] = $request->file('logo')->store('partner-logos', 'public');
+        }
+        TrainingPartner::create($data);
 
         return redirect()->route('admin.super.training-partners.index')
             ->with('success', 'Training partner created successfully.');
@@ -136,6 +144,7 @@ class TrainingPartnerController extends Controller
             'type' => ['required', 'in:HQ,STANDARD'],
             'name' => 'required|string|max:255',
             'code' => ['required', 'string', 'max:20', Rule::unique('training_partners', 'code')->ignore($trainingPartner->id)],
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'student_approval_deduction' => 'nullable|numeric|min:0',
             'district' => 'nullable|string|max:100',
             'mandal' => 'nullable|string|max:100',
@@ -155,10 +164,56 @@ class TrainingPartnerController extends Controller
                 ->withInput();
         }
 
-        $trainingPartner->update($validator->validated());
+        $data = $validator->validated();
+        unset($data['logo']);
+        if ($request->hasFile('logo')) {
+            if ($trainingPartner->logo_path) {
+                Storage::disk('public')->delete($trainingPartner->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('partner-logos', 'public');
+        }
+        $trainingPartner->update($data);
 
         return redirect()->route('admin.super.training-partners.index')
             ->with('success', 'Training partner updated successfully.');
+    }
+
+    public function approve(Request $request, TrainingPartner $trainingPartner)
+    {
+        if ($trainingPartner->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending partners can be approved.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'student_approval_deduction' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $amount = (float) $request->student_approval_deduction;
+        $trainingPartner->update([
+            'status' => 'active',
+            'student_approval_deduction' => $amount,
+        ]);
+
+        return redirect()->back()
+            ->with('success', "{$trainingPartner->name} approved. Student approval deduction set to ₹" . number_format($amount, 2));
+    }
+
+    public function reject(TrainingPartner $trainingPartner)
+    {
+        if ($trainingPartner->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending partners can be rejected.');
+        }
+
+        $trainingPartner->update(['status' => 'rejected']);
+
+        return redirect()->back()
+            ->with('success', "{$trainingPartner->name} has been rejected.");
     }
 
     public function destroy(TrainingPartner $trainingPartner)

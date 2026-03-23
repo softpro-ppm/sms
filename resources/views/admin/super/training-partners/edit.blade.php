@@ -11,7 +11,7 @@
             <p class="text-primary-100 text-sm">Update training partner details</p>
         </div>
 
-        <form method="POST" action="{{ route('admin.super.training-partners.update', $trainingPartner) }}" class="p-6 space-y-6">
+        <form method="POST" action="{{ route('admin.super.training-partners.update', $trainingPartner) }}" enctype="multipart/form-data" class="p-6 space-y-6">
             @csrf
             @method('PUT')
 
@@ -34,6 +34,20 @@
                     </select>
                     @error('status')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
+            </div>
+
+            <div>
+                <label for="logo" class="block text-sm font-medium text-gray-700 mb-2">Logo (optional)</label>
+                @if($trainingPartner->logo_path)
+                <div class="mb-2">
+                    <img src="{{ asset('storage/' . $trainingPartner->logo_path) }}" alt="{{ $trainingPartner->name }}" class="h-16 object-contain">
+                    <p class="text-xs text-gray-500 mt-1">Current logo. Upload new to replace.</p>
+                </div>
+                @endif
+                <input type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/jpg"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-800">
+                <p class="mt-1 text-xs text-gray-500">Max 2MB. JPEG, PNG only.</p>
+                @error('logo')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>
