@@ -28,6 +28,12 @@
                 <i class="fas fa-plus-circle mr-2"></i>Recharge
             </button>
             @endif
+            @if(in_array($trainingPartner->status, ['active', 'suspended']))
+            <a href="{{ route('admin.super.training-partners.staff.create', $trainingPartner) }}"
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <i class="fas fa-user-plus mr-2"></i>Add Staff
+            </a>
+            @endif
             <a href="{{ route('admin.super.training-partners.edit', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-edit mr-2"></i>Edit

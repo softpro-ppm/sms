@@ -3,11 +3,18 @@
 namespace App\Http\Controllers\Admin\Super;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PartnerApprovedMail;
 use App\Models\TrainingPartner;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class TrainingPartnerController extends Controller
 {
@@ -203,8 +210,38 @@ class TrainingPartnerController extends Controller
             'student_approval_deduction' => $amount,
         ]);
 
-        return redirect()->back()
-            ->with('success', "{$trainingPartner->name} approved with code {$code}. Student approval deduction set to ₹" . number_format($amount, 2));
+        $loginCredentials = null;
+        $email = $trainingPartner->contact_email;
+        $hasAdmin = $trainingPartner->users()->where('role', 'admin')->exists();
+
+        if ($email && !$hasAdmin && !User::where('email', $email)->exists()) {
+            $tempPassword = Str::random(10);
+            User::create([
+                'name' => $trainingPartner->contact_name ?: $trainingPartner->name,
+                'email' => $email,
+                'password' => Hash::make($tempPassword),
+                'role' => 'admin',
+                'training_partner_id' => $trainingPartner->id,
+                'is_active' => true,
+            ]);
+            $loginCredentials = ['email' => $email, 'password' => $tempPassword];
+        }
+
+        if ($email) {
+            try {
+                Mail::to($email)->send(new PartnerApprovedMail($trainingPartner, $loginCredentials));
+            } catch (\Throwable $e) {
+                Log::warning('Partner approval email failed', ['partner' => $trainingPartner->id, 'email' => $email, 'error' => $e->getMessage()]);
+            }
+        }
+
+        $msg = "{$trainingPartner->name} approved with code {$code}. Student approval deduction set to ₹" . number_format($amount, 2);
+        if ($loginCredentials) {
+            $msg .= '. TP Admin created. Credentials sent to ' . $email . '.';
+        } elseif ($email) {
+            $msg .= '. Approval email sent to ' . $email . '.';
+        }
+        return redirect()->back()->with('success', $msg);
     }
 
     public function reject(TrainingPartner $trainingPartner)
@@ -217,6 +254,40 @@ class TrainingPartnerController extends Controller
 
         return redirect()->back()
             ->with('success', "{$trainingPartner->name} has been rejected.");
+    }
+
+    public function createStaff(TrainingPartner $trainingPartner)
+    {
+        return view('admin.super.training-partners.create-staff', compact('trainingPartner'));
+    }
+
+    public function storeStaff(Request $request, TrainingPartner $trainingPartner)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', 'in:admin,reception'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $data = $validator->validated();
+        User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'],
+            'training_partner_id' => $trainingPartner->id,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('admin.super.training-partners.show', $trainingPartner)
+            ->with('success', "{$data['role']} user {$data['name']} created. Credentials: {$data['email']} / (as set).");
     }
 
     public function destroy(TrainingPartner $trainingPartner)

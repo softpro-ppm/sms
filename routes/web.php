@@ -245,6 +245,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.s
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
     Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');
+    Route::get('training-partners/{training_partner}/staff/create', [TrainingPartnerController::class, 'createStaff'])->name('training-partners.staff.create');
+    Route::post('training-partners/{training_partner}/staff', [TrainingPartnerController::class, 'storeStaff'])->name('training-partners.staff.store');
     Route::resource('training-partners', TrainingPartnerController::class)->names('training-partners');
 });
 

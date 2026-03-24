@@ -11,15 +11,19 @@ use Illuminate\Validation\Rules\Password;
 class UserManagementController extends Controller
 {
     /**
-     * Get staff users (admin and reception only).
+     * Get staff users (admin and reception only), scoped to current user's training partner.
      */
     protected function getStaffUsers()
     {
-        return User::whereIn('role', ['admin', 'reception'])
+        $tpId = auth()->user()->training_partner_id;
+        $query = User::whereIn('role', ['admin', 'reception'])
             ->whereNull('student_id')
             ->orderBy('role')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+        if ($tpId !== null) {
+            $query->where('training_partner_id', $tpId);
+        }
+        return $query->get();
     }
 
     /**
@@ -51,11 +55,14 @@ class UserManagementController extends Controller
             'role' => ['required', 'in:admin,reception'],
         ]);
 
+        $tpId = auth()->user()->training_partner_id;
+
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
+            'training_partner_id' => $tpId,
             'is_active' => true,
         ]);
 
@@ -86,10 +93,13 @@ class UserManagementController extends Controller
             'is_active' => ['boolean'],
         ]);
 
-        // Prevent deactivating the last admin
+        // Prevent deactivating the last admin (within this TP)
         if ($user->is_admin && isset($validated['is_active']) && !$validated['is_active']) {
-            $adminCount = User::where('role', 'admin')->where('is_active', true)->count();
-            if ($adminCount <= 1) {
+            $adminQuery = User::where('role', 'admin')->where('is_active', true);
+            if (auth()->user()->training_partner_id !== null) {
+                $adminQuery->where('training_partner_id', auth()->user()->training_partner_id);
+            }
+            if ($adminQuery->count() <= 1) {
                 return back()->withErrors(['is_active' => 'Cannot deactivate the only admin.']);
             }
         }
@@ -142,11 +152,15 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Ensure user is a staff member (admin or reception).
+     * Ensure user is a staff member (admin or reception) and belongs to current user's training partner.
      */
     protected function ensureStaffUser(User $user): void
     {
         if (!in_array($user->role, ['admin', 'reception']) || $user->student_id !== null) {
+            abort(404);
+        }
+        $tpId = auth()->user()->training_partner_id;
+        if ($tpId !== null && $user->training_partner_id !== $tpId) {
             abort(404);
         }
     }
