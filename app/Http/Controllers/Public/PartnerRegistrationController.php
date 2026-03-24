@@ -7,6 +7,7 @@ use App\Mail\PartnerRegistrationOtpMail;
 use App\Models\TrainingPartner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -55,6 +56,7 @@ class PartnerRegistrationController extends Controller
         try {
             Mail::to($email)->send(new PartnerRegistrationOtpMail($otp, (string) self::OTP_EXPIRY_MINUTES));
         } catch (\Throwable $e) {
+            Log::error('Partner OTP send failed', ['email' => $email, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => 'Failed to send OTP. Please try again.'], 500);
         }
 
