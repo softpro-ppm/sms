@@ -242,6 +242,7 @@
     <script>
         // Auto-hide notifications after 5-10 seconds
         function showNotification(message, type = 'success', duration = 7000) {
+            if (!message || !String(message).trim()) return;
             const colors = {
                 success: 'bg-green-500',
                 error: 'bg-red-500',
@@ -291,22 +292,22 @@
             }, 300);
         }
         
-        // Show session notifications on page load
+        // Show session notifications on page load (skip empty messages to avoid stray green box)
         document.addEventListener('DOMContentLoaded', function() {
-            @if(session('success'))
-                showNotification('{{ session('success') }}', 'success', 7000);
+            @if(session('success') && trim(session('success')))
+                showNotification({!! json_encode(session('success')) !!}, 'success', 7000);
             @endif
             
-            @if(session('error'))
-                showNotification('{{ session('error') }}', 'error', 7000);
+            @if(session('error') && trim(session('error')))
+                showNotification({!! json_encode(session('error')) !!}, 'error', 7000);
             @endif
             
-            @if(session('warning'))
-                showNotification('{{ session('warning') }}', 'warning', 7000);
+            @if(session('warning') && trim(session('warning')))
+                showNotification({!! json_encode(session('warning')) !!}, 'warning', 7000);
             @endif
             
-            @if(session('info'))
-                showNotification('{{ session('info') }}', 'info', 7000);
+            @if(session('info') && trim(session('info')))
+                showNotification({!! json_encode(session('info')) !!}, 'info', 7000);
             @endif
         });
     </script>
