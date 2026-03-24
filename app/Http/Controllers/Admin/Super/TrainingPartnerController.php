@@ -185,6 +185,7 @@ class TrainingPartnerController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:20|alpha_dash|unique:training_partners,code,' . $trainingPartner->id,
             'student_approval_deduction' => 'required|numeric|min:0',
         ]);
 
@@ -195,13 +196,15 @@ class TrainingPartnerController extends Controller
         }
 
         $amount = (float) $request->student_approval_deduction;
+        $code = trim($request->code);
         $trainingPartner->update([
+            'code' => $code,
             'status' => 'active',
             'student_approval_deduction' => $amount,
         ]);
 
         return redirect()->back()
-            ->with('success', "{$trainingPartner->name} approved. Student approval deduction set to ₹" . number_format($amount, 2));
+            ->with('success', "{$trainingPartner->name} approved with code {$code}. Student approval deduction set to ₹" . number_format($amount, 2));
     }
 
     public function reject(TrainingPartner $trainingPartner)

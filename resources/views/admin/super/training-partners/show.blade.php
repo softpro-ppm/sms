@@ -8,7 +8,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h2 class="text-2xl font-bold text-gray-900">{{ $trainingPartner->name }}</h2>
-            <p class="text-gray-600 mt-1">{{ $trainingPartner->code }} • {{ $trainingPartner->type }}</p>
+            <p class="text-gray-600 mt-1">{{ $trainingPartner->code ?: '— (pending)' }} • {{ $trainingPartner->type }}</p>
         </div>
         <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
             @if($trainingPartner->status === 'pending')
@@ -178,9 +178,17 @@
         <div class="fixed inset-0 bg-gray-900/60" onclick="document.getElementById('approveModal').classList.add('hidden')"></div>
         <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Approve Partner</h3>
-            <p class="text-sm text-gray-600 mb-4">Set the student approval deduction amount (₹) to deduct from this partner's wallet when each student is approved.</p>
+            <p class="text-sm text-gray-600 mb-4">Assign a unique code and set the student approval deduction amount (₹) to deduct from this partner's wallet when each student is approved.</p>
             <form method="POST" action="{{ route('admin.super.training-partners.approve', $trainingPartner) }}">
                 @csrf
+                <div class="mb-4">
+                    <label for="approve_code" class="block text-sm font-medium text-gray-700 mb-2">Partner Code <span class="text-red-500">*</span></label>
+                    <input type="text" id="approve_code" name="code" required maxlength="20"
+                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                           placeholder="e.g. ABC001" value="{{ old('code') }}">
+                    <p class="mt-1 text-xs text-gray-500">Letters, numbers, hyphens. Must be unique.</p>
+                    @error('code')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
                 <div class="mb-4">
                     <label for="approve_deduction" class="block text-sm font-medium text-gray-700 mb-2">Student Approval Deduction (₹) <span class="text-red-500">*</span></label>
                     <input type="number" id="approve_deduction" name="student_approval_deduction" required min="0" step="0.01"

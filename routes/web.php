@@ -57,6 +57,8 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/register/success', [RegisterController::class, 'success'])->name('register.success');
 
 Route::get('/register/partner', [PartnerRegistrationController::class, 'showRegistrationForm'])->name('partner.register');
+Route::post('/register/partner/send-otp', [PartnerRegistrationController::class, 'sendOtp'])->name('partner.send-otp');
+Route::post('/register/partner/verify-otp', [PartnerRegistrationController::class, 'verifyOtp'])->name('partner.verify-otp');
 Route::post('/register/partner', [PartnerRegistrationController::class, 'register']);
 Route::get('/register/partner/success', [PartnerRegistrationController::class, 'success'])->name('partner.register.success');
 

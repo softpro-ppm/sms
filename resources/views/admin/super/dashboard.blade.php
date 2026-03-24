@@ -112,7 +112,7 @@
                     @forelse($recentPartners as $partner)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $partner->name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ $partner->code }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ $partner->code ?: '—' }}</td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $partner->type === 'HQ' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800' }}">
                                 {{ $partner->type }}

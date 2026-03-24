@@ -91,7 +91,7 @@
                         <td class="px-6 py-4">
                             <div>
                                 <div class="font-medium text-gray-900">{{ $partner->name }}</div>
-                                <div class="text-sm text-gray-500">{{ $partner->code }}</div>
+                                <div class="text-sm text-gray-500">{{ $partner->code ?: '—' }}</div>
                             </div>
                         </td>
                         <td class="px-6 py-4">
