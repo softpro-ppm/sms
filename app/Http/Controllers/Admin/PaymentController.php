@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Mail\FullyPaidMail;
 use App\Mail\PaymentApprovedMail;
@@ -21,6 +22,16 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PaymentController extends Controller
 {
+    use ScopesByTrainingPartner;
+
+    protected function ensurePaymentBelongsToPartner(Payment $payment): void
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $payment->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
@@ -28,7 +39,7 @@ class PaymentController extends Controller
         $search = trim((string) $request->get('search', ''));
         $status = trim((string) $request->get('status', ''));
 
-        $query = Payment::with(['student', 'enrollment.batch.course', 'approvedBy']);
+        $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course', 'approvedBy']));
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -55,14 +66,14 @@ class PaymentController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
-        // Statistics
+        // Statistics (TP-scoped)
         $stats = [
-            'total_payments' => Payment::count(),
-            'pending_payments' => Payment::where('status', 'pending')->count(),
-            'approved_payments' => Payment::where('status', 'approved')->count(),
-            'rejected_payments' => Payment::where('status', 'rejected')->count(),
-            'total_amount_pending' => Payment::where('status', 'pending')->sum('amount'),
-            'total_amount_approved' => Payment::where('status', 'approved')->sum('amount'),
+            'total_payments' => $this->scopePayments(Payment::query())->count(),
+            'pending_payments' => $this->scopePayments(Payment::where('status', 'pending'))->count(),
+            'approved_payments' => $this->scopePayments(Payment::where('status', 'approved'))->count(),
+            'rejected_payments' => $this->scopePayments(Payment::where('status', 'rejected'))->count(),
+            'total_amount_pending' => $this->scopePayments(Payment::where('status', 'pending'))->sum('amount'),
+            'total_amount_approved' => $this->scopePayments(Payment::where('status', 'approved'))->sum('amount'),
             'total_remaining_amount' => $this->calculateTotalRemainingAmount(),
         ];
 
@@ -71,11 +82,11 @@ class PaymentController extends Controller
 
     public function pending(Request $request)
     {
-        // Get all enrollments with pending payments
-        // Use paid_amount/outstanding_amount (includes credit allocations) - NOT sum of payments
-        $enrollments = \App\Models\Enrollment::with(['student', 'batch.course', 'payments'])
-            ->where('status', 'active')
-            ->get()
+        // Get all enrollments with pending payments (TP-scoped)
+        $enrollments = $this->scopeEnrollments(
+            \App\Models\Enrollment::with(['student', 'batch.course', 'payments'])
+                ->where('status', 'active')
+        )->get()
             ->filter(function ($enrollment) {
                 $outstanding = (float) ($enrollment->outstanding_amount ?? 0);
                 return $outstanding > 0;
@@ -152,10 +163,9 @@ class PaymentController extends Controller
 
     public function debug()
     {
-        $payments = Payment::with(['student'])
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
+        $payments = $this->scopePayments(
+            Payment::with(['student'])->orderBy('created_at', 'desc')->take(10)
+        )->get();
 
         return view('admin.payments.debug', compact('payments'));
     }
@@ -170,6 +180,10 @@ class PaymentController extends Controller
 
         if ($studentId) {
             $student = Student::with(['enrollments.batch.course'])->find($studentId);
+            $tpId = $this->getTrainingPartnerId();
+            if ($student && $tpId !== null && (int) $student->training_partner_id !== $tpId) {
+                $student = null;
+            }
             if ($student) {
                 $enrollments = $student->enrollments()->where('status', 'active')->get();
                 
@@ -210,6 +224,12 @@ class PaymentController extends Controller
                 ->withInput();
         }
 
+        // Ensure student belongs to TP
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $enrollment->student->training_partner_id !== $tpId) {
+            abort(404);
+        }
+
         // Generate unique receipt number
         $receiptNumber = $this->generateUniqueReceiptNumber();
 
@@ -230,7 +250,7 @@ class PaymentController extends Controller
 
     public function approve(Payment $payment)
     {
-        // Only admin can approve payments
+        $this->ensurePaymentBelongsToPartner($payment);
         if (!auth()->user()->is_admin) {
             return redirect()->back()
                 ->with('error', 'Only admin can approve payments.');
@@ -310,7 +330,7 @@ class PaymentController extends Controller
 
     public function reject(Payment $payment)
     {
-        // Only admin can reject payments
+        $this->ensurePaymentBelongsToPartner($payment);
         if (!auth()->user()->is_admin) {
             return redirect()->back()
                 ->with('error', 'Only admin can reject payments.');
@@ -335,15 +355,15 @@ class PaymentController extends Controller
         }
 
         $paymentIds = $request->input('payment_ids', []);
-        
+
         if (empty($paymentIds)) {
             return redirect()->back()
                 ->with('error', 'No payments selected for approval.');
         }
 
-        $payments = Payment::whereIn('id', $paymentIds)
-            ->where('status', 'pending')
-            ->get();
+        $payments = $this->scopePayments(
+            Payment::whereIn('id', $paymentIds)->where('status', 'pending')
+        )->get();
 
         $approvedCount = 0;
         $allocationService = new PaymentAllocationService();
@@ -422,6 +442,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
+        $this->ensurePaymentBelongsToPartner($payment);
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy']);
         
         return view('admin.payments.show', compact('payment'));
@@ -429,7 +450,7 @@ class PaymentController extends Controller
 
     public function destroy(Payment $payment)
     {
-        // Only admin can delete payments
+        $this->ensurePaymentBelongsToPartner($payment);
         if (!auth()->user()->is_admin) {
             return redirect()->back()
                 ->with('error', 'Only admin can delete payments.');
@@ -456,6 +477,7 @@ class PaymentController extends Controller
 
     public function generateReceipt(Payment $payment)
     {
+        $this->ensurePaymentBelongsToPartner($payment);
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
@@ -466,6 +488,7 @@ class PaymentController extends Controller
 
     public function downloadReceiptPdf(Payment $payment)
     {
+        $this->ensurePaymentBelongsToPartner($payment);
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
@@ -477,15 +500,19 @@ class PaymentController extends Controller
     // API Methods for AJAX requests
     public function getStudents()
     {
-        $students = Student::where('status', 'approved')
-            ->select('id', 'full_name', 'email', 'aadhar_number')
-            ->get();
-        
+        $students = $this->scopeStudents(
+            Student::where('status', 'approved')->select('id', 'full_name', 'email', 'aadhar_number')
+        )->get();
+
         return response()->json($students);
     }
 
     public function getStudentEnrollments(Student $student)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $student->training_partner_id !== $tpId) {
+            return response()->json([], 404);
+        }
         $enrollments = $student->enrollments()
             ->with(['batch.course'])
             ->where('status', 'active')
@@ -500,10 +527,9 @@ class PaymentController extends Controller
      */
     private function calculateTotalRemainingAmount()
     {
-        // Get all active enrollments
-        $enrollments = Enrollment::with(['payments'])
-            ->where('status', 'active')
-            ->get();
+        $enrollments = $this->scopeEnrollments(
+            Enrollment::with(['payments'])->where('status', 'active')
+        )->get();
 
         $totalFees = 0;
         $totalPaid = 0;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\Course;
@@ -17,6 +18,8 @@ use Carbon\Carbon;
 
 class BatchController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
@@ -57,7 +60,7 @@ class BatchController extends Controller
             'running_batches' => Batch::whereDate('start_date', '<=', $today)
                 ->whereDate('end_date', '>=', $today)
                 ->count(),
-            'total_students' => Enrollment::where('status', 'active')->count(),
+            'total_students' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->count(),
         ];
 
         return view('admin.batches.index', compact('batches', 'stats'));
@@ -142,7 +145,11 @@ class BatchController extends Controller
     public function show(Batch $batch)
     {
         $batch->load(['course', 'enrollments.student']);
-        
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null) {
+            $batch->setRelation('enrollments', $batch->enrollments->filter(fn ($e) => (int) ($e->student->training_partner_id ?? 0) === $tpId));
+        }
+
         return view('admin.batches.show', compact('batch'));
     }
 
@@ -267,9 +274,10 @@ class BatchController extends Controller
         $perPage = (int) $request->get('per_page', 10);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
 
-        // Eligible: approved students with ZERO enrollments (not enrolled in any batch)
-        $query = Student::where('status', 'approved')
-            ->whereDoesntHave('enrollments');
+        // Eligible: approved students with ZERO enrollments (TP-scoped)
+        $query = $this->scopeStudents(
+            Student::where('status', 'approved')->whereDoesntHave('enrollments')
+        );
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -321,10 +329,14 @@ class BatchController extends Controller
         $enrolled = 0;
         $errors = [];
 
+        $tpId = $this->getTrainingPartnerId();
         foreach ($studentIds as $studentId) {
             $student = Student::find($studentId);
             if (!$student) {
                 continue;
+            }
+            if ($tpId !== null && (int) $student->training_partner_id !== $tpId) {
+                continue; // Skip students from other TPs
             }
 
             // Re-check: must be approved and have no enrollments

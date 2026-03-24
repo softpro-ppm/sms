@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\AssessmentResult;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Response;
 
 class ReportsController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'payments');
@@ -220,7 +223,7 @@ class ReportsController extends Controller
 
     private function paymentQuery(Request $request): Builder
     {
-        $query = Payment::with(['student', 'enrollment.batch.course']);
+        $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
@@ -263,7 +266,7 @@ class ReportsController extends Controller
 
     private function enrollmentQuery(Request $request): Builder
     {
-        $query = Enrollment::with(['student', 'batch.course']);
+        $query = $this->scopeEnrollments(Enrollment::with(['student', 'batch.course']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
@@ -298,7 +301,7 @@ class ReportsController extends Controller
 
     private function studentQuery(Request $request): Builder
     {
-        $query = Student::query();
+        $query = $this->scopeStudents(Student::query());
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
@@ -321,7 +324,7 @@ class ReportsController extends Controller
 
     private function assessmentResultQuery(Request $request): Builder
     {
-        $query = AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']);
+        $query = $this->scopeAssessmentResults(AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {

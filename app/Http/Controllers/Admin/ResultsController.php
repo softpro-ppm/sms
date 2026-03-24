@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\AssessmentResult;
 use App\Models\Student;
@@ -12,12 +13,14 @@ use Illuminate\Support\Facades\DB;
 
 class ResultsController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 20);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
 
-        $query = AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']);
+        $query = $this->scopeAssessmentResults(AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']));
 
         // Filter by course (enrollment -> batch -> course_id)
         if ($request->filled('course_id')) {
@@ -65,13 +68,14 @@ class ResultsController extends Controller
         $courses = Course::where('is_active', true)->orderBy('name')->get();
         $assessments = Assessment::where('is_active', true)->orderBy('title')->get();
 
-        // Get statistics
+        // Get statistics (TP-scoped)
+        $baseQuery = $this->scopeAssessmentResults(AssessmentResult::query());
         $stats = [
-            'total_results' => AssessmentResult::count(),
-            'passed_results' => AssessmentResult::where('is_passed', true)->count(),
-            'failed_results' => AssessmentResult::where('is_passed', false)->count(),
-            'average_percentage' => AssessmentResult::avg('percentage') ?? 0,
-            'total_students' => AssessmentResult::distinct('student_id')->count(),
+            'total_results' => (clone $baseQuery)->count(),
+            'passed_results' => (clone $baseQuery)->where('is_passed', true)->count(),
+            'failed_results' => (clone $baseQuery)->where('is_passed', false)->count(),
+            'average_percentage' => (clone $baseQuery)->avg('percentage') ?? 0,
+            'total_students' => (clone $baseQuery)->selectRaw('COUNT(DISTINCT student_id) as c')->value('c') ?? 0,
         ];
 
         return view('admin.results.index', compact('results', 'courses', 'assessments', 'stats'));
@@ -79,14 +83,18 @@ class ResultsController extends Controller
 
     public function show(AssessmentResult $result)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $result->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         $result->load(['student', 'assessment', 'enrollment.batch.course', 'attempt.attemptQuestions.question']);
-        
+
         return view('admin.results.show', compact('result'));
     }
 
     public function export(Request $request)
     {
-        $query = AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']);
+        $query = $this->scopeAssessmentResults(AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']));
 
         // Apply same filters as index
         if ($request->filled('course_id')) {

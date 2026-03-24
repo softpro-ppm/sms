@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\TrainingPartner;
@@ -29,16 +30,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StudentController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
         $search = trim((string) $request->get('search', ''));
 
-        $studentsQuery = Student::with(['user', 'enrollments.batch.course', 'documents'])
-            ->withCount(['enrollments' => function($query) {
-                $query->where('status', 'active');
-            }]);
+        $studentsQuery = $this->scopeStudents(
+            Student::with(['user', 'enrollments.batch.course', 'documents'])
+                ->withCount(['enrollments' => fn ($q) => $q->where('status', 'active')])
+        );
 
         if ($search !== '') {
             $studentsQuery->where(function ($query) use ($search) {
@@ -55,24 +58,35 @@ class StudentController extends Controller
             ->appends($request->query());
 
         $stats = [
-            'total_students' => Student::count(),
-            'approved_students' => Student::where('status', 'approved')->count(),
-            'pending_students' => Student::where('status', 'pending')->count(),
-            'total_enrollments' => Enrollment::where('status', 'active')->count(),
+            'total_students' => $this->scopeStudents(Student::query())->count(),
+            'approved_students' => $this->scopeStudents(Student::where('status', 'approved'))->count(),
+            'pending_students' => $this->scopeStudents(Student::where('status', 'pending'))->count(),
+            'total_enrollments' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->count(),
         ];
 
         return view('admin.students.index', compact('students', 'stats'));
     }
 
+    /** Ensure TP admin can only access students from their center. */
+    protected function ensureStudentBelongsToPartner(Student $student): void
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $student->training_partner_id !== $tpId) {
+            abort(404);
+        }
+    }
+
     public function show(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $student->load(['user', 'enrollments.batch.course', 'payments', 'assessmentResults.assessment', 'documents']);
-        
+
         return view('admin.students.show', compact('student'));
     }
 
     public function approve(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         // Photo is mandatory before approval
         $photoDoc = $student->documents()->where('document_type', 'photo')->first();
         if (!$photoDoc || !Storage::disk('public')->exists($photoDoc->file_path)) {
@@ -131,6 +145,7 @@ class StudentController extends Controller
 
     public function reject(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $student->update(['status' => 'rejected']);
 
         return redirect()->route('admin.students.index')
@@ -139,6 +154,7 @@ class StudentController extends Controller
 
     public function enroll(Request $request, Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $validator = Validator::make($request->all(), [
             'batch_id' => 'required|exists:batches,id',
             'enrollment_date' => 'required|date',
@@ -242,6 +258,7 @@ class StudentController extends Controller
 
     public function dropEnrollment(Enrollment $enrollment)
     {
+        $this->ensureStudentBelongsToPartner($enrollment->student);
         $student = $enrollment->student;
         $batch = $enrollment->batch;
         $paidAmount = (float) $enrollment->paid_amount;
@@ -432,11 +449,13 @@ class StudentController extends Controller
 
     public function edit(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         return view('admin.students.edit', compact('student'));
     }
 
     public function update(Request $request, Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $validator = Validator::make($request->all(), [
             'aadhar_number' => 'required|string|size:12|regex:/^[0-9]{12}$/|unique:students,aadhar_number,' . $student->id,
             'full_name' => 'required|string|max:255',
@@ -506,6 +525,7 @@ class StudentController extends Controller
 
     public function resetPassword(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         if (!$student->user) {
             return redirect()->back()
                 ->with('error', 'Student does not have a user account.');
@@ -522,6 +542,7 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         // Check if student has any active enrollments or payments
         if ($student->enrollments()->where('status', 'active')->count() > 0) {
             return redirect()->back()
@@ -565,6 +586,7 @@ class StudentController extends Controller
      */
     public function forceDestroy(Request $request, Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $validator = Validator::make($request->all(), [
             'confirmation' => 'required|in:REMOVE'
         ]);
@@ -635,6 +657,7 @@ class StudentController extends Controller
      */
     public function removeFromEnrollment(Enrollment $enrollment)
     {
+        $this->ensureStudentBelongsToPartner($enrollment->student);
         $paidAmount = (float) $enrollment->paid_amount;
 
         try {
@@ -749,6 +772,7 @@ class StudentController extends Controller
      */
     public function idCardPreview(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $student->load(['documents', 'enrollments.batch']);
         return view('admin.students.id-card-pdf', compact('student'));
     }
@@ -758,6 +782,7 @@ class StudentController extends Controller
      */
     public function idCard(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $student->load(['documents', 'enrollments.batch.course']);
         $pdf = Pdf::loadView('admin.students.id-card-pdf', compact('student'));
         $pdf->setPaper([0, 0, 242.65, 153.07]); // CR80: 85.6mm x 54mm (pt)
@@ -769,6 +794,7 @@ class StudentController extends Controller
      */
     public function downloadIdCard(Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         $student->load(['documents', 'enrollments.batch.course']);
         $pdf = Pdf::loadView('admin.students.id-card-pdf', compact('student'));
         $pdf->setPaper([0, 0, 242.65, 153.07]); // CR80: 85.6mm x 54mm
@@ -780,6 +806,7 @@ class StudentController extends Controller
      */
     public function uploadDocument(Request $request, Student $student)
     {
+        $this->ensureStudentBelongsToPartner($student);
         try {
             $validator = Validator::make($request->all(), [
                 'document_type' => 'required|string|in:photo,aadhar,qualification_certificate',
@@ -873,6 +900,7 @@ class StudentController extends Controller
      */
     public function updateDocument(Request $request, Student $student, $documentId)
     {
+        $this->ensureStudentBelongsToPartner($student);
         try {
             $validator = Validator::make($request->all(), [
                 'document_type' => 'required|string|in:photo,aadhar,qualification_certificate',
@@ -922,6 +950,7 @@ class StudentController extends Controller
      */
     public function removeDocument(Student $student, $documentId)
     {
+        $this->ensureStudentBelongsToPartner($student);
         try {
             $document = $student->documents()->findOrFail($documentId);
             

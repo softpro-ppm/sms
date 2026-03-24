@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use App\Models\Student;
@@ -20,6 +21,8 @@ use Carbon\Carbon;
 
 class CertificatesController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function sample()
     {
         $templateService = app(CertificateTemplateService::class);
@@ -33,7 +36,7 @@ class CertificatesController extends Controller
         $perPage = (int) $request->get('per_page', 20);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
 
-        $query = Certificate::with(['student', 'course', 'batch', 'assessmentResult']);
+        $query = $this->scopeCertificates(Certificate::with(['student', 'course', 'batch', 'assessmentResult']));
 
         // Filter by course
         if ($request->filled('course_id')) {
@@ -79,13 +82,14 @@ class CertificatesController extends Controller
         $courses = Course::where('is_active', true)->orderBy('name')->get();
         $batches = Batch::where('is_active', true)->orderBy('batch_name')->get();
 
-        // Get statistics
+        // Get statistics (TP-scoped)
+        $baseQuery = $this->scopeCertificates(Certificate::query());
         $stats = [
-            'total_certificates' => Certificate::count(),
-            'issued_certificates' => Certificate::where('is_issued', true)->count(),
-            'pending_certificates' => Certificate::where('is_issued', false)->count(),
-            'total_students' => Certificate::distinct('student_id')->count(),
-            'this_month' => Certificate::whereMonth('issue_date', now()->month)
+            'total_certificates' => (clone $baseQuery)->count(),
+            'issued_certificates' => (clone $baseQuery)->where('is_issued', true)->count(),
+            'pending_certificates' => (clone $baseQuery)->where('is_issued', false)->count(),
+            'total_students' => (clone $baseQuery)->selectRaw('COUNT(DISTINCT student_id) as c')->value('c') ?? 0,
+            'this_month' => (clone $baseQuery)->whereMonth('issue_date', now()->month)
                 ->whereYear('issue_date', now()->year)
                 ->count(),
         ];
@@ -95,6 +99,10 @@ class CertificatesController extends Controller
 
     public function show(Certificate $certificate)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
 
         return view('admin.certificates.show', compact('certificate'));
@@ -102,6 +110,10 @@ class CertificatesController extends Controller
 
     public function preview(Certificate $certificate)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
 
         $templateService = app(CertificateTemplateService::class);
@@ -112,6 +124,10 @@ class CertificatesController extends Controller
 
     public function generate(Certificate $certificate)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         try {
             // Generate certificate number and update certificate
             $certificateNumber = $this->generateCertificateNumber();
@@ -148,6 +164,10 @@ class CertificatesController extends Controller
 
     public function download(Certificate $certificate)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         if (!$certificate->is_issued || !$certificate->certificate_number) {
             return redirect()->back()
                 ->with('error', 'Certificate must be generated before download.');
@@ -173,6 +193,10 @@ class CertificatesController extends Controller
 
     public function revoke(Certificate $certificate)
     {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
         $certificate->update(['is_issued' => false]);
         
         return redirect()->back()
@@ -181,13 +205,12 @@ class CertificatesController extends Controller
 
     public function create(Request $request)
     {
-        $students = Student::where('status', 'approved')->orderBy('full_name')->get();
+        $students = $this->scopeStudents(Student::where('status', 'approved')->orderBy('full_name'))->get();
         $courses = Course::where('is_active', true)->orderBy('name')->get();
         $batches = Batch::where('is_active', true)->orderBy('batch_name')->get();
-        $assessmentResults = AssessmentResult::where('is_passed', true)
-            ->with(['student', 'assessment'])
-            ->orderBy('completed_at', 'desc')
-            ->get();
+        $assessmentResults = $this->scopeAssessmentResults(
+            AssessmentResult::where('is_passed', true)->with(['student', 'assessment'])->orderBy('completed_at', 'desc')
+        )->get();
 
         return view('admin.certificates.create', compact('students', 'courses', 'batches', 'assessmentResults'));
     }
@@ -201,6 +224,13 @@ class CertificatesController extends Controller
             'assessment_result_id' => 'nullable|exists:assessment_results,id',
             'certificate_content' => 'nullable|string',
         ]);
+
+        // Ensure student belongs to TP
+        $student = Student::find($request->student_id);
+        $tpId = $this->getTrainingPartnerId();
+        if (!$student || ($tpId !== null && (int) $student->training_partner_id !== $tpId)) {
+            abort(404);
+        }
 
         // Check if certificate already exists for this student and course
         $existingCertificate = Certificate::where('student_id', $request->student_id)
