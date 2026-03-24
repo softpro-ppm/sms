@@ -178,7 +178,7 @@
             <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-6">
                 <ul class="space-y-2">
                     @if(auth()->user()->is_super_admin)
-                    {{-- Super Admin navigation --}}
+                    {{-- Super Admin navigation - Platform owner: creates Courses & Exams --}}
                     <li>
                         <a href="{{ route('admin.super.dashboard') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.dashboard') ? 'active' : '' }}">
@@ -191,6 +191,27 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.training-partners.*') ? 'active' : '' }}">
                             <i class="fas fa-building w-5 h-5 mr-3"></i>
                             <span>Training Partners</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.courses.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+                            <i class="fas fa-book w-5 h-5 mr-3"></i>
+                            <span>Courses</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.question-banks.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.question-banks.*') ? 'active' : '' }}">
+                            <i class="fas fa-database w-5 h-5 mr-3"></i>
+                            <span>Question Banks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.assessments.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.assessments.*') ? 'active' : '' }}">
+                            <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
+                            <span>Exams</span>
                         </a>
                     </li>
                     @else
@@ -253,22 +274,6 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
                             <i class="fas fa-book w-5 h-5 mr-3"></i>
                             <span>Courses</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="{{ route('admin.question-banks.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.question-banks.*') ? 'active' : '' }}">
-                            <i class="fas fa-database w-5 h-5 mr-3"></i>
-                            <span>Question Banks</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="{{ route('admin.assessments.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.assessments.*') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
-                            <span>Exams</span>
                         </a>
                     </li>
                     

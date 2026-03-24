@@ -26,10 +26,13 @@ class BatchController extends Controller
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
         $search = trim((string) $request->get('search', ''));
 
+        $tpId = $this->getTrainingPartnerId();
+        $enrollmentCountFilter = $tpId !== null
+            ? fn ($q) => $q->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
+            : fn ($q) => $q->where('status', 'active');
+
         $query = Batch::with(['course'])
-            ->withCount(['enrollments' => function($query) {
-                $query->where('status', 'active');
-            }]);
+            ->withCount(['enrollments' => $enrollmentCountFilter]);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {

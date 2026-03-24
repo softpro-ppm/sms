@@ -75,8 +75,8 @@ Route::get('/verify/{enrollment_no}/photo', [StudentVerificationController::clas
 Route::redirect('/public/student-verification', '/verify', 301);
 Route::post('/public/student-verification/search', [StudentVerificationController::class, 'search'])->name('public.student-verification.search');
 
-// Admin routes (Admin & Reception)
-Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admin.')->group(function () {
+// Admin routes (Admin, Reception, Super Admin for Courses/Exams)
+Route::middleware(['auth', 'role:admin,reception,super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     
@@ -126,16 +126,18 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
             Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
             Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
     
-            // Courses management
+            // Courses: index/show for HQ & TP (read-only); create/edit/delete for Super Admin only
             Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
-            Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
             Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
-            Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
-            Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
-            Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
-            Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
-    
+            Route::middleware('super_admin')->group(function () {
+                Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+                Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+                Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+                Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+                Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+                Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
+            });
+
     // Batches management
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
     Route::get('/batches/create', [BatchController::class, 'create'])->name('batches.create');
@@ -149,41 +151,45 @@ Route::middleware(['auth', 'role:admin,reception'])->prefix('admin')->name('admi
     Route::patch('/batches/{batch}/toggle-status', [BatchController::class, 'toggleStatus'])->name('batches.toggle-status');
     Route::get('/api/batches/by-course', [BatchController::class, 'getBatchesByCourse'])->name('batches.by-course');
     
-    // Assessments management
-    Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
-    Route::get('/assessments/create', [AssessmentController::class, 'create'])->name('assessments.create');
-    Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
-    Route::get('/assessments/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
-    Route::get('/assessments/{assessment}/edit', [AssessmentController::class, 'edit'])->name('assessments.edit');
-    Route::put('/assessments/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
-    Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
-    Route::patch('/assessments/{assessment}/toggle-status', [AssessmentController::class, 'toggleStatus'])->name('assessments.toggle-status');
-    Route::get('/api/assessments/batches/by-course', [AssessmentController::class, 'getBatchesByCourse'])->name('assessments.batches-by-course');
-    
-    // Question Bank management
-    Route::get('/question-banks', [QuestionBankController::class, 'index'])->name('question-banks.index');
-    Route::get('/question-banks/create', [QuestionBankController::class, 'create'])->name('question-banks.create');
-    Route::post('/question-banks', [QuestionBankController::class, 'store'])->name('question-banks.store');
-    Route::get('/question-banks/export', [QuestionBankController::class, 'export'])->name('question-banks.export');
-    Route::get('/question-banks/{questionBank}', [QuestionBankController::class, 'show'])
-        ->whereNumber('questionBank')
-        ->name('question-banks.show');
-    Route::get('/question-banks/{questionBank}/edit', [QuestionBankController::class, 'edit'])
-        ->whereNumber('questionBank')
-        ->name('question-banks.edit');
-    Route::put('/question-banks/{questionBank}', [QuestionBankController::class, 'update'])
-        ->whereNumber('questionBank')
-        ->name('question-banks.update');
-    Route::delete('/question-banks/{questionBank}', [QuestionBankController::class, 'destroy'])
-        ->whereNumber('questionBank')
-        ->name('question-banks.destroy');
-    Route::patch('/question-banks/{questionBank}/toggle-status', [QuestionBankController::class, 'toggleStatus'])
-        ->whereNumber('questionBank')
-        ->name('question-banks.toggle-status');
-    Route::post('/question-banks/bulk-upload', [QuestionBankController::class, 'bulkUpload'])->name('question-banks.bulk-upload');
-    Route::get('/question-banks/download-template', [QuestionBankController::class, 'downloadTemplate'])->name('question-banks.download-template');
-    Route::get('/api/question-banks/subjects/by-course', [QuestionBankController::class, 'getSubjectsByCourse'])->name('question-banks.subjects-by-course');
-    Route::get('/api/question-banks/stats', [QuestionBankController::class, 'getQuestionStats'])->name('question-banks.stats');
+    // Assessments (Exams) - Super Admin only. HQ & TP cannot create/manage.
+    Route::middleware('super_admin')->group(function () {
+        Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
+        Route::get('/assessments/create', [AssessmentController::class, 'create'])->name('assessments.create');
+        Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
+        Route::get('/assessments/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
+        Route::get('/assessments/{assessment}/edit', [AssessmentController::class, 'edit'])->name('assessments.edit');
+        Route::put('/assessments/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
+        Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+        Route::patch('/assessments/{assessment}/toggle-status', [AssessmentController::class, 'toggleStatus'])->name('assessments.toggle-status');
+        Route::get('/api/assessments/batches/by-course', [AssessmentController::class, 'getBatchesByCourse'])->name('assessments.batches-by-course');
+    });
+
+    // Question Banks - Super Admin only
+    Route::middleware('super_admin')->group(function () {
+        Route::get('/question-banks', [QuestionBankController::class, 'index'])->name('question-banks.index');
+        Route::get('/question-banks/create', [QuestionBankController::class, 'create'])->name('question-banks.create');
+        Route::post('/question-banks', [QuestionBankController::class, 'store'])->name('question-banks.store');
+        Route::get('/question-banks/export', [QuestionBankController::class, 'export'])->name('question-banks.export');
+        Route::get('/question-banks/{questionBank}', [QuestionBankController::class, 'show'])
+            ->whereNumber('questionBank')
+            ->name('question-banks.show');
+        Route::get('/question-banks/{questionBank}/edit', [QuestionBankController::class, 'edit'])
+            ->whereNumber('questionBank')
+            ->name('question-banks.edit');
+        Route::put('/question-banks/{questionBank}', [QuestionBankController::class, 'update'])
+            ->whereNumber('questionBank')
+            ->name('question-banks.update');
+        Route::delete('/question-banks/{questionBank}', [QuestionBankController::class, 'destroy'])
+            ->whereNumber('questionBank')
+            ->name('question-banks.destroy');
+        Route::patch('/question-banks/{questionBank}/toggle-status', [QuestionBankController::class, 'toggleStatus'])
+            ->whereNumber('questionBank')
+            ->name('question-banks.toggle-status');
+        Route::post('/question-banks/bulk-upload', [QuestionBankController::class, 'bulkUpload'])->name('question-banks.bulk-upload');
+        Route::get('/question-banks/download-template', [QuestionBankController::class, 'downloadTemplate'])->name('question-banks.download-template');
+        Route::get('/api/question-banks/subjects/by-course', [QuestionBankController::class, 'getSubjectsByCourse'])->name('question-banks.subjects-by-course');
+        Route::get('/api/question-banks/stats', [QuestionBankController::class, 'getQuestionStats'])->name('question-banks.stats');
+    });
     
     // Results management
     Route::get('/results', [ResultsController::class, 'index'])->name('results.index');

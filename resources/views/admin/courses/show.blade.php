@@ -12,11 +12,13 @@
             <p class="text-gray-600 mt-1">{{ $course->description ?: 'No description provided' }}</p>
         </div>
         <div class="mt-4 sm:mt-0 flex space-x-3">
+            @if(auth()->user()->is_super_admin)
             <a href="{{ route('admin.courses.edit', $course) }}" 
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-edit mr-2"></i>
                 Edit Course
             </a>
+            @endif
             <a href="{{ route('admin.courses.index') }}" 
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>
