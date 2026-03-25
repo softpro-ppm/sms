@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\DatabaseBackupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
@@ -210,30 +211,18 @@ class SettingsController extends Controller
         }
     }
 
-    public function backupDatabase()
+    public function backupDatabase(DatabaseBackupService $databaseBackupService)
     {
         try {
-            $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
-            $path = storage_path('app/backups/' . $filename);
-            
-            // Create backups directory if it doesn't exist
-            if (!file_exists(dirname($path))) {
-                mkdir(dirname($path), 0755, true);
-            }
-            
-            // Simple backup command (adjust based on your database driver)
-            $database = config('database.connections.' . config('database.default'));
-            $command = "mysqldump --user={$database['username']} --password={$database['password']} --host={$database['host']} {$database['database']} > {$path}";
-            
-            exec($command, $output, $returnCode);
-            
-            if ($returnCode === 0) {
+            $error = null;
+            $path = $databaseBackupService->createMysqlDump($error);
+            if ($path !== null) {
                 return redirect()->route('admin.settings.index')
                     ->with('success', 'Database backup created successfully!');
-            } else {
-                return redirect()->route('admin.settings.index')
-                    ->with('error', 'Failed to create database backup.');
             }
+
+            return redirect()->route('admin.settings.index')
+                ->with('error', 'Failed to create database backup.' . ($error ? ' ' . $error : ''));
         } catch (\Exception $e) {
             return redirect()->route('admin.settings.index')
                 ->with('error', 'Failed to backup database: ' . $e->getMessage());

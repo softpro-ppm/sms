@@ -11,6 +11,7 @@ use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\AssessmentResult;
 use App\Models\Certificate;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -72,7 +73,23 @@ class DashboardController extends Controller
         $recentPayments = $recentActivities['recent_payments'];
         $recentAssessments = $recentActivities['recent_assessments'];
 
-        return view('admin.dashboard', compact('stats', 'recentActivities', 'chartData', 'recentStudents', 'recentPayments', 'recentAssessments'));
+        $onboarding = null;
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && ! auth()->user()->is_super_admin) {
+            $staffCount = User::query()
+                ->where('training_partner_id', $tpId)
+                ->whereIn('role', ['admin', 'reception'])
+                ->count();
+            $onboarding = [
+                'show' => (int) $stats['total_students'] === 0 && (int) $stats['total_enrollments'] === 0,
+                'staff_done' => auth()->user()->role !== 'admin' || $staffCount >= 2,
+                'student_done' => $this->scopeStudents(Student::where('status', 'approved'))->exists(),
+                'enrollment_done' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->exists(),
+                'payment_done' => $this->scopePayments(Payment::where('status', 'approved'))->exists(),
+            ];
+        }
+
+        return view('admin.dashboard', compact('stats', 'recentActivities', 'chartData', 'recentStudents', 'recentPayments', 'recentAssessments', 'onboarding'));
     }
 
     private function getMonthlyEnrollments()

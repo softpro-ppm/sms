@@ -157,7 +157,7 @@
                                     </div>
                                     <div class="text-center">
                                         <div class="text-lg font-semibold text-orange-600">{{ $course->enrollments_count }}</div>
-                                        <div class="text-xs text-gray-500">Students</div>
+                                        <div class="text-xs text-gray-500">Enrollments</div>
                                     </div>
                                 </div>
                             </div>

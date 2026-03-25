@@ -22,6 +22,37 @@
         </div>
     </div>
 
+    @if(!empty($onboarding) && $onboarding['show'])
+    <div class="bg-white border-l-4 border-primary-500 rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Get started</h3>
+        <p class="text-gray-600 text-sm mb-4">Short path for a new centre: add people, enroll students in a batch, then record fees.</p>
+        <ol class="space-y-3 text-sm text-gray-800 list-decimal list-inside">
+            @if(auth()->user()->role === 'admin')
+            <li class="{{ $onboarding['staff_done'] ? 'text-green-800' : '' }}">
+                @if($onboarding['staff_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.settings.users.index') }}" class="font-semibold text-primary-700 hover:underline">Add staff</a>
+                <span class="text-gray-600">— reception or another admin (optional but recommended).</span>
+            </li>
+            @endif
+            <li class="{{ $onboarding['student_done'] ? 'text-green-800' : '' }}">
+                @if($onboarding['student_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.students.create') }}" class="font-semibold text-primary-700 hover:underline">Register student</a>
+                <span class="text-gray-600">— approve when ready.</span>
+            </li>
+            <li class="{{ $onboarding['enrollment_done'] ? 'text-green-800' : '' }}">
+                @if($onboarding['enrollment_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.batches.index') }}" class="font-semibold text-primary-700 hover:underline">Pick a batch</a>
+                <span class="text-gray-600">— open a batch and enroll students.</span>
+            </li>
+            <li class="{{ $onboarding['payment_done'] ? 'text-green-800' : '' }}">
+                @if($onboarding['payment_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.payments.create') }}" class="font-semibold text-primary-700 hover:underline">Record payment</a>
+                <span class="text-gray-600">— then approve if you use pending workflow.</span>
+            </li>
+        </ol>
+    </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Students -->

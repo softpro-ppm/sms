@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Batch;
@@ -11,13 +12,36 @@ use Illuminate\Support\Facades\Validator;
 
 class CourseController extends Controller
 {
+    use ScopesByTrainingPartner;
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
         $search = trim((string) $request->get('search', ''));
 
-        $query = Course::withCount(['batches', 'enrollments']);
+        $tpId = $this->getTrainingPartnerId();
+        $enrollmentFilter = $tpId !== null
+            ? fn ($q) => $q->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
+            : fn ($q) => $q->where('status', 'active');
+
+        $query = Course::query();
+        if ($tpId !== null) {
+            $query->withCount([
+                'batches as batches_count' => function ($q) use ($tpId) {
+                    $q->whereHas('enrollments', function ($eq) use ($tpId) {
+                        $eq->where('status', 'active')
+                            ->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId));
+                    });
+                },
+                'enrollments as enrollments_count' => $enrollmentFilter,
+            ]);
+        } else {
+            $query->withCount([
+                'batches',
+                'enrollments' => $enrollmentFilter,
+            ]);
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -33,8 +57,15 @@ class CourseController extends Controller
         $stats = [
             'total_courses' => Course::count(),
             'active_courses' => Course::where('is_active', true)->count(),
-            'total_batches' => Batch::count(),
-            'total_enrollments' => Enrollment::where('status', 'active')->count(),
+            'total_batches' => $tpId !== null
+                ? Batch::whereHas('enrollments', function ($eq) use ($tpId) {
+                    $eq->where('status', 'active')
+                        ->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId));
+                })->count()
+                : Batch::count(),
+            'total_enrollments' => $tpId !== null
+                ? Enrollment::where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))->count()
+                : Enrollment::where('status', 'active')->count(),
         ];
 
         return view('admin.courses.index', compact('courses', 'stats'));

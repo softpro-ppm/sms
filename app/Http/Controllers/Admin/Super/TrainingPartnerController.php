@@ -4,6 +4,12 @@ namespace App\Http\Controllers\Admin\Super;
 
 use App\Http\Controllers\Controller;
 use App\Mail\PartnerApprovedMail;
+use App\Models\AssessmentResult;
+use App\Models\Batch;
+use App\Models\Certificate;
+use App\Models\Enrollment;
+use App\Models\Payment;
+use App\Models\Student;
 use App\Models\TrainingPartner;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -110,6 +116,60 @@ class TrainingPartnerController extends Controller
         $trainingPartner->load(['walletTransactions' => fn ($q) => $q->latest()->limit(20)]);
 
         return view('admin.super.training-partners.show', compact('trainingPartner'));
+    }
+
+    public function activity(TrainingPartner $trainingPartner)
+    {
+        $tpId = $trainingPartner->id;
+
+        $stats = [
+            'students_total' => Student::where('training_partner_id', $tpId)->count(),
+            'students_approved' => Student::where('training_partner_id', $tpId)->where('status', 'approved')->count(),
+            'students_pending' => Student::where('training_partner_id', $tpId)->where('status', 'pending')->count(),
+            'batches_with_activity' => Batch::whereHas('enrollments.student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+            'active_enrollments' => Enrollment::where('status', 'active')->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+            'payments_approved_sum' => (float) Payment::where('status', 'approved')->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->sum('amount'),
+            'payments_approved_count' => Payment::where('status', 'approved')->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+            'payments_pending_count' => Payment::where('status', 'pending')->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+            'assessment_results' => AssessmentResult::whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+            'certificates_issued' => Certificate::where('is_issued', true)->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))->count(),
+        ];
+
+        $recentBatches = Batch::with('course')
+            ->whereHas('enrollments.student', fn ($q) => $q->where('training_partner_id', $tpId))
+            ->orderByDesc('start_date')
+            ->limit(30)
+            ->get();
+
+        $recentStudents = Student::where('training_partner_id', $tpId)->latest()->limit(30)->get();
+
+        $recentPayments = Payment::with(['student:id,full_name', 'enrollment.batch.course'])
+            ->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        $recentResults = AssessmentResult::with(['student:id,full_name', 'assessment'])
+            ->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        $recentCertificates = Certificate::with(['student:id,full_name', 'course'])
+            ->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        return view('admin.super.training-partners.activity', compact(
+            'trainingPartner',
+            'stats',
+            'recentBatches',
+            'recentStudents',
+            'recentPayments',
+            'recentResults',
+            'recentCertificates'
+        ));
     }
 
     public function recharge(Request $request, TrainingPartner $trainingPartner)
@@ -223,6 +283,7 @@ class TrainingPartnerController extends Controller
                 'role' => 'admin',
                 'training_partner_id' => $trainingPartner->id,
                 'is_active' => true,
+                'must_change_password' => true,
             ]);
             $loginCredentials = ['email' => $email, 'password' => $tempPassword];
         }

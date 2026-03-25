@@ -25,7 +25,8 @@ class User extends Authenticatable
         'role',
         'student_id',
         'training_partner_id',
-        'is_active'
+        'is_active',
+        'must_change_password',
     ];
 
     /**
@@ -48,7 +49,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

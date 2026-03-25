@@ -38,6 +38,10 @@
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-edit mr-2"></i>Edit
             </a>
+            <a href="{{ route('admin.super.training-partners.activity', $trainingPartner) }}"
+               class="inline-flex items-center px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800">
+                <i class="fas fa-chart-line mr-2"></i>Full activity
+            </a>
             <a href="{{ route('admin.super.training-partners.index') }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                 <i class="fas fa-arrow-left mr-2"></i>Back

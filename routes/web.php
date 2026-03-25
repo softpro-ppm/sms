@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppLogsController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
+use App\Http\Controllers\Admin\ForcePasswordController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -76,7 +77,10 @@ Route::redirect('/public/student-verification', '/verify', 301);
 Route::post('/public/student-verification/search', [StudentVerificationController::class, 'search'])->name('public.student-verification.search');
 
 // Admin routes (Admin, Reception, Super Admin for Courses/Exams)
-Route::middleware(['auth', 'role:admin,reception,super_admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/first-login-password', [ForcePasswordController::class, 'show'])->name('password.force');
+    Route::post('/first-login-password', [ForcePasswordController::class, 'update'])->name('password.force.update');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     
@@ -251,6 +255,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.s
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
     Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');
+    Route::get('training-partners/{training_partner}/activity', [TrainingPartnerController::class, 'activity'])->name('training-partners.activity');
     Route::get('training-partners/{training_partner}/staff/create', [TrainingPartnerController::class, 'createStaff'])->name('training-partners.staff.create');
     Route::post('training-partners/{training_partner}/staff', [TrainingPartnerController::class, 'storeStaff'])->name('training-partners.staff.store');
     Route::resource('training-partners', TrainingPartnerController::class)->names('training-partners');

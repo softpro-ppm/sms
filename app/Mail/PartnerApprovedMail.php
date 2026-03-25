@@ -5,12 +5,13 @@ namespace App\Mail;
 use App\Models\TrainingPartner;
 use App\Services\EmailTemplateService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PartnerApprovedMail extends Mailable
+class PartnerApprovedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
