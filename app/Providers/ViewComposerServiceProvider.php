@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Support\AdminLayoutScopes;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use App\Models\Student;
-use App\Models\Payment;
+use Illuminate\Support\ServiceProvider;
 
 class ViewComposerServiceProvider extends ServiceProvider
 {
@@ -22,14 +22,12 @@ class ViewComposerServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share common data with admin layout
+        // Share common data with admin layout (TP-scoped for non–Super Admin)
         View::composer('layouts.admin', function ($view) {
-            $pendingStudents = Student::where('status', 'pending')->count();
-            $pendingPayments = Payment::where('status', 'pending')->count();
-            
+            $user = Auth::user();
             $view->with([
-                'pendingStudents' => $pendingStudents,
-                'pendingPayments' => $pendingPayments,
+                'pendingStudents' => AdminLayoutScopes::pendingStudentsQuery($user)->count(),
+                'pendingPayments' => AdminLayoutScopes::pendingPaymentsQuery($user)->count(),
             ]);
         });
     }

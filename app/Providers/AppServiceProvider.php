@@ -2,8 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Payment;
-use App\Models\Student;
+use App\Support\AdminLayoutScopes;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 
@@ -32,8 +31,9 @@ class AppServiceProvider extends ServiceProvider
             $notificationCount = 0;
 
             if ($user->is_admin) {
-                $notifications = Payment::with('student:id,full_name')
-                    ->where('status', 'pending')
+                $paymentBase = AdminLayoutScopes::pendingPaymentsQuery($user);
+                $notifications = (clone $paymentBase)
+                    ->with('student:id,full_name')
                     ->latest()
                     ->limit(5)
                     ->get()
@@ -49,9 +49,10 @@ class AppServiceProvider extends ServiceProvider
                         ];
                     });
 
-                $notificationCount = Payment::where('status', 'pending')->count();
+                $notificationCount = (clone $paymentBase)->count();
             } elseif ($user->is_reception) {
-                $notifications = Student::where('status', 'pending')
+                $studentBase = AdminLayoutScopes::pendingStudentsQuery($user);
+                $notifications = (clone $studentBase)
                     ->select('id', 'full_name', 'email', 'created_at')
                     ->latest()
                     ->limit(5)
@@ -71,7 +72,7 @@ class AppServiceProvider extends ServiceProvider
                         ];
                     });
 
-                $notificationCount = Student::where('status', 'pending')->count();
+                $notificationCount = (clone $studentBase)->count();
             }
 
             $view->with([

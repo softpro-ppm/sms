@@ -229,7 +229,7 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
                             <i class="fas fa-users w-5 h-5 mr-3"></i>
                             <span>Students</span>
-                            @if($pendingStudents ?? 0 > 0)
+                            @if(($pendingStudents ?? 0) > 0)
                                 <span class="ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingStudents ?? 0 }}</span>
                             @endif
                         </a>
@@ -240,7 +240,7 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                             <i class="fas fa-credit-card w-5 h-5 mr-3"></i>
                             <span>Payments</span>
-                            @if($pendingPayments ?? 0 > 0)
+                            @if(($pendingPayments ?? 0) > 0)
                                 <span class="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingPayments ?? 0 }}</span>
                             @endif
                             <i class="fas fa-chevron-down ml-auto text-xs"></i>
