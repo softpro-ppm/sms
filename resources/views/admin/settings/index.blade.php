@@ -16,14 +16,22 @@
                class="inline-flex items-center px-5 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 shadow-sm">
                 <i class="fas fa-user-shield mr-2"></i> Staff Users
             </a>
+            @if($showFullSystemPanels ?? false)
             <a href="{{ route('admin.settings.email-templates.index') }}" 
                class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm">
                 <i class="fas fa-envelope-open-text mr-2"></i> Email Templates (Edit All 8)
             </a>
+            @endif
         </div>
     </div>
 
-    <!-- System Statistics -->
+    @if(!($showFullSystemPanels ?? false))
+    <div class="rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+        <strong>{{ $trainingPartnerName ?? 'Your centre' }}</strong> — summary counts below include only this training partner’s students, payments, batches, exams, and certificates. Server storage, database, and global configuration are managed by the platform administrator.
+    </div>
+    @endif
+
+    <!-- System Statistics (TP/HQ admins: scoped to training_partner_id) -->
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center">
@@ -110,6 +118,7 @@
         </div>
     </div>
 
+    @if($showFullSystemPanels ?? true)
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- System Information -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -187,7 +196,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <!-- Database Information -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -383,5 +392,26 @@
             </form>
         </div>
     </div>
+    @else
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Centre &amp; time</h3>
+        </div>
+        <div class="p-6 space-y-4 text-sm">
+            <div>
+                <p class="text-gray-500">Training partner</p>
+                <p class="font-medium text-gray-900">{{ $trainingPartnerName ?? '—' }}</p>
+            </div>
+            <div>
+                <p class="text-gray-500">Timezone</p>
+                <p class="font-medium text-gray-900">{{ $systemInfo['timezone'] }}</p>
+            </div>
+            <div>
+                <p class="text-gray-500">Server time</p>
+                <p class="font-medium text-gray-900">{{ $systemInfo['server_time'] }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection

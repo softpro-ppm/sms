@@ -2,7 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\EnsuresPlatformAdminOnly;
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
+use App\Models\Assessment;
+use App\Models\Batch;
+use App\Models\Certificate;
+use App\Models\Course;
+use App\Models\Payment;
+use App\Models\Student;
 use App\Services\DatabaseBackupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +19,9 @@ use Illuminate\Support\Facades\Artisan;
 
 class SettingsController extends Controller
 {
+    use EnsuresPlatformAdminOnly;
+    use ScopesByTrainingPartner;
+
     public function index()
     {
         // Get system information
@@ -54,28 +65,59 @@ class SettingsController extends Controller
             'from_name' => config('mail.from.name'),
         ];
 
-        // Get application statistics
-        $stats = [
-            'total_students' => \App\Models\Student::count(),
-            'total_courses' => \App\Models\Course::count(),
-            'total_batches' => \App\Models\Batch::count(),
-            'total_assessments' => \App\Models\Assessment::count(),
-            'total_certificates' => \App\Models\Certificate::count(),
-            'total_payments' => \App\Models\Payment::count(),
-        ];
+        $tpId = $this->getTrainingPartnerId();
+        $showFullSystemPanels = $tpId === null;
+
+        if ($showFullSystemPanels) {
+            $stats = [
+                'total_students' => Student::count(),
+                'total_courses' => Course::count(),
+                'total_batches' => Batch::count(),
+                'total_assessments' => Assessment::count(),
+                'total_certificates' => Certificate::count(),
+                'total_payments' => Payment::count(),
+            ];
+        } else {
+            $stats = [
+                'total_students' => $this->scopeStudents(Student::query())->count(),
+                'total_courses' => Course::query()
+                    ->whereHas('batches.enrollments', function ($enQ) use ($tpId) {
+                        $enQ->where('status', 'active')
+                            ->whereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
+                    })
+                    ->count(),
+                'total_batches' => Batch::query()
+                    ->whereHas('enrollments', function ($eq) use ($tpId) {
+                        $eq->where('status', 'active')
+                            ->whereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
+                    })
+                    ->count(),
+                'total_assessments' => Assessment::query()
+                    ->whereHas('assessmentResults.student', fn ($s) => $s->where('training_partner_id', $tpId))
+                    ->count(),
+                'total_certificates' => $this->scopeCertificates(Certificate::query())->count(),
+                'total_payments' => $this->scopePayments(Payment::query())->count(),
+            ];
+        }
+
+        $trainingPartnerName = auth()->user()->trainingPartner?->name;
 
         return view('admin.settings.index', compact(
             'systemInfo',
-            'storageInfo', 
+            'storageInfo',
             'databaseInfo',
             'cacheInfo',
             'mailInfo',
-            'stats'
+            'stats',
+            'showFullSystemPanels',
+            'trainingPartnerName'
         ));
     }
 
     public function updateGeneral(Request $request)
     {
+        $this->ensurePlatformAdminOnly();
+
         $request->validate([
             'app_name' => 'required|string|max:255',
             'timezone' => 'required|string',
@@ -101,6 +143,8 @@ class SettingsController extends Controller
 
     public function updateMail(Request $request)
     {
+        $this->ensurePlatformAdminOnly();
+
         $request->validate([
             'mail_host' => 'required|string',
             'mail_port' => 'required|integer',
@@ -135,6 +179,8 @@ class SettingsController extends Controller
 
     public function clearCache()
     {
+        $this->ensurePlatformAdminOnly();
+
         try {
             Artisan::call('cache:clear');
             Artisan::call('config:clear');
@@ -151,6 +197,8 @@ class SettingsController extends Controller
 
     public function clearCacheGet(Request $request)
     {
+        $this->ensurePlatformAdminOnly();
+
         // Optional: Add a simple token check for security
         // You can set CACHE_CLEAR_TOKEN in .env file
         // If token is set in .env, it must be provided in URL
@@ -198,6 +246,8 @@ class SettingsController extends Controller
 
     public function optimizeApplication()
     {
+        $this->ensurePlatformAdminOnly();
+
         try {
             Artisan::call('config:cache');
             Artisan::call('route:cache');
@@ -213,6 +263,8 @@ class SettingsController extends Controller
 
     public function backupDatabase(DatabaseBackupService $databaseBackupService)
     {
+        $this->ensurePlatformAdminOnly();
+
         try {
             $error = null;
             $path = $databaseBackupService->createMysqlDump($error);
@@ -231,6 +283,8 @@ class SettingsController extends Controller
 
     public function exportData()
     {
+        $this->ensurePlatformAdminOnly();
+
         try {
             $data = [
                 'students' => \App\Models\Student::all(),

@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\EnsuresPlatformAdminOnly;
 use App\Http\Controllers\Controller;
 use App\Models\EmailTemplate;
 use Illuminate\Http\Request;
 
 class EmailTemplateController extends Controller
 {
+    use EnsuresPlatformAdminOnly;
+
     public function index()
     {
+        $this->ensurePlatformAdminOnly();
+
         $templates = EmailTemplate::orderBy('slug')->get();
 
         // Ensure all 8 defaults exist
@@ -35,6 +40,8 @@ class EmailTemplateController extends Controller
 
     public function edit(EmailTemplate $emailTemplate)
     {
+        $this->ensurePlatformAdminOnly();
+
         $defaults = EmailTemplate::getDefaultTemplates();
         $default = $defaults[$emailTemplate->slug] ?? null;
 
@@ -47,6 +54,8 @@ class EmailTemplateController extends Controller
 
     public function update(Request $request, EmailTemplate $emailTemplate)
     {
+        $this->ensurePlatformAdminOnly();
+
         $request->validate([
             'subject' => 'required|string|max:255',
             'header_html' => 'nullable|string',
@@ -65,6 +74,8 @@ class EmailTemplateController extends Controller
 
     public function reset(EmailTemplate $emailTemplate)
     {
+        $this->ensurePlatformAdminOnly();
+
         $defaults = EmailTemplate::getDefaultTemplates();
         $slug = $emailTemplate->slug;
 
