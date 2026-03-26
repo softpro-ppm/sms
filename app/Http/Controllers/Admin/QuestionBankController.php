@@ -158,8 +158,9 @@ class QuestionBankController extends Controller
         }
 
         $file = $request->file('csv_file');
-        $path = $file->store('temp');
-        $fullPath = storage_path('app/' . $path);
+        // Default disk "local" root is storage/app/private — not storage/app. Must resolve path via Storage.
+        $path = $file->store('temp', 'local');
+        $fullPath = Storage::disk('local')->path($path);
 
         try {
             $handle = fopen($fullPath, 'r');
@@ -207,7 +208,7 @@ class QuestionBankController extends Controller
             }
 
             fclose($handle);
-            Storage::delete($path);
+            Storage::disk('local')->delete($path);
 
             $message = "Successfully imported {$imported} questions!";
             if (!empty($errors)) {
@@ -218,7 +219,7 @@ class QuestionBankController extends Controller
                 ->with('success', $message);
 
         } catch (\Exception $e) {
-            Storage::delete($path);
+            Storage::disk('local')->delete($path);
             return redirect()->back()
                 ->with('error', 'Error processing CSV file: ' . $e->getMessage());
         }
