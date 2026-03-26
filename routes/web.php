@@ -131,8 +131,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
             Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
     
             // Courses: index/show for HQ & TP (read-only); create/edit/delete for Super Admin only
+            // Static paths (/courses/create) must be registered before /courses/{course} or "create" is bound as an id → 404.
             Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
             Route::middleware('super_admin')->group(function () {
                 Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
                 Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
@@ -141,6 +141,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
                 Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
                 Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
             });
+            Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 
     // Batches management
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
