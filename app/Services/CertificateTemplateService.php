@@ -12,7 +12,13 @@ class CertificateTemplateService
 {
     public function generateHtml(Certificate $certificate): string
     {
-        $certificate->load(['student', 'course', 'batch', 'assessmentResult', 'enrollment']);
+        $certificate->load([
+            'student.trainingPartner',
+            'course',
+            'batch',
+            'assessmentResult',
+            'enrollment',
+        ]);
 
         $student = $certificate->student;
         $course = $certificate->course;
@@ -25,21 +31,19 @@ class CertificateTemplateService
             ->first();
         $enrollmentNumber = $enrollment?->enrollment_number ?? 'N/A';
 
-        // Student photo: use base64 data URI (like logo) for reliable loading in browser and DomPDF
-        $photoDoc = $student->documents()->where('document_type', 'photo')->first();
-        $studentPhotoUrl = null;
-        $studentPhotoPath = null;
-        if ($photoDoc && Storage::disk('public')->exists($photoDoc->file_path)) {
-            $photoFile = Storage::disk('public')->path($photoDoc->file_path);
-            if (file_exists($photoFile)) {
-                $photoData = base64_encode(file_get_contents($photoFile));
-                $mime = mime_content_type($photoFile) ?: 'image/jpeg';
-                $studentPhotoPath = 'data:' . $mime . ';base64,' . $photoData;
-                $studentPhotoUrl = $studentPhotoPath;
+        // Training partner logo (top-right, mirrors SoftPro logo). Omit if missing — space stays blank.
+        $trainingPartnerLogoPath = null;
+        $partner = $student->trainingPartner;
+        if ($partner && ! empty($partner->logo_path) && Storage::disk('public')->exists($partner->logo_path)) {
+            $tpLogoFile = Storage::disk('public')->path($partner->logo_path);
+            if (file_exists($tpLogoFile) && is_readable($tpLogoFile)) {
+                $tpLogoData = base64_encode(file_get_contents($tpLogoFile));
+                $mime = mime_content_type($tpLogoFile) ?: 'image/png';
+                $trainingPartnerLogoPath = 'data:' . $mime . ';base64,' . $tpLogoData;
             }
         }
 
-        // Logo: use data URI for reliable loading in browser, PDF, and saved HTML
+        // SoftPro logo: use data URI for reliable loading in browser, PDF, and saved HTML
         $logoPath = asset('images/logo/Logo_png.png');
         $logoFile = public_path('images/logo/Logo_png.png');
         if (file_exists($logoFile)) {
@@ -98,8 +102,7 @@ class CertificateTemplateService
             'course' => $course,
             'batch' => $batch,
             'enrollmentNumber' => $enrollmentNumber,
-            'studentPhotoUrl' => $studentPhotoUrl,
-            'studentPhotoPath' => $studentPhotoPath,
+            'trainingPartnerLogoPath' => $trainingPartnerLogoPath,
             'logoPath' => $logoPath,
             'salutation' => $salutation,
             'parentLabel' => $parentLabel,
@@ -165,8 +168,7 @@ class CertificateTemplateService
             'course' => $course,
             'batch' => $batch,
             'enrollmentNumber' => 'SP20260001',
-            'studentPhotoUrl' => null,
-            'studentPhotoPath' => null,
+            'trainingPartnerLogoPath' => null,
             'logoPath' => $logoPath,
             'salutation' => 'Ms.',
             'parentLabel' => 'D/o',

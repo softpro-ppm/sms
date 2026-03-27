@@ -87,18 +87,22 @@
             height: 22mm;
             width: auto;
         }
+        .header-tp-logo {
+            position: absolute;
+            top: 1mm;
+            right: 0;
+            height: 22mm;
+            width: auto;
+            max-height: 22mm;
+            object-fit: contain;
+            object-position: right center;
+        }
         .header-institute {
             position: absolute;
             top: 2mm;
             left: 30mm;
             right: 30mm;
             text-align: center;
-        }
-        .header-photo {
-            position: absolute;
-            top: 0;
-            right: 0;
-            text-align: right;
         }
         .institute-name {
             font-size: 16pt;
@@ -109,15 +113,6 @@
         }
         .institute-tagline { font-size: 9pt; color: #6b5344; letter-spacing: 2px; }
         .institute-website { font-size: 9pt; color: #8b7355; }
-        .photo-box {
-            width: 22mm;
-            height: 28mm;
-            border: 2px solid #8b7355;
-            background: #ffffff;
-            overflow: hidden;
-        }
-        .photo-box img { width: 22mm; height: 28mm; object-fit: cover; }
-        .enrollment-badge { font-size: 7pt; color: #6b5344; font-weight: 600; }
 
         /* 2) TITLE: top 28mm, height 20mm */
         .section-title {
@@ -363,7 +358,6 @@
         @media print {
             html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
             .certificate { box-shadow: none; background: #ffffff !important; }
-            .photo-box { background: #ffffff !important; }
         }
     </style>
 </head>
@@ -383,13 +377,8 @@
                     <div class="institute-tagline">Skill Development &amp; Training Institute</div>
                     <div class="institute-website">www.softpro.co.in</div>
                 </div>
-                @if($studentPhotoUrl)
-                <div class="header-photo">
-                    <div class="photo-box">
-                        <img src="{{ $studentPhotoPath }}" alt="">
-                    </div>
-                    <div class="enrollment-badge">Enrol. {{ $enrollmentNumber }}</div>
-                </div>
+                @if(!empty($trainingPartnerLogoPath))
+                <img src="{{ $trainingPartnerLogoPath }}" alt="" class="header-tp-logo">
                 @endif
             </div>
 
