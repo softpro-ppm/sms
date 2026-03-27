@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppLogsController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
+use App\Http\Controllers\Admin\TpImpersonationController;
 use App\Http\Controllers\Admin\ForcePasswordController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
 use App\Http\Controllers\Auth\LoginController;
@@ -76,12 +77,13 @@ Route::get('/verify/{enrollment_no}/photo', [StudentVerificationController::clas
 Route::redirect('/public/student-verification', '/verify', 301);
 Route::post('/public/student-verification/search', [StudentVerificationController::class, 'search'])->name('public.student-verification.search');
 
-// Admin routes (Admin, Reception, Super Admin for Courses/Exams)
+// Admin routes (TP staff + Super Admin for operational pages; catalogue routes exclude Super Admin — use TP admin).
 Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/first-login-password', [ForcePasswordController::class, 'show'])->name('password.force');
     Route::post('/first-login-password', [ForcePasswordController::class, 'update'])->name('password.force.update');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/impersonation/leave', [TpImpersonationController::class, 'leave'])->name('impersonation.leave');
     Route::post('/dashboard/dismiss-catalog-onboarding', [DashboardController::class, 'dismissCatalogOnboarding'])
         ->name('dashboard.dismiss-catalog-onboarding');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
@@ -132,10 +134,12 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
             Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
             Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
     
-            // Courses: list/show for all staff; create/edit/delete for centre Admin & platform Super Admin only (not Reception).
-            // Static paths (/courses/create) must be registered before /courses/{course} or "create" is bound as an id → 404.
-            Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            Route::middleware('role:admin,super_admin')->group(function () {
+            // Courses: list/show for TP admin & reception only (not Super Admin). CUD: centre admin only.
+            // Register /courses/create before /courses/{course} so "create" is not captured as an id.
+            Route::middleware('role:admin,reception')->group(function () {
+                Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+            });
+            Route::middleware('role:admin')->group(function () {
                 Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
                 Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
                 Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
@@ -143,7 +147,9 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
                 Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
                 Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
             });
-            Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+            Route::middleware('role:admin,reception')->group(function () {
+                Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+            });
 
     // Batches management
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
@@ -158,8 +164,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::patch('/batches/{batch}/toggle-status', [BatchController::class, 'toggleStatus'])->name('batches.toggle-status');
     Route::get('/api/batches/by-course', [BatchController::class, 'getBatchesByCourse'])->name('batches.by-course');
     
-    // Assessments (Exams) — centre Admin & Super Admin only (not Reception).
-    Route::middleware('role:admin,super_admin')->group(function () {
+    // Assessments (Exams) — TP centre admin only (not Reception, not Super Admin).
+    Route::middleware('role:admin')->group(function () {
         Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
         Route::get('/assessments/create', [AssessmentController::class, 'create'])->name('assessments.create');
         Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
@@ -171,8 +177,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/api/assessments/batches/by-course', [AssessmentController::class, 'getBatchesByCourse'])->name('assessments.batches-by-course');
     });
 
-    // Question Banks — centre Admin & Super Admin only (not Reception).
-    Route::middleware('role:admin,super_admin')->group(function () {
+    // Question Banks — TP centre admin only (not Reception, not Super Admin).
+    Route::middleware('role:admin')->group(function () {
         Route::get('/question-banks', [QuestionBankController::class, 'index'])->name('question-banks.index');
         Route::get('/question-banks/create', [QuestionBankController::class, 'create'])->name('question-banks.create');
         Route::post('/question-banks', [QuestionBankController::class, 'store'])->name('question-banks.store');
@@ -255,6 +261,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
 // Super Admin routes (Platform owner – Training Partner management)
 Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.super.')->group(function () {
     Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
+    Route::post('training-partners/{training_partner}/impersonate', [TpImpersonationController::class, 'start'])->name('training-partners.impersonate');
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
     Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');

@@ -11,6 +11,15 @@
             <p class="text-gray-600 mt-1">{{ $trainingPartner->code ?: '—' }} • Full activity (read-only)</p>
         </div>
         <div class="flex flex-wrap gap-2">
+            @if($canImpersonate)
+            <form method="POST" action="{{ route('admin.super.training-partners.impersonate', $trainingPartner) }}" class="inline"
+                  onsubmit="return confirm('Open this centre as its admin? You will see their dashboard and catalogue.');">
+                @csrf
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-amber-500 text-amber-950 rounded-lg hover:bg-amber-400 font-medium">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Open as centre admin
+                </button>
+            </form>
+            @endif
             <a href="{{ route('admin.super.training-partners.show', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                 <i class="fas fa-building mr-2"></i>Partner profile

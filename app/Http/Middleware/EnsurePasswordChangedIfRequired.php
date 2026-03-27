@@ -18,6 +18,11 @@ class EnsurePasswordChangedIfRequired
             return $next($request);
         }
 
+        // Super Admin “view as centre” — skip force-password for the impersonated staff session
+        if ($request->session()->has('impersonation')) {
+            return $next($request);
+        }
+
         if (!in_array($user->role, ['admin', 'reception'], true)) {
             return $next($request);
         }

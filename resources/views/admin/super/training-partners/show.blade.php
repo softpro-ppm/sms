@@ -28,6 +28,15 @@
                 <i class="fas fa-plus-circle mr-2"></i>Recharge
             </button>
             @endif
+            @if(in_array($trainingPartner->status, ['active', 'suspended']) && $trainingPartner->users->where('role', 'admin')->where('is_active', true)->isNotEmpty())
+            <form method="POST" action="{{ route('admin.super.training-partners.impersonate', $trainingPartner) }}" class="inline"
+                  onsubmit="return confirm('Open this centre as its admin? You will see their dashboard and catalogue.');">
+                @csrf
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-amber-500 text-amber-950 rounded-lg hover:bg-amber-400 font-medium">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Open as centre admin
+                </button>
+            </form>
+            @endif
             @if(in_array($trainingPartner->status, ['active', 'suspended']))
             <a href="{{ route('admin.super.training-partners.staff.create', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -116,9 +125,19 @@
             @if($trainingPartner->users->isNotEmpty())
             <ul class="divide-y divide-gray-200">
                 @foreach($trainingPartner->users as $user)
-                <li class="px-6 py-3 flex items-center justify-between">
+                <li class="px-6 py-3 flex flex-wrap items-center justify-between gap-2">
                     <span class="text-sm font-medium text-gray-900">{{ $user->name }}</span>
-                    <span class="text-xs text-gray-500">{{ $user->email }} • {{ ucfirst($user->role) }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500">{{ $user->email }} • {{ ucfirst($user->role) }}</span>
+                        @if($user->role === 'admin' && $user->is_active)
+                        <form method="POST" action="{{ route('admin.super.training-partners.impersonate', $trainingPartner) }}" class="inline"
+                              onsubmit="return confirm('Sign in as {{ $user->name }}?');">
+                            @csrf
+                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                            <button type="submit" class="text-xs font-semibold text-amber-700 hover:text-amber-900 underline">Enter as</button>
+                        </form>
+                        @endif
+                    </div>
                 </li>
                 @endforeach
             </ul>

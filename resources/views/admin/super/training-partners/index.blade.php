@@ -111,6 +111,13 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
+                                @if($partner->has_active_admin && in_array($partner->status, ['active', 'suspended'], true))
+                                <form method="POST" action="{{ route('admin.super.training-partners.impersonate', $partner) }}" class="inline"
+                                      onsubmit="return confirm('Open {{ $partner->name }} as its centre admin?');" title="Open as centre admin">
+                                    @csrf
+                                    <button type="submit" class="text-amber-600 hover:text-amber-800"><i class="fas fa-sign-in-alt"></i></button>
+                                </form>
+                                @endif
                                 <a href="{{ route('admin.super.training-partners.show', $partner) }}" class="text-primary-600 hover:text-primary-800" title="View"><i class="fas fa-eye"></i></a>
                                 <a href="{{ route('admin.super.training-partners.edit', $partner) }}" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fas fa-edit"></i></a>
                                 @if(!$partner->is_hq)

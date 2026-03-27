@@ -32,7 +32,10 @@ class TrainingPartnerController extends Controller
         $type = $request->get('type', '');
         $status = $request->get('status', '');
 
-        $query = TrainingPartner::withCount(['users', 'students']);
+        $query = TrainingPartner::withCount(['users', 'students'])
+            ->withExists([
+                'users as has_active_admin' => fn ($q) => $q->where('role', 'admin')->where('is_active', true),
+            ]);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -161,6 +164,13 @@ class TrainingPartnerController extends Controller
             ->limit(30)
             ->get();
 
+        $canImpersonate = in_array($trainingPartner->status, ['active', 'suspended'], true)
+            && User::query()
+                ->where('training_partner_id', $tpId)
+                ->where('role', 'admin')
+                ->where('is_active', true)
+                ->exists();
+
         return view('admin.super.training-partners.activity', compact(
             'trainingPartner',
             'stats',
@@ -168,7 +178,8 @@ class TrainingPartnerController extends Controller
             'recentStudents',
             'recentPayments',
             'recentResults',
-            'recentCertificates'
+            'recentCertificates',
+            'canImpersonate'
         ));
     }
 

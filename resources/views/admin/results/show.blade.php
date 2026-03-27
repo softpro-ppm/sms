@@ -180,11 +180,17 @@
                         View Student
                     </a>
                     
+                    @unless(auth()->user()->is_super_admin)
                     <a href="{{ route('admin.assessments.show', $result->assessment) }}" 
                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
                         <i class="fas fa-clipboard-list mr-2"></i>
                         View Exam
                     </a>
+                    @else
+                    <p class="w-full text-center text-sm text-gray-500 px-2 py-2 border border-dashed border-gray-200 rounded-lg">
+                        Exam details are available when signed in as that centre&rsquo;s admin (catalogue is not on the Super Admin account).
+                    </p>
+                    @endunless
 
                     @if($result->is_passed)
                     <a href="#" 

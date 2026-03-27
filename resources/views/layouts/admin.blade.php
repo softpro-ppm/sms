@@ -153,7 +153,16 @@
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
-    <div class="flex h-screen"
+    @if(session()->has('impersonation'))
+    <div class="fixed top-0 left-0 right-0 z-[60] bg-amber-400 text-amber-950 px-3 py-2.5 flex flex-wrap items-center justify-center gap-3 text-sm shadow-md border-b border-amber-500">
+        <span class="text-center"><i class="fas fa-user-secret mr-1" aria-hidden="true"></i> Viewing <strong>{{ session('impersonation.training_partner_name') }}</strong> as {{ auth()->user()->name }}. Actions in this session affect this partner only.</span>
+        <form method="POST" action="{{ route('admin.impersonation.leave') }}" class="shrink-0">
+            @csrf
+            <button type="submit" class="px-3 py-1.5 bg-amber-950 text-amber-50 rounded-lg text-xs font-semibold hover:bg-black transition-colors">Return to Super Admin</button>
+        </form>
+    </div>
+    @endif
+    <div class="flex h-screen @if(session()->has('impersonation')) pt-11 @endif"
          x-data="{ sidebarOpen: false }"
          x-init="if (window.innerWidth >= 768) { sidebarOpen = false }"
          @resize.window="if (window.innerWidth >= 768) { sidebarOpen = false }"
@@ -178,7 +187,7 @@
             <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-6">
                 <ul class="space-y-2">
                     @if(auth()->user()->is_super_admin)
-                    {{-- Super Admin navigation - Platform owner: creates Courses & Exams --}}
+                    {{-- Super Admin: platform & TPs only; catalogue (courses / question banks / exams) is TP-scoped — use a TP admin login. --}}
                     <li>
                         <a href="{{ route('admin.super.dashboard') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.dashboard') ? 'active' : '' }}">
@@ -191,27 +200,6 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.training-partners.*') ? 'active' : '' }}">
                             <i class="fas fa-building w-5 h-5 mr-3"></i>
                             <span>Training Partners</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.courses.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-                            <i class="fas fa-book w-5 h-5 mr-3"></i>
-                            <span>Courses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.question-banks.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.question-banks.*') ? 'active' : '' }}">
-                            <i class="fas fa-database w-5 h-5 mr-3"></i>
-                            <span>Question Banks</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.assessments.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.assessments.*') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
-                            <span>Exams</span>
                         </a>
                     </li>
                     @else
