@@ -22,49 +22,129 @@
         </div>
     </div>
 
-    @if(!empty($onboarding) && $onboarding['show'])
-    <div class="bg-white border-l-4 border-primary-500 rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">Get started — your catalogue is empty</h3>
-        <p class="text-gray-600 text-sm mb-4">Build your centre in order: courses → batches → question bank &amp; exams → students → enrollments → payments. You start with one admin login; add reception later from Settings → Staff if you need it.</p>
-        <ol class="space-y-3 text-sm text-gray-800 list-decimal list-inside">
-            <li class="{{ !empty($onboarding['course_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['course_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.courses.create') }}" class="font-semibold text-primary-700 hover:underline">Create a course</a>
-                <span class="text-gray-600">— fees, duration, and assessment settings.</span>
-            </li>
-            <li class="{{ !empty($onboarding['batch_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['batch_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.batches.create') }}" class="font-semibold text-primary-700 hover:underline">Add a batch</a>
-                <span class="text-gray-600">— link it to a course.</span>
-            </li>
-            <li class="{{ !empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.question-banks.create') }}" class="font-semibold text-primary-700 hover:underline">Question bank</a>
-                <span class="text-gray-600">— then</span>
-                <a href="{{ route('admin.assessments.create') }}" class="font-semibold text-primary-700 hover:underline">exam</a>
-                <span class="text-gray-600">for the same course.</span>
-            </li>
-            <li class="{{ !empty($onboarding['student_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['student_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.students.create') }}" class="font-semibold text-primary-700 hover:underline">Register students</a>
-                <span class="text-gray-600">— approve when ready.</span>
-            </li>
-            <li class="{{ !empty($onboarding['enrollment_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['enrollment_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.batches.index') }}" class="font-semibold text-primary-700 hover:underline">Enroll in a batch</a>
-                <span class="text-gray-600">— open a batch and add students.</span>
-            </li>
-            <li class="{{ !empty($onboarding['payment_done']) ? 'text-green-800' : '' }}">
-                @if(!empty($onboarding['payment_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.payments.create') }}" class="font-semibold text-primary-700 hover:underline">Record payment</a>
-                <span class="text-gray-600">— optional once enrollments exist.</span>
-            </li>
-            <li class="text-gray-700">
-                <a href="{{ route('admin.settings.users.index') }}" class="font-semibold text-primary-700 hover:underline">Staff</a>
-                <span class="text-gray-600">— add a reception account later if needed (only admin is created for a new partner initially).</span>
-            </li>
-        </ol>
+    @if(!empty($onboarding['show_modal']))
+    @php
+        $incomplete = (int) ! $onboarding['course_done']
+            + (int) ! $onboarding['batch_done']
+            + (int) ! $onboarding['question_bank_done']
+            + (int) ! $onboarding['exam_done']
+            + (int) ! $onboarding['student_done']
+            + (int) ! $onboarding['enrollment_done'];
+    @endphp
+    <div id="catalog-onboarding-modal"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="catalog-onboarding-title"
+         data-show="1">
+        <div id="catalog-onboarding-backdrop" class="absolute inset-0 bg-slate-900/65 backdrop-blur-sm transition-opacity cursor-pointer" aria-hidden="true"></div>
+        <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-[0_25px_80px_-12px_rgba(0,0,0,0.35)] ring-1 ring-slate-200/80 transform transition-all"
+             style="animation: catalogModalIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards">
+            <div class="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 px-6 py-8 text-white">
+                <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 20%, #fff 0%, transparent 45%), radial-gradient(circle at 80% 0%, #f0abfc 0%, transparent 40%);"></div>
+                <div class="relative flex items-start gap-4">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/20">
+                        <i class="fas fa-rocket text-2xl text-white"></i>
+                    </div>
+                    <div class="min-w-0 flex-1 pt-0.5">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-primary-100/90">New centre setup</p>
+                        <h2 id="catalog-onboarding-title" class="mt-1 text-xl font-bold leading-tight sm:text-2xl">Get started — your catalogue is empty</h2>
+                        <p class="mt-2 text-sm text-primary-100/95 leading-relaxed">
+                            Build in order: <span class="font-semibold text-white">courses → batches → question bank &amp; exams → students → enrollments</span>. Add reception later from Settings → Staff if needed.
+                        </p>
+                        <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/10">
+                            <span class="flex h-2 w-2 rounded-full bg-amber-300 animate-pulse"></span>
+                            @if($incomplete === 0)
+                                Core setup complete — close when you&rsquo;re ready
+                            @else
+                                {{ $incomplete }} {{ \Illuminate\Support\Str::plural('step', $incomplete) }} left to finish core setup
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="max-h-[min(28rem,55vh)] overflow-y-auto px-6 py-5">
+                <ul class="space-y-3 text-sm">
+                    <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['course_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ !empty($onboarding['course_done']) ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-700' }}">
+                            @if(!empty($onboarding['course_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
+                        </span>
+                        <div>
+                            <a href="{{ route('admin.courses.create') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Create a course</a>
+                            <p class="text-slate-600 text-xs mt-0.5">Fees, duration, and assessment settings.</p>
+                        </div>
+                    </li>
+                    <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['batch_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ !empty($onboarding['batch_done']) ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-700' }}">
+                            @if(!empty($onboarding['batch_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
+                        </span>
+                        <div>
+                            <a href="{{ route('admin.batches.create') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Add a batch</a>
+                            <p class="text-slate-600 text-xs mt-0.5">Link it to your course.</p>
+                        </div>
+                    </li>
+                    <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ !empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']) ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-700' }}">
+                            @if(!empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
+                        </span>
+                        <div>
+                            <span class="font-semibold text-slate-800">Question bank &amp; exam</span>
+                            <p class="text-slate-600 text-xs mt-1">
+                                <a href="{{ route('admin.question-banks.create') }}" class="text-primary-700 font-medium hover:underline">Question bank</a>
+                                <span class="text-slate-400"> · </span>
+                                <a href="{{ route('admin.assessments.create') }}" class="text-primary-700 font-medium hover:underline">Exam</a>
+                                <span class="text-slate-500"> — same course.</span>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['student_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ !empty($onboarding['student_done']) ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-700' }}">
+                            @if(!empty($onboarding['student_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
+                        </span>
+                        <div>
+                            <a href="{{ route('admin.students.create') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Register students</a>
+                            <p class="text-slate-600 text-xs mt-0.5">Approve when ready.</p>
+                        </div>
+                    </li>
+                    <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['enrollment_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ !empty($onboarding['enrollment_done']) ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-700' }}">
+                            @if(!empty($onboarding['enrollment_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
+                        </span>
+                        <div>
+                            <a href="{{ route('admin.batches.index') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Enroll in a batch</a>
+                            <p class="text-slate-600 text-xs mt-0.5">Open a batch and add students.</p>
+                        </div>
+                    </li>
+                    <li class="flex gap-3 rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-slate-600">
+                        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500"><i class="fas fa-plus text-xs"></i></span>
+                        <div>
+                            <span class="font-semibold text-slate-700">Optional</span>
+                            <p class="text-xs mt-1">
+                                <a href="{{ route('admin.payments.create') }}" class="text-primary-700 font-medium hover:underline">Record payment</a>
+                                <span class="text-slate-500"> · </span>
+                                <a href="{{ route('admin.settings.users.index') }}" class="text-primary-700 font-medium hover:underline">Add reception</a>
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+                <label class="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
+                    <input type="checkbox" id="catalog-onboarding-dont-show" class="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                    <span><span class="font-medium text-slate-800">Don&rsquo;t show this again</span><span class="block text-xs text-slate-500 mt-0.5">You can still set everything up from the sidebar. This only hides the reminder on dashboard login.</span></span>
+                </label>
+                <button type="button" id="catalog-onboarding-continue" class="mt-4 w-full rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                    Continue to dashboard
+                </button>
+            </div>
+        </div>
     </div>
+    <style>
+        @keyframes catalogModalIn {
+            from { opacity: 0; transform: translateY(1rem) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
     @endif
 
     <!-- Statistics Cards -->
@@ -260,10 +340,61 @@
 
 @section('scripts')
 <script>
-    // Auto-hide welcome banner after 7 seconds
     document.addEventListener('DOMContentLoaded', function() {
         const welcomeBanner = document.getElementById('welcome-banner');
-        if (welcomeBanner) {
+        const catalogModal = document.getElementById('catalog-onboarding-modal');
+        const catalogShows = catalogModal && catalogModal.dataset.show === '1';
+
+        if (catalogShows) {
+            catalogModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        const closeCatalogModal = () => {
+            if (!catalogModal) return;
+            catalogModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        const dismissUrl = @json(route('admin.dashboard.dismiss-catalog-onboarding'));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        const confirmCatalogContinue = document.getElementById('catalog-onboarding-continue');
+        if (confirmCatalogContinue) {
+            confirmCatalogContinue.addEventListener('click', async function () {
+                const permanent = document.getElementById('catalog-onboarding-dont-show')?.checked;
+                if (permanent && csrfToken) {
+                    try {
+                        await fetch(dismissUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: JSON.stringify({ dismiss_permanently: true }),
+                        });
+                    } catch (e) {
+                        console.warn('Dismiss catalogue onboarding failed', e);
+                    }
+                }
+                closeCatalogModal();
+            });
+        }
+
+        const backdrop = document.getElementById('catalog-onboarding-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', closeCatalogModal);
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && catalogModal && !catalogModal.classList.contains('hidden')) {
+                closeCatalogModal();
+            }
+        });
+
+        if (welcomeBanner && !catalogShows) {
             setTimeout(() => {
                 welcomeBanner.style.opacity = '0';
                 welcomeBanner.style.transform = 'translateY(-20px)';
@@ -271,8 +402,15 @@
                     welcomeBanner.style.display = 'none';
                 }, 500);
             }, 7000);
+        } else if (welcomeBanner && catalogShows) {
+            setTimeout(() => {
+                welcomeBanner.style.opacity = '0';
+                welcomeBanner.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    welcomeBanner.style.display = 'none';
+                }, 500);
+            }, 12000);
         }
     });
-
 </script>
 @endsection

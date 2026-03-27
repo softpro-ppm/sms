@@ -82,23 +82,51 @@ class DashboardController extends Controller
 
         $onboarding = null;
         if ($tpId !== null && ! auth()->user()->is_super_admin && auth()->user()->is_admin) {
+            $courseDone = Course::query()->visibleToTrainingPartner($tpId)->exists();
+            $batchDone = Batch::query()->visibleToTrainingPartner($tpId)->exists();
+            $questionBankDone = QuestionBank::query()
+                ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
+                ->exists();
+            $examDone = Assessment::query()
+                ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
+                ->exists();
+            $studentDone = $this->scopeStudents(Student::where('status', 'approved'))->exists();
+            $enrollmentDone = $this->scopeEnrollments(Enrollment::where('status', 'active'))->exists();
+
+            $allRequiredComplete = $courseDone && $batchDone && $questionBankDone && $examDone && $studentDone && $enrollmentDone;
+
             $onboarding = [
-                'show' => (int) $stats['total_students'] === 0 && (int) $stats['total_enrollments'] === 0,
-                'course_done' => Course::query()->visibleToTrainingPartner($tpId)->exists(),
-                'batch_done' => Batch::query()->visibleToTrainingPartner($tpId)->exists(),
-                'question_bank_done' => QuestionBank::query()
-                    ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
-                    ->exists(),
-                'exam_done' => Assessment::query()
-                    ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
-                    ->exists(),
-                'student_done' => $this->scopeStudents(Student::where('status', 'approved'))->exists(),
-                'enrollment_done' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->exists(),
+                'course_done' => $courseDone,
+                'batch_done' => $batchDone,
+                'question_bank_done' => $questionBankDone,
+                'exam_done' => $examDone,
+                'student_done' => $studentDone,
+                'enrollment_done' => $enrollmentDone,
                 'payment_done' => $this->scopePayments(Payment::where('status', 'approved'))->exists(),
+                'all_required_complete' => $allRequiredComplete,
+                'show_modal' => ! auth()->user()->dismiss_catalog_onboarding && ! $allRequiredComplete,
             ];
         }
 
         return view('admin.dashboard', compact('stats', 'recentActivities', 'chartData', 'recentStudents', 'recentPayments', 'recentAssessments', 'onboarding'));
+    }
+
+    /**
+     * Persist “don’t show catalogue setup popup again” for this admin (TP centre).
+     */
+    public function dismissCatalogOnboarding(Request $request)
+    {
+        $user = auth()->user();
+        if (! $user->is_admin || $user->is_super_admin || $user->training_partner_id === null) {
+            abort(403);
+        }
+
+        $permanent = $request->boolean('dismiss_permanently');
+        if ($permanent) {
+            $user->forceFill(['dismiss_catalog_onboarding' => true])->save();
+        }
+
+        return response()->json(['ok' => true, 'dismissed_permanently' => $permanent]);
     }
 
     private function getMonthlyEnrollments()

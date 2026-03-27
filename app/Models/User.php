@@ -27,6 +27,7 @@ class User extends Authenticatable
         'training_partner_id',
         'is_active',
         'must_change_password',
+        'dismiss_catalog_onboarding',
     ];
 
     /**
@@ -51,6 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'dismiss_catalog_onboarding' => 'boolean',
         ];
     }
 

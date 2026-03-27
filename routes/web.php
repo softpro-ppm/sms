@@ -82,6 +82,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/first-login-password', [ForcePasswordController::class, 'update'])->name('password.force.update');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/dismiss-catalog-onboarding', [DashboardController::class, 'dismissCatalogOnboarding'])
+        ->name('dashboard.dismiss-catalog-onboarding');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     
             // Students management

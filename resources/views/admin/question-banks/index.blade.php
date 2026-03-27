@@ -41,7 +41,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Total Questions</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $questions->total() }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $statsTotal ?? $questions->total() }}</p>
                 </div>
             </div>
         </div>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Active Questions</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ \App\Models\QuestionBank::where('is_active', true)->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $statsActive ?? 0 }}</p>
                 </div>
             </div>
         </div>

@@ -59,6 +59,9 @@ class QuestionBankController extends Controller
             });
         }
 
+        $statsTotal = (clone $query)->count();
+        $statsActive = (clone $query)->where('is_active', true)->count();
+
         $questions = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->appends($request->query());
@@ -74,7 +77,7 @@ class QuestionBankController extends Controller
         }
         $subjects = $subjectsQuery->pluck('subject');
 
-        return view('admin.question-banks.index', compact('questions', 'courses', 'subjects'));
+        return view('admin.question-banks.index', compact('questions', 'courses', 'subjects', 'statsTotal', 'statsActive'));
     }
 
     public function create()
