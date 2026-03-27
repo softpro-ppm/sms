@@ -85,7 +85,7 @@ class QuestionBankController extends Controller
         $tpId = $this->getTrainingPartnerId();
         $courses = Course::query()
             ->where('is_active', true)
-            ->visibleToTrainingPartner($tpId)
+            ->writableByTrainingPartner($tpId)
             ->orderBy('name')
             ->get();
 
@@ -113,7 +113,7 @@ class QuestionBankController extends Controller
         }
 
         $course = Course::findOrFail($request->course_id);
-        $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         QuestionBank::create($request->all());
 
@@ -131,11 +131,11 @@ class QuestionBankController extends Controller
 
     public function edit(QuestionBank $questionBank)
     {
-        $this->ensureQuestionBankAccessible($questionBank);
+        $this->ensureQuestionBankMutableByTrainingPartner($questionBank);
         $tpId = $this->getTrainingPartnerId();
         $courses = Course::query()
             ->where('is_active', true)
-            ->visibleToTrainingPartner($tpId)
+            ->writableByTrainingPartner($tpId)
             ->orderBy('name')
             ->get();
 
@@ -144,7 +144,7 @@ class QuestionBankController extends Controller
 
     public function update(Request $request, QuestionBank $questionBank)
     {
-        $this->ensureQuestionBankAccessible($questionBank);
+        $this->ensureQuestionBankMutableByTrainingPartner($questionBank);
         $validator = Validator::make($request->all(), [
             'course_id' => 'required|exists:courses,id',
             'subject' => 'required|string|max:100',
@@ -164,7 +164,7 @@ class QuestionBankController extends Controller
         }
 
         $course = Course::findOrFail($request->course_id);
-        $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         $questionBank->update($request->all());
 
@@ -174,7 +174,7 @@ class QuestionBankController extends Controller
 
     public function destroy(QuestionBank $questionBank)
     {
-        $this->ensureQuestionBankAccessible($questionBank);
+        $this->ensureQuestionBankMutableByTrainingPartner($questionBank);
         $questionBank->delete();
 
         return redirect()->route('admin.question-banks.index')
@@ -183,7 +183,7 @@ class QuestionBankController extends Controller
 
     public function toggleStatus(QuestionBank $questionBank)
     {
-        $this->ensureQuestionBankAccessible($questionBank);
+        $this->ensureQuestionBankMutableByTrainingPartner($questionBank);
         $questionBank->update(['is_active' => !$questionBank->is_active]);
 
         $status = $questionBank->is_active ? 'activated' : 'deactivated';
@@ -205,7 +205,7 @@ class QuestionBankController extends Controller
         }
 
         $course = Course::findOrFail($request->course_id);
-        $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         $file = $request->file('csv_file');
         // Default disk "local" root is storage/app/private — not storage/app. Must resolve path via Storage.

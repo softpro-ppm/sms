@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin\Concerns;
 
+use App\Models\Assessment;
 use App\Models\Course;
+use App\Models\QuestionBank;
 
 trait ScopesByTrainingPartner
 {
@@ -68,7 +70,7 @@ trait ScopesByTrainingPartner
     }
 
     /**
-     * TP admins may only access courses owned by their partner (not legacy platform rows).
+     * TP may access platform catalog courses and their own; not another partner's courses.
      */
     protected function ensureCourseAccessible(Course $course): void
     {
@@ -76,8 +78,41 @@ trait ScopesByTrainingPartner
         if ($tpId === null) {
             return;
         }
-        if ($course->training_partner_id === null || (int) $course->training_partner_id !== $tpId) {
+        $ownerId = $course->training_partner_id;
+        if ($ownerId !== null && (int) $ownerId !== $tpId) {
             abort(404);
         }
+        if ($ownerId === null && !Course::includePlatformCatalogForPartner($tpId)) {
+            abort(404);
+        }
+    }
+
+    /**
+     * Mutations to course rows or partner-owned curriculum: platform catalog is super-admin only.
+     */
+    protected function ensureTrainingPartnerOwnsCourse(Course $course): void
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId === null) {
+            return;
+        }
+        if ($course->training_partner_id === null) {
+            abort(403);
+        }
+        if ((int) $course->training_partner_id !== $tpId) {
+            abort(404);
+        }
+    }
+
+    protected function ensureQuestionBankMutableByTrainingPartner(QuestionBank $questionBank): void
+    {
+        $questionBank->loadMissing('course');
+        $this->ensureTrainingPartnerOwnsCourse($questionBank->course);
+    }
+
+    protected function ensureAssessmentMutableByTrainingPartner(Assessment $assessment): void
+    {
+        $assessment->loadMissing('course');
+        $this->ensureTrainingPartnerOwnsCourse($assessment->course);
     }
 }

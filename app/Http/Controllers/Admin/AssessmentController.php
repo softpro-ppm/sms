@@ -93,7 +93,7 @@ class AssessmentController extends Controller
         $tpId = $this->getTrainingPartnerId();
         $courses = Course::query()
             ->where('is_active', true)
-            ->visibleToTrainingPartner($tpId)
+            ->writableByTrainingPartner($tpId)
             ->orderBy('name')
             ->get();
 
@@ -119,7 +119,7 @@ class AssessmentController extends Controller
         }
 
         $course = Course::findOrFail($request->course_id);
-        $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         $assessment = Assessment::create([
             'title' => $request->title,
@@ -156,11 +156,11 @@ class AssessmentController extends Controller
 
     public function edit(Assessment $assessment)
     {
-        $this->ensureAssessmentAccessible($assessment);
+        $this->ensureAssessmentMutableByTrainingPartner($assessment);
         $tpId = $this->getTrainingPartnerId();
         $courses = Course::query()
             ->where('is_active', true)
-            ->visibleToTrainingPartner($tpId)
+            ->writableByTrainingPartner($tpId)
             ->orderBy('name')
             ->get();
 
@@ -169,7 +169,7 @@ class AssessmentController extends Controller
 
     public function update(Request $request, Assessment $assessment)
     {
-        $this->ensureAssessmentAccessible($assessment);
+        $this->ensureAssessmentMutableByTrainingPartner($assessment);
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -187,7 +187,7 @@ class AssessmentController extends Controller
         }
 
         $course = Course::findOrFail($request->course_id);
-        $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         $assessment->update([
             'title' => $request->title,
@@ -205,7 +205,7 @@ class AssessmentController extends Controller
 
     public function destroy(Assessment $assessment)
     {
-        $this->ensureAssessmentAccessible($assessment);
+        $this->ensureAssessmentMutableByTrainingPartner($assessment);
         if ($assessment->assessmentResults()->count() > 0) {
             return redirect()->back()
                 ->with('error', 'Cannot delete assessment with existing results. Please handle results first.');
@@ -219,7 +219,7 @@ class AssessmentController extends Controller
 
     public function toggleStatus(Assessment $assessment)
     {
-        $this->ensureAssessmentAccessible($assessment);
+        $this->ensureAssessmentMutableByTrainingPartner($assessment);
         $newStatus = !$assessment->is_active;
         $assessment->update(['is_active' => $newStatus]);
 

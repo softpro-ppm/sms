@@ -27,8 +27,53 @@ class Course extends Model
         'is_active' => 'boolean'
     ];
 
-    /** @param  \Illuminate\Database\Eloquent\Builder  $query */
-    public function scopeVisibleToTrainingPartner($query, ?int $trainingPartnerId)
+    /**
+     * Whether this partner sees Super Admin catalog courses (training_partner_id null). HQ yes; STANDARD no.
+     */
+    public static function includePlatformCatalogForPartner(?int $trainingPartnerId): bool
+    {
+        if ($trainingPartnerId === null) {
+            return true;
+        }
+
+        static $cache = [];
+
+        if (!array_key_exists($trainingPartnerId, $cache)) {
+            $cache[$trainingPartnerId] = TrainingPartner::query()
+                ->whereKey($trainingPartnerId)
+                ->value('type') === 'HQ';
+        }
+
+        return $cache[$trainingPartnerId];
+    }
+
+    /**
+     * Courses visible to a partner admin: always their own; plus platform catalog only for HQ partners.
+     *
+     * @param  ?bool  $includePlatformCatalog  null = derive from partner type (HQ vs STANDARD)
+     */
+    public function scopeVisibleToTrainingPartner($query, ?int $trainingPartnerId, ?bool $includePlatformCatalog = null)
+    {
+        if ($trainingPartnerId === null) {
+            return $query;
+        }
+
+        $includePlatformCatalog ??= static::includePlatformCatalogForPartner($trainingPartnerId);
+
+        if ($includePlatformCatalog) {
+            return $query->where(function ($q) use ($trainingPartnerId) {
+                $q->where('training_partner_id', $trainingPartnerId)
+                    ->orWhereNull('training_partner_id');
+            });
+        }
+
+        return $query->where('training_partner_id', $trainingPartnerId);
+    }
+
+    /**
+     * Courses a partner may edit or attach exclusive content to (question banks, assessments). Super admin: all.
+     */
+    public function scopeWritableByTrainingPartner($query, ?int $trainingPartnerId)
     {
         if ($trainingPartnerId === null) {
             return $query;

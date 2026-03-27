@@ -133,6 +133,7 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
 
         return view('admin.courses.edit', compact('course'));
     }
@@ -140,6 +141,7 @@ class CourseController extends Controller
     public function update(Request $request, Course $course)
     {
         $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
         $ownerTpId = $course->training_partner_id;
         $validator = Validator::make($request->all(), [
             'name' => [
@@ -185,6 +187,7 @@ class CourseController extends Controller
     public function destroy(Course $course)
     {
         $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
         if ($course->batches()->count() > 0) {
             return redirect()->back()
                 ->with('error', 'Cannot delete course with existing batches. Please delete batches first.');
@@ -204,6 +207,7 @@ class CourseController extends Controller
     public function toggleStatus(Course $course)
     {
         $this->ensureCourseAccessible($course);
+        $this->ensureTrainingPartnerOwnsCourse($course);
         $course->update(['is_active' => !$course->is_active]);
 
         $status = $course->is_active ? 'activated' : 'deactivated';
