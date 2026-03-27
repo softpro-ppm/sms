@@ -21,12 +21,16 @@ class DashboardController extends Controller
 
     public function index()
     {
+        $tpId = $this->getTrainingPartnerId();
+
         // Live Statistics Cards (TP-scoped for students, enrollments, payments, certificates)
         $stats = [
             'total_students' => $this->scopeStudents(Student::where('status', 'approved'))->count(),
             'pending_students' => $this->scopeStudents(Student::where('status', 'pending'))->count(),
             'total_courses' => Course::where('is_active', true)->count(),
-            'active_batches' => Batch::where('is_active', true)
+            'active_batches' => Batch::query()
+                ->visibleToTrainingPartner($tpId)
+                ->where('is_active', true)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->count(),
@@ -169,7 +173,9 @@ class DashboardController extends Controller
             ? fn ($q) => $q->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
             : fn ($q) => $q->where('status', 'active');
 
-        return Batch::with(['course', 'enrollments'])
+        return Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->with(['course', 'enrollments'])
             ->withCount(['enrollments' => $enrollmentFilter])
             ->where('end_date', '<=', now())
             ->orderBy('enrollments_count', 'desc')

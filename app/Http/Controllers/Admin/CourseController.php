@@ -28,12 +28,7 @@ class CourseController extends Controller
         $query = Course::query();
         if ($tpId !== null) {
             $query->withCount([
-                'batches as batches_count' => function ($q) use ($tpId) {
-                    $q->whereHas('enrollments', function ($eq) use ($tpId) {
-                        $eq->where('status', 'active')
-                            ->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId));
-                    });
-                },
+                'batches as batches_count' => fn ($q) => $q->visibleToTrainingPartner($tpId),
                 'enrollments as enrollments_count' => $enrollmentFilter,
             ]);
         } else {
@@ -58,10 +53,7 @@ class CourseController extends Controller
             'total_courses' => Course::count(),
             'active_courses' => Course::where('is_active', true)->count(),
             'total_batches' => $tpId !== null
-                ? Batch::whereHas('enrollments', function ($eq) use ($tpId) {
-                    $eq->where('status', 'active')
-                        ->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId));
-                })->count()
+                ? Batch::query()->visibleToTrainingPartner($tpId)->count()
                 : Batch::count(),
             'total_enrollments' => $tpId !== null
                 ? Enrollment::where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))->count()

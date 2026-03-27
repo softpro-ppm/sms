@@ -25,7 +25,12 @@ class ReportsController extends Controller
         $perPage = $this->parsePerPage($request, 10);
 
         $courses = Course::where('is_active', true)->orderBy('name')->get();
-        $batches = Batch::where('is_active', true)->orderBy('batch_name')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('is_active', true)
+            ->orderBy('batch_name')
+            ->get();
         $assessments = Assessment::where('is_active', true)->orderBy('title')->get();
 
         $viewData = [

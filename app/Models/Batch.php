@@ -10,11 +10,12 @@ class Batch extends Model
 {
     protected $fillable = [
         'course_id',
+        'training_partner_id',
         'batch_name',
         'start_date',
         'end_date',
         'max_students',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -27,6 +28,26 @@ class Batch extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function trainingPartner(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPartner::class);
+    }
+
+    /**
+     * Batches a training partner may see: owned by them, or legacy/shared rows they have enrollments under.
+     */
+    public function scopeVisibleToTrainingPartner($query, ?int $trainingPartnerId)
+    {
+        if ($trainingPartnerId === null) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($trainingPartnerId) {
+            $q->where('training_partner_id', $trainingPartnerId)
+                ->orWhereHas('enrollments.student', fn ($s) => $s->where('training_partner_id', $trainingPartnerId));
+        });
     }
 
     public function enrollments(): HasMany

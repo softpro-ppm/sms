@@ -87,10 +87,7 @@ class SettingsController extends Controller
                     })
                     ->count(),
                 'total_batches' => Batch::query()
-                    ->whereHas('enrollments', function ($eq) use ($tpId) {
-                        $eq->where('status', 'active')
-                            ->whereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
-                    })
+                    ->visibleToTrainingPartner($tpId)
                     ->count(),
                 'total_assessments' => Assessment::query()
                     ->whereHas('assessmentResults.student', fn ($s) => $s->where('training_partner_id', $tpId))

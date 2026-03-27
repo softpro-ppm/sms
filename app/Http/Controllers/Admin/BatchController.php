@@ -20,6 +20,39 @@ class BatchController extends Controller
 {
     use ScopesByTrainingPartner;
 
+    protected function ensureBatchAccessible(Batch $batch): void
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId === null) {
+            return;
+        }
+        $ok = Batch::query()->whereKey($batch->id)->visibleToTrainingPartner($tpId)->exists();
+        if (!$ok) {
+            abort(404);
+        }
+    }
+
+    /**
+     * Batch names are unique per (course, owner): platform rows use null training_partner_id.
+     * On update, pass the row's owner id (not the editor's) so super admins validate correctly.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function batchesForNameUniquenessScope(int $courseId, ?int $excludeBatchId, ?int $ownerTrainingPartnerId)
+    {
+        $q = Batch::where('course_id', $courseId);
+        if ($ownerTrainingPartnerId === null) {
+            $q->whereNull('training_partner_id');
+        } else {
+            $q->where('training_partner_id', $ownerTrainingPartnerId);
+        }
+        if ($excludeBatchId !== null) {
+            $q->where('id', '!=', $excludeBatchId);
+        }
+
+        return $q;
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
@@ -31,7 +64,9 @@ class BatchController extends Controller
             ? fn ($q) => $q->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
             : fn ($q) => $q->where('status', 'active');
 
-        $query = Batch::with(['course'])
+        $query = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->with(['course'])
             ->withCount(['enrollments' => $enrollmentCountFilter]);
 
         if ($search !== '') {
@@ -57,10 +92,13 @@ class BatchController extends Controller
             ->orderByDesc('start_date')
             ->paginate($perPage)
             ->appends($request->query());
+
+        $statsBase = fn () => Batch::query()->visibleToTrainingPartner($tpId);
         $stats = [
-            'total_batches' => Batch::count(),
-            'active_batches' => Batch::where('is_active', true)->count(),
-            'running_batches' => Batch::whereDate('start_date', '<=', $today)
+            'total_batches' => $statsBase()->count(),
+            'active_batches' => $statsBase()->where('is_active', true)->count(),
+            'running_batches' => $statsBase()
+                ->whereDate('start_date', '<=', $today)
                 ->whereDate('end_date', '>=', $today)
                 ->count(),
             'total_students' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->count(),
@@ -96,8 +134,11 @@ class BatchController extends Controller
                 ->withInput();
         }
 
-        // Check if batch name already exists for this course
-        $existingBatch = Batch::where('course_id', $request->course_id)
+        $existingBatch = $this->batchesForNameUniquenessScope(
+            (int) $request->course_id,
+            null,
+            $this->getTrainingPartnerId()
+        )
             ->where('batch_name', $request->batch_name)
             ->first();
 
@@ -106,7 +147,11 @@ class BatchController extends Controller
             $course = Course::find($request->course_id);
             
             // Suggest alternative batch names
-            $existingBatches = Batch::where('course_id', $request->course_id)
+            $existingBatches = $this->batchesForNameUniquenessScope(
+                (int) $request->course_id,
+                null,
+                $this->getTrainingPartnerId()
+            )
                 ->pluck('batch_name')
                 ->toArray();
             
@@ -134,6 +179,7 @@ class BatchController extends Controller
 
         $batch = Batch::create([
             'course_id' => $request->course_id,
+            'training_partner_id' => $this->getTrainingPartnerId(),
             'batch_name' => $request->batch_name,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
@@ -147,6 +193,7 @@ class BatchController extends Controller
 
     public function show(Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $batch->load(['course', 'enrollments.student']);
         $tpId = $this->getTrainingPartnerId();
         if ($tpId !== null) {
@@ -158,6 +205,7 @@ class BatchController extends Controller
 
     public function edit(Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $courses = Course::where('is_active', true)->orderBy('name')->get();
         return response()
             ->view('admin.batches.edit', compact('batch', 'courses'))
@@ -168,6 +216,7 @@ class BatchController extends Controller
 
     public function update(Request $request, Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $validator = Validator::make($request->all(), [
             'course_id' => 'required|exists:courses,id',
             'batch_name' => 'required|string|max:255',
@@ -183,10 +232,11 @@ class BatchController extends Controller
                 ->withInput();
         }
 
-        // Check if batch name already exists for this course (excluding current batch)
-        $existingBatch = Batch::where('course_id', $request->course_id)
+        $batchOwnerTpId = $batch->training_partner_id !== null
+            ? (int) $batch->training_partner_id
+            : null;
+        $existingBatch = $this->batchesForNameUniquenessScope((int) $request->course_id, $batch->id, $batchOwnerTpId)
             ->where('batch_name', $request->batch_name)
-            ->where('id', '!=', $batch->id)
             ->first();
 
         if ($existingBatch) {
@@ -194,8 +244,7 @@ class BatchController extends Controller
             $course = Course::find($request->course_id);
             
             // Suggest alternative batch names
-            $existingBatches = Batch::where('course_id', $request->course_id)
-                ->where('id', '!=', $batch->id)
+            $existingBatches = $this->batchesForNameUniquenessScope((int) $request->course_id, $batch->id, $batchOwnerTpId)
                 ->pluck('batch_name')
                 ->toArray();
             
@@ -236,6 +285,7 @@ class BatchController extends Controller
 
     public function destroy(Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         // Check if batch has any enrollments
         if ($batch->enrollments()->count() > 0) {
             return redirect()->back()
@@ -250,6 +300,7 @@ class BatchController extends Controller
 
     public function toggleStatus(Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $batch->update(['is_active' => !$batch->is_active]);
         
         $status = $batch->is_active ? 'activated' : 'deactivated';
@@ -264,6 +315,7 @@ class BatchController extends Controller
      */
     public function enrollStudents(Request $request, Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $batch->load('course');
 
         // Check batch capacity
@@ -309,6 +361,7 @@ class BatchController extends Controller
      */
     public function storeEnrollments(Request $request, Batch $batch)
     {
+        $this->ensureBatchAccessible($batch);
         $validator = Validator::make($request->all(), [
             'student_ids' => 'required|array',
             'student_ids.*' => 'required|exists:students,id',
@@ -424,7 +477,10 @@ class BatchController extends Controller
             return response()->json([]);
         }
 
-        $batches = Batch::where('course_id', $courseId)
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('course_id', $courseId)
             ->where('is_active', true)
             ->where(function ($query) {
                 $today = Carbon::today();

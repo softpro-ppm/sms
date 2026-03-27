@@ -80,7 +80,12 @@ class CertificatesController extends Controller
         
         // Get filter options
         $courses = Course::where('is_active', true)->orderBy('name')->get();
-        $batches = Batch::where('is_active', true)->orderBy('batch_name')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('is_active', true)
+            ->orderBy('batch_name')
+            ->get();
 
         // Get statistics (TP-scoped)
         $baseQuery = $this->scopeCertificates(Certificate::query());
@@ -207,7 +212,12 @@ class CertificatesController extends Controller
     {
         $students = $this->scopeStudents(Student::where('status', 'approved')->orderBy('full_name'))->get();
         $courses = Course::where('is_active', true)->orderBy('name')->get();
-        $batches = Batch::where('is_active', true)->orderBy('batch_name')->get();
+        $createTpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($createTpId)
+            ->where('is_active', true)
+            ->orderBy('batch_name')
+            ->get();
         $assessmentResults = $this->scopeAssessmentResults(
             AssessmentResult::where('is_passed', true)->with(['student', 'assessment'])->orderBy('completed_at', 'desc')
         )->get();
@@ -230,6 +240,16 @@ class CertificatesController extends Controller
         $tpId = $this->getTrainingPartnerId();
         if (!$student || ($tpId !== null && (int) $student->training_partner_id !== $tpId)) {
             abort(404);
+        }
+
+        if ($request->filled('batch_id') && $tpId !== null) {
+            $batchOk = Batch::query()
+                ->whereKey((int) $request->batch_id)
+                ->visibleToTrainingPartner($tpId)
+                ->exists();
+            if (!$batchOk) {
+                abort(404);
+            }
         }
 
         // Check if certificate already exists for this student and course
@@ -280,7 +300,10 @@ class CertificatesController extends Controller
     public function getBatchesByCourse(Request $request)
     {
         $courseId = $request->course_id;
-        $batches = Batch::where('course_id', $courseId)
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('course_id', $courseId)
             ->where('is_active', true)
             ->where(function ($query) {
                 $today = Carbon::today();

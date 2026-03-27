@@ -29,7 +29,24 @@ git push
 
 echo ""
 echo "=== 5. Pulling on server & clearing config ==="
-$SSH "cd $REMOTE_PATH && git pull && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && php artisan package:discover && php artisan migrate --force && php artisan config:clear && php artisan view:clear && php artisan cache:clear && (php artisan storage:link 2>/dev/null || true)"
+# Remote: set -e so a failed step aborts (avoids 'Deploy complete' when the site is half-updated).
+# Do NOT delete bootstrap/cache manifests before package:discover — if SSH dies mid-way, Laravel 500s until discover runs.
+$SSH "set -e
+cd $REMOTE_PATH || exit 1
+echo '--- git pull ---'
+git pull
+echo '--- composer install ---'
+composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+echo '--- artisan package:discover ---'
+php artisan package:discover --ansi
+echo '--- artisan migrate ---'
+php artisan migrate --force
+echo '--- artisan optimize:clear ---'
+php artisan optimize:clear
+echo '--- storage link (ignore if exists) ---'
+php artisan storage:link 2>/dev/null || true
+echo '--- remote deploy OK ---'
+"
 
 echo ""
 echo "✅ Deploy complete."

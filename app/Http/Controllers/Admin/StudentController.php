@@ -170,6 +170,15 @@ class StudentController extends Controller
         }
 
         $batch = Batch::find($request->batch_id);
+        if (!$batch) {
+            return redirect()->back()
+                ->with('error', 'Batch not found.')
+                ->withInput();
+        }
+        $enrollTpId = $this->getTrainingPartnerId();
+        if ($enrollTpId !== null && !Batch::query()->whereKey($batch->id)->visibleToTrainingPartner($enrollTpId)->exists()) {
+            abort(404);
+        }
 
         // Check if student is already enrolled in this batch
         $existingEnrollment = Enrollment::where('student_id', $student->id)
@@ -292,7 +301,13 @@ class StudentController extends Controller
         }
         
         $courses = Course::where('is_active', true)->orderBy('name')->get();
-        $batches = Batch::where('is_active', true)->with('course')->orderBy('batch_name')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('is_active', true)
+            ->with('course')
+            ->orderBy('batch_name')
+            ->get();
         
         return view('admin.students.create', compact('courses', 'batches'));
     }
@@ -712,7 +727,10 @@ class StudentController extends Controller
             return response()->json([]);
         }
 
-        $batches = Batch::where('course_id', $courseId)
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('course_id', $courseId)
             ->where('is_active', true)
             ->where(function ($query) {
                 $gracePeriod = Carbon::today()->subDays(5);
