@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Concerns;
 
+use App\Models\Course;
+
 trait ScopesByTrainingPartner
 {
     /**
@@ -63,5 +65,19 @@ trait ScopesByTrainingPartner
         return $tpId !== null
             ? $query->whereHas('student', fn ($q) => $q->where('training_partner_id', $tpId))
             : $query;
+    }
+
+    /**
+     * TP admins may only access courses owned by their partner (not legacy platform rows).
+     */
+    protected function ensureCourseAccessible(Course $course): void
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId === null) {
+            return;
+        }
+        if ($course->training_partner_id === null || (int) $course->training_partner_id !== $tpId) {
+            abort(404);
+        }
     }
 }

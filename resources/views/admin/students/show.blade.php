@@ -1036,7 +1036,7 @@
                         <select name="course_id" id="course_id" 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                             <option value="">Select a course</option>
-                            @foreach(\App\Models\Course::where('is_active', true)->orderBy('name')->get() as $course)
+                            @foreach($courses as $course)
                                 <option value="{{ $course->id }}">{{ $course->name }}</option>
                             @endforeach
                         </select>

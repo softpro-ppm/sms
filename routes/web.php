@@ -130,10 +130,10 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
             Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
             Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
     
-            // Courses: index/show for HQ & TP (read-only); create/edit/delete for Super Admin only
+            // Courses: list/show for all staff; create/edit/delete for centre Admin & platform Super Admin only (not Reception).
             // Static paths (/courses/create) must be registered before /courses/{course} or "create" is bound as an id → 404.
             Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            Route::middleware('super_admin')->group(function () {
+            Route::middleware('role:admin,super_admin')->group(function () {
                 Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
                 Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
                 Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
@@ -156,8 +156,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::patch('/batches/{batch}/toggle-status', [BatchController::class, 'toggleStatus'])->name('batches.toggle-status');
     Route::get('/api/batches/by-course', [BatchController::class, 'getBatchesByCourse'])->name('batches.by-course');
     
-    // Assessments (Exams) - Super Admin only. HQ & TP cannot create/manage.
-    Route::middleware('super_admin')->group(function () {
+    // Assessments (Exams) — centre Admin & Super Admin only (not Reception).
+    Route::middleware('role:admin,super_admin')->group(function () {
         Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
         Route::get('/assessments/create', [AssessmentController::class, 'create'])->name('assessments.create');
         Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
@@ -169,8 +169,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/api/assessments/batches/by-course', [AssessmentController::class, 'getBatchesByCourse'])->name('assessments.batches-by-course');
     });
 
-    // Question Banks - Super Admin only
-    Route::middleware('super_admin')->group(function () {
+    // Question Banks — centre Admin & Super Admin only (not Reception).
+    Route::middleware('role:admin,super_admin')->group(function () {
         Route::get('/question-banks', [QuestionBankController::class, 'index'])->name('question-banks.index');
         Route::get('/question-banks/create', [QuestionBankController::class, 'create'])->name('question-banks.create');
         Route::post('/question-banks', [QuestionBankController::class, 'store'])->name('question-banks.store');

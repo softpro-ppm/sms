@@ -81,7 +81,14 @@ class StudentController extends Controller
         $this->ensureStudentBelongsToPartner($student);
         $student->load(['user', 'enrollments.batch.course', 'payments', 'assessmentResults.assessment', 'documents']);
 
-        return view('admin.students.show', compact('student'));
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.students.show', compact('student', 'courses'));
     }
 
     public function approve(Student $student)
@@ -300,8 +307,12 @@ class StudentController extends Controller
             session()->start();
         }
         
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
         $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
         $batches = Batch::query()
             ->visibleToTrainingPartner($tpId)
             ->where('is_active', true)
@@ -765,6 +776,8 @@ class StudentController extends Controller
                     'message' => 'Course not found'
                 ], 404);
             }
+
+            $this->ensureCourseAccessible($course);
 
             return response()->json([
                 'success' => true,

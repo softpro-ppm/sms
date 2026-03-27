@@ -328,7 +328,7 @@ class TrainingPartnerController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => ['required', 'in:admin,reception'],
+            'role' => ['required', 'in:admin'],
         ]);
 
         if ($validator->fails()) {

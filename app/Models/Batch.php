@@ -46,6 +46,7 @@ class Batch extends Model
 
         return $query->where(function ($q) use ($trainingPartnerId) {
             $q->where('training_partner_id', $trainingPartnerId)
+                ->orWhereHas('course', fn ($c) => $c->where('training_partner_id', $trainingPartnerId))
                 ->orWhereHas('enrollments.student', fn ($s) => $s->where('training_partner_id', $trainingPartnerId));
         });
     }

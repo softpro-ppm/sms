@@ -109,7 +109,12 @@ class BatchController extends Controller
 
     public function create()
     {
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
         return response()
             ->view('admin.batches.create', compact('courses'))
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -131,6 +136,13 @@ class BatchController extends Controller
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
+                ->withInput();
+        }
+
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && !Course::query()->visibleToTrainingPartner($tpId)->whereKey((int) $request->course_id)->exists()) {
+            return redirect()->back()
+                ->withErrors(['course_id' => 'Invalid course.'])
                 ->withInput();
         }
 
@@ -206,7 +218,12 @@ class BatchController extends Controller
     public function edit(Batch $batch)
     {
         $this->ensureBatchAccessible($batch);
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
         return response()
             ->view('admin.batches.edit', compact('batch', 'courses'))
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -229,6 +246,13 @@ class BatchController extends Controller
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
+                ->withInput();
+        }
+
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && !Course::query()->visibleToTrainingPartner($tpId)->whereKey((int) $request->course_id)->exists()) {
+            return redirect()->back()
+                ->withErrors(['course_id' => 'Invalid course.'])
                 ->withInput();
         }
 

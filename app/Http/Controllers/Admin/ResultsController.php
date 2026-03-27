@@ -64,9 +64,17 @@ class ResultsController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
         
-        // Get filter options
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
-        $assessments = Assessment::where('is_active', true)->orderBy('title')->get();
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+        $assessmentsQuery = Assessment::query()->where('is_active', true);
+        if ($tpId !== null) {
+            $assessmentsQuery->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId));
+        }
+        $assessments = $assessmentsQuery->orderBy('title')->get();
 
         // Get statistics (TP-scoped)
         $baseQuery = $this->scopeAssessmentResults(AssessmentResult::query());

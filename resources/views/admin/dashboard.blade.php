@@ -24,30 +24,44 @@
 
     @if(!empty($onboarding) && $onboarding['show'])
     <div class="bg-white border-l-4 border-primary-500 rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">Get started</h3>
-        <p class="text-gray-600 text-sm mb-4">Short path for a new centre: add people, enroll students in a batch, then record fees.</p>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Get started — your catalogue is empty</h3>
+        <p class="text-gray-600 text-sm mb-4">Build your centre in order: courses → batches → question bank &amp; exams → students → enrollments → payments. You start with one admin login; add reception later from Settings → Staff if you need it.</p>
         <ol class="space-y-3 text-sm text-gray-800 list-decimal list-inside">
-            @if(auth()->user()->role === 'admin')
-            <li class="{{ $onboarding['staff_done'] ? 'text-green-800' : '' }}">
-                @if($onboarding['staff_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.settings.users.index') }}" class="font-semibold text-primary-700 hover:underline">Add staff</a>
-                <span class="text-gray-600">— reception or another admin (optional but recommended).</span>
+            <li class="{{ !empty($onboarding['course_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['course_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.courses.create') }}" class="font-semibold text-primary-700 hover:underline">Create a course</a>
+                <span class="text-gray-600">— fees, duration, and assessment settings.</span>
             </li>
-            @endif
-            <li class="{{ $onboarding['student_done'] ? 'text-green-800' : '' }}">
-                @if($onboarding['student_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.students.create') }}" class="font-semibold text-primary-700 hover:underline">Register student</a>
+            <li class="{{ !empty($onboarding['batch_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['batch_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.batches.create') }}" class="font-semibold text-primary-700 hover:underline">Add a batch</a>
+                <span class="text-gray-600">— link it to a course.</span>
+            </li>
+            <li class="{{ !empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['question_bank_done']) && !empty($onboarding['exam_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.question-banks.create') }}" class="font-semibold text-primary-700 hover:underline">Question bank</a>
+                <span class="text-gray-600">— then</span>
+                <a href="{{ route('admin.assessments.create') }}" class="font-semibold text-primary-700 hover:underline">exam</a>
+                <span class="text-gray-600">for the same course.</span>
+            </li>
+            <li class="{{ !empty($onboarding['student_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['student_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.students.create') }}" class="font-semibold text-primary-700 hover:underline">Register students</a>
                 <span class="text-gray-600">— approve when ready.</span>
             </li>
-            <li class="{{ $onboarding['enrollment_done'] ? 'text-green-800' : '' }}">
-                @if($onboarding['enrollment_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
-                <a href="{{ route('admin.batches.index') }}" class="font-semibold text-primary-700 hover:underline">Pick a batch</a>
-                <span class="text-gray-600">— open a batch and enroll students.</span>
+            <li class="{{ !empty($onboarding['enrollment_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['enrollment_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+                <a href="{{ route('admin.batches.index') }}" class="font-semibold text-primary-700 hover:underline">Enroll in a batch</a>
+                <span class="text-gray-600">— open a batch and add students.</span>
             </li>
-            <li class="{{ $onboarding['payment_done'] ? 'text-green-800' : '' }}">
-                @if($onboarding['payment_done'])<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
+            <li class="{{ !empty($onboarding['payment_done']) ? 'text-green-800' : '' }}">
+                @if(!empty($onboarding['payment_done']))<span class="text-green-600 font-medium"><i class="fas fa-check-circle"></i> Done — </span>@endif
                 <a href="{{ route('admin.payments.create') }}" class="font-semibold text-primary-700 hover:underline">Record payment</a>
-                <span class="text-gray-600">— then approve if you use pending workflow.</span>
+                <span class="text-gray-600">— optional once enrollments exist.</span>
+            </li>
+            <li class="text-gray-700">
+                <a href="{{ route('admin.settings.users.index') }}" class="font-semibold text-primary-700 hover:underline">Staff</a>
+                <span class="text-gray-600">— add a reception account later if needed (only admin is created for a new partner initially).</span>
             </li>
         </ol>
     </div>

@@ -81,16 +81,13 @@ class SettingsController extends Controller
             $stats = [
                 'total_students' => $this->scopeStudents(Student::query())->count(),
                 'total_courses' => Course::query()
-                    ->whereHas('batches.enrollments', function ($enQ) use ($tpId) {
-                        $enQ->where('status', 'active')
-                            ->whereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
-                    })
+                    ->visibleToTrainingPartner($tpId)
                     ->count(),
                 'total_batches' => Batch::query()
                     ->visibleToTrainingPartner($tpId)
                     ->count(),
                 'total_assessments' => Assessment::query()
-                    ->whereHas('assessmentResults.student', fn ($s) => $s->where('training_partner_id', $tpId))
+                    ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
                     ->count(),
                 'total_certificates' => $this->scopeCertificates(Certificate::query())->count(),
                 'total_payments' => $this->scopePayments(Payment::query())->count(),

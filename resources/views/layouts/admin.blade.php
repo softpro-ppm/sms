@@ -270,14 +270,6 @@
                     </li>
                     
                     <li>
-                        <a href="{{ route('admin.courses.index') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-                            <i class="fas fa-book w-5 h-5 mr-3"></i>
-                            <span>Courses</span>
-                        </a>
-                    </li>
-                    
-                    <li>
                         <a href="{{ route('admin.results.index') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.results.*') ? 'active' : '' }}">
                             <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
@@ -286,6 +278,27 @@
                     </li>
 
                     @if(auth()->user()->is_admin)
+                    <li>
+                        <a href="{{ route('admin.courses.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+                            <i class="fas fa-book w-5 h-5 mr-3"></i>
+                            <span>Courses</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.question-banks.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.question-banks.*') ? 'active' : '' }}">
+                            <i class="fas fa-database w-5 h-5 mr-3"></i>
+                            <span>Question Banks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.assessments.index') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.assessments.*') ? 'active' : '' }}">
+                            <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
+                            <span>Exams</span>
+                        </a>
+                    </li>
                     <li>
                         <a href="{{ route('admin.reports.index') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">

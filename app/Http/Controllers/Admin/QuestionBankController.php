@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\QuestionBank;
 use App\Models\Course;
@@ -12,12 +13,24 @@ use Illuminate\Support\Facades\Storage;
 
 class QuestionBankController extends Controller
 {
+    use ScopesByTrainingPartner;
+
+    protected function ensureQuestionBankAccessible(QuestionBank $questionBank): void
+    {
+        $questionBank->loadMissing('course');
+        $this->ensureCourseAccessible($questionBank->course);
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 20);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
 
+        $tpId = $this->getTrainingPartnerId();
         $query = QuestionBank::with('course');
+        if ($tpId !== null) {
+            $query->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId));
+        }
 
         // Filter by course
         if ($request->filled('course_id')) {
@@ -49,17 +62,30 @@ class QuestionBankController extends Controller
         $questions = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->appends($request->query());
-        $courses = Course::where('is_active', true)->get();
-        
-        // Get unique subjects for filter dropdown
-        $subjects = QuestionBank::select('subject')->distinct()->orderBy('subject')->pluck('subject');
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
+        $subjectsQuery = QuestionBank::query()->select('subject')->distinct()->orderBy('subject');
+        if ($tpId !== null) {
+            $subjectsQuery->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId));
+        }
+        $subjects = $subjectsQuery->pluck('subject');
 
         return view('admin.question-banks.index', compact('questions', 'courses', 'subjects'));
     }
 
     public function create()
     {
-        $courses = Course::where('is_active', true)->get();
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
         return view('admin.question-banks.create', compact('courses'));
     }
 
@@ -83,6 +109,9 @@ class QuestionBankController extends Controller
                 ->withInput();
         }
 
+        $course = Course::findOrFail($request->course_id);
+        $this->ensureCourseAccessible($course);
+
         QuestionBank::create($request->all());
 
         return redirect()->route('admin.question-banks.index')
@@ -91,18 +120,28 @@ class QuestionBankController extends Controller
 
     public function show(QuestionBank $questionBank)
     {
+        $this->ensureQuestionBankAccessible($questionBank);
         $questionBank->load('course');
+
         return view('admin.question-banks.show', compact('questionBank'));
     }
 
     public function edit(QuestionBank $questionBank)
     {
-        $courses = Course::where('is_active', true)->get();
+        $this->ensureQuestionBankAccessible($questionBank);
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
         return view('admin.question-banks.edit', compact('questionBank', 'courses'));
     }
 
     public function update(Request $request, QuestionBank $questionBank)
     {
+        $this->ensureQuestionBankAccessible($questionBank);
         $validator = Validator::make($request->all(), [
             'course_id' => 'required|exists:courses,id',
             'subject' => 'required|string|max:100',
@@ -121,6 +160,9 @@ class QuestionBankController extends Controller
                 ->withInput();
         }
 
+        $course = Course::findOrFail($request->course_id);
+        $this->ensureCourseAccessible($course);
+
         $questionBank->update($request->all());
 
         return redirect()->route('admin.question-banks.index')
@@ -129,6 +171,7 @@ class QuestionBankController extends Controller
 
     public function destroy(QuestionBank $questionBank)
     {
+        $this->ensureQuestionBankAccessible($questionBank);
         $questionBank->delete();
 
         return redirect()->route('admin.question-banks.index')
@@ -137,6 +180,7 @@ class QuestionBankController extends Controller
 
     public function toggleStatus(QuestionBank $questionBank)
     {
+        $this->ensureQuestionBankAccessible($questionBank);
         $questionBank->update(['is_active' => !$questionBank->is_active]);
 
         $status = $questionBank->is_active ? 'activated' : 'deactivated';
@@ -156,6 +200,9 @@ class QuestionBankController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
+
+        $course = Course::findOrFail($request->course_id);
+        $this->ensureCourseAccessible($course);
 
         $file = $request->file('csv_file');
         // Default disk "local" root is storage/app/private — not storage/app. Must resolve path via Storage.
@@ -241,9 +288,18 @@ class QuestionBankController extends Controller
 
     public function export(Request $request)
     {
+        $tpId = $this->getTrainingPartnerId();
         $query = QuestionBank::query();
+        if ($tpId !== null) {
+            $query->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId));
+        }
 
         if ($request->filled('course_id')) {
+            $course = Course::find($request->course_id);
+            if (!$course) {
+                abort(404);
+            }
+            $this->ensureCourseAccessible($course);
             $query->where('course_id', $request->course_id);
         }
 
@@ -291,6 +347,15 @@ class QuestionBankController extends Controller
     public function getSubjectsByCourse(Request $request)
     {
         $courseId = $request->course_id;
+        if (!$courseId) {
+            return response()->json([]);
+        }
+        $course = Course::find($courseId);
+        if (!$course) {
+            return response()->json([]);
+        }
+        $this->ensureCourseAccessible($course);
+
         $subjects = QuestionBank::where('course_id', $courseId)
             ->select('subject')
             ->distinct()
@@ -303,7 +368,15 @@ class QuestionBankController extends Controller
     public function getQuestionStats(Request $request)
     {
         $courseId = $request->course_id;
-        
+        if (!$courseId) {
+            return response()->json([]);
+        }
+        $course = Course::find($courseId);
+        if (!$course) {
+            return response()->json([]);
+        }
+        $this->ensureCourseAccessible($course);
+
         $stats = QuestionBank::where('course_id', $courseId)
             ->select('subject', DB::raw('COUNT(*) as total'), DB::raw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active'))
             ->groupBy('subject')

@@ -24,7 +24,11 @@ class ReportsController extends Controller
         $tab = $request->get('tab', 'payments');
         $perPage = $this->parsePerPage($request, 10);
 
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($this->getTrainingPartnerId())
+            ->orderBy('name')
+            ->get();
         $tpId = $this->getTrainingPartnerId();
         $batches = Batch::query()
             ->visibleToTrainingPartner($tpId)

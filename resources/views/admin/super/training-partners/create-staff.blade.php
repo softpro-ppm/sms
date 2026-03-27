@@ -14,7 +14,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Add Staff for {{ $trainingPartner->name }}</h2>
-            <p class="text-sm text-gray-600 mt-0.5">Create admin or reception account for this training partner</p>
+            <p class="text-sm text-gray-600 mt-0.5">Create the centre <strong>admin</strong> account only. They build their own catalogue from scratch; they can add reception later from Settings → Staff.</p>
         </div>
 
         <form method="POST" action="{{ route('admin.super.training-partners.staff.store', $trainingPartner) }}" class="p-6 space-y-6">
@@ -54,18 +54,7 @@
                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
             </div>
 
-            <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Role <span class="text-red-500">*</span></label>
-                <select name="role" id="role" required
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 @error('role') border-red-500 @enderror">
-                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="reception" {{ old('role') === 'reception' ? 'selected' : '' }}>Reception</option>
-                </select>
-                <p class="mt-0.5 text-xs text-gray-500">Admin can create reception users from Settings → Staff Users.</p>
-                @error('role')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            <input type="hidden" name="role" value="admin">
 
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="px-5 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm">

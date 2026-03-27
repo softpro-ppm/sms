@@ -78,8 +78,12 @@ class CertificatesController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
         
-        // Get filter options
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
+        $filterTpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($filterTpId)
+            ->orderBy('name')
+            ->get();
         $tpId = $this->getTrainingPartnerId();
         $batches = Batch::query()
             ->visibleToTrainingPartner($tpId)
@@ -211,8 +215,12 @@ class CertificatesController extends Controller
     public function create(Request $request)
     {
         $students = $this->scopeStudents(Student::where('status', 'approved')->orderBy('full_name'))->get();
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
         $createTpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($createTpId)
+            ->orderBy('name')
+            ->get();
         $batches = Batch::query()
             ->visibleToTrainingPartner($createTpId)
             ->where('is_active', true)
@@ -248,6 +256,16 @@ class CertificatesController extends Controller
                 ->visibleToTrainingPartner($tpId)
                 ->exists();
             if (!$batchOk) {
+                abort(404);
+            }
+        }
+
+        if ($tpId !== null) {
+            $courseOk = Course::query()
+                ->visibleToTrainingPartner($tpId)
+                ->whereKey((int) $request->course_id)
+                ->exists();
+            if (!$courseOk) {
                 abort(404);
             }
         }

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
+use App\Models\AssessmentResult;
 use App\Models\Course;
 use App\Models\Batch;
-use App\Models\Student;
-use App\Models\AssessmentResult;
 use App\Models\QuestionBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +15,14 @@ use Carbon\Carbon;
 
 class AssessmentController extends Controller
 {
+    use ScopesByTrainingPartner;
+
+    protected function ensureAssessmentAccessible(Assessment $assessment): void
+    {
+        $assessment->loadMissing('course');
+        $this->ensureCourseAccessible($assessment->course);
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
@@ -23,7 +31,12 @@ class AssessmentController extends Controller
         $status = trim((string) $request->get('status', ''));
         $courseId = $request->get('course_id');
 
+        $tpId = $this->getTrainingPartnerId();
+
         $query = Assessment::with(['course']);
+        if ($tpId !== null) {
+            $query->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId));
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -47,20 +60,43 @@ class AssessmentController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
-        $stats = [
-            'total_assessments' => Assessment::count(),
-            'active_assessments' => Assessment::where('is_active', true)->count(),
-            'inactive_assessments' => Assessment::where('is_active', false)->count(),
-            'total_students_assessed' => AssessmentResult::distinct('student_id')->count(),
-        ];
+        if ($tpId !== null) {
+            $stats = [
+                'total_assessments' => Assessment::whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))->count(),
+                'active_assessments' => Assessment::whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))->where('is_active', true)->count(),
+                'inactive_assessments' => Assessment::whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))->where('is_active', false)->count(),
+                'total_students_assessed' => AssessmentResult::query()
+                    ->whereHas('assessment.course', fn ($q) => $q->visibleToTrainingPartner($tpId))
+                    ->distinct()
+                    ->count('student_id'),
+            ];
+        } else {
+            $stats = [
+                'total_assessments' => Assessment::count(),
+                'active_assessments' => Assessment::where('is_active', true)->count(),
+                'inactive_assessments' => Assessment::where('is_active', false)->count(),
+                'total_students_assessed' => AssessmentResult::distinct('student_id')->count('student_id'),
+            ];
+        }
 
-        return view('admin.assessments.index', compact('assessments', 'stats'));
+        $filterCourses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.assessments.index', compact('assessments', 'stats', 'filterCourses'));
     }
 
     public function create()
     {
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
-        
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
         return view('admin.assessments.create', compact('courses'));
     }
 
@@ -73,7 +109,7 @@ class AssessmentController extends Controller
             'time_limit_minutes' => 'required|integer|min:1|max:300',
             'total_questions' => 'required|integer|min:1|max:100',
             'passing_percentage' => 'required|numeric|min:1|max:100',
-            'is_active' => 'required|boolean'
+            'is_active' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -81,6 +117,9 @@ class AssessmentController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
+
+        $course = Course::findOrFail($request->course_id);
+        $this->ensureCourseAccessible($course);
 
         $assessment = Assessment::create([
             'title' => $request->title,
@@ -98,11 +137,12 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment)
     {
+        $this->ensureAssessmentAccessible($assessment);
         $assessment->load(['course', 'assessmentResults.student']);
-        
+
         $questionBankCount = QuestionBank::where('course_id', $assessment->course_id)->where('is_active', true)->count();
         $subjectCount = QuestionBank::where('course_id', $assessment->course_id)->where('is_active', true)->distinct('subject')->count('subject');
-        
+
         $stats = [
             'total_questions_in_bank' => $questionBankCount,
             'total_subjects' => $subjectCount,
@@ -116,13 +156,20 @@ class AssessmentController extends Controller
 
     public function edit(Assessment $assessment)
     {
-        $courses = Course::where('is_active', true)->orderBy('name')->get();
-        
+        $this->ensureAssessmentAccessible($assessment);
+        $tpId = $this->getTrainingPartnerId();
+        $courses = Course::query()
+            ->where('is_active', true)
+            ->visibleToTrainingPartner($tpId)
+            ->orderBy('name')
+            ->get();
+
         return view('admin.assessments.edit', compact('assessment', 'courses'));
     }
 
     public function update(Request $request, Assessment $assessment)
     {
+        $this->ensureAssessmentAccessible($assessment);
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -130,7 +177,7 @@ class AssessmentController extends Controller
             'time_limit_minutes' => 'required|integer|min:1|max:300',
             'total_questions' => 'required|integer|min:1|max:100',
             'passing_percentage' => 'required|numeric|min:1|max:100',
-            'is_active' => 'required|boolean'
+            'is_active' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -138,6 +185,9 @@ class AssessmentController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
+
+        $course = Course::findOrFail($request->course_id);
+        $this->ensureCourseAccessible($course);
 
         $assessment->update([
             'title' => $request->title,
@@ -155,8 +205,8 @@ class AssessmentController extends Controller
 
     public function destroy(Assessment $assessment)
     {
-        // Check if assessment has results
-        if ($assessment->results()->count() > 0) {
+        $this->ensureAssessmentAccessible($assessment);
+        if ($assessment->assessmentResults()->count() > 0) {
             return redirect()->back()
                 ->with('error', 'Cannot delete assessment with existing results. Please handle results first.');
         }
@@ -169,10 +219,12 @@ class AssessmentController extends Controller
 
     public function toggleStatus(Assessment $assessment)
     {
+        $this->ensureAssessmentAccessible($assessment);
         $newStatus = !$assessment->is_active;
         $assessment->update(['is_active' => $newStatus]);
 
         $statusText = $newStatus ? 'activated' : 'deactivated';
+
         return redirect()->back()
             ->with('success', "Assessment {$statusText} successfully!");
     }
@@ -180,12 +232,21 @@ class AssessmentController extends Controller
     public function getBatchesByCourse(Request $request)
     {
         $courseId = $request->get('course_id');
-        
+
         if (!$courseId) {
             return response()->json([]);
         }
 
-        $batches = Batch::where('course_id', $courseId)
+        $course = Course::find($courseId);
+        if (!$course) {
+            return response()->json([]);
+        }
+        $this->ensureCourseAccessible($course);
+
+        $tpId = $this->getTrainingPartnerId();
+        $batches = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->where('course_id', $courseId)
             ->where('is_active', true)
             ->where(function ($query) {
                 $today = Carbon::today();

@@ -10,8 +10,9 @@ use App\Models\Batch;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\AssessmentResult;
+use App\Models\Assessment;
+use App\Models\QuestionBank;
 use App\Models\Certificate;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +28,9 @@ class DashboardController extends Controller
         $stats = [
             'total_students' => $this->scopeStudents(Student::where('status', 'approved'))->count(),
             'pending_students' => $this->scopeStudents(Student::where('status', 'pending'))->count(),
-            'total_courses' => Course::where('is_active', true)->count(),
+            'total_courses' => $tpId !== null
+                ? Course::query()->visibleToTrainingPartner($tpId)->where('is_active', true)->count()
+                : Course::where('is_active', true)->count(),
             'active_batches' => Batch::query()
                 ->visibleToTrainingPartner($tpId)
                 ->where('is_active', true)
@@ -78,15 +81,17 @@ class DashboardController extends Controller
         $recentAssessments = $recentActivities['recent_assessments'];
 
         $onboarding = null;
-        $tpId = $this->getTrainingPartnerId();
-        if ($tpId !== null && ! auth()->user()->is_super_admin) {
-            $staffCount = User::query()
-                ->where('training_partner_id', $tpId)
-                ->whereIn('role', ['admin', 'reception'])
-                ->count();
+        if ($tpId !== null && ! auth()->user()->is_super_admin && auth()->user()->is_admin) {
             $onboarding = [
                 'show' => (int) $stats['total_students'] === 0 && (int) $stats['total_enrollments'] === 0,
-                'staff_done' => auth()->user()->role !== 'admin' || $staffCount >= 2,
+                'course_done' => Course::query()->visibleToTrainingPartner($tpId)->exists(),
+                'batch_done' => Batch::query()->visibleToTrainingPartner($tpId)->exists(),
+                'question_bank_done' => QuestionBank::query()
+                    ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
+                    ->exists(),
+                'exam_done' => Assessment::query()
+                    ->whereHas('course', fn ($q) => $q->visibleToTrainingPartner($tpId))
+                    ->exists(),
                 'student_done' => $this->scopeStudents(Student::where('status', 'approved'))->exists(),
                 'enrollment_done' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->exists(),
                 'payment_done' => $this->scopePayments(Payment::where('status', 'approved'))->exists(),
@@ -160,7 +165,12 @@ class DashboardController extends Controller
             ? fn ($q) => $q->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
             : fn ($q) => $q->where('status', 'active');
 
-        return Course::withCount(['enrollments' => $enrollmentFilter])
+        $courseQuery = Course::query();
+        if ($tpId !== null) {
+            $courseQuery->visibleToTrainingPartner($tpId);
+        }
+
+        return $courseQuery->withCount(['enrollments' => $enrollmentFilter])
             ->orderBy('enrollments_count', 'desc')
             ->limit(10)
             ->get();
