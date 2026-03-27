@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# Track public/build (Vite manifest + assets). Dev HMR file stays ignored.
 /public/hot
 /public/storage
 /storage/*.key
