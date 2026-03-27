@@ -160,8 +160,8 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
-        $course = $enrollment->batch->course;
         $batch = $enrollment->batch;
+        $courseName = $enrollment->display_course_name;
 
         // Template: 6 body params only. Button is STATIC (softpro.co.in) - do NOT send button param.
         return $this->sendTemplate(
@@ -171,7 +171,7 @@ class WhatsAppNotificationService
             'enrollment_confirmation',
             [
                 $student->full_name,
-                $course->name,
+                $courseName,
                 $batch->batch_name,
                 $enrollment->enrollment_number,
                 (string) (int) $enrollment->total_fee,

@@ -20,7 +20,7 @@
                         <div class="flex items-center justify-between p-4 border border-orange-200 rounded-lg bg-orange-50">
                             <div class="flex-1">
                                 <h4 class="text-sm font-medium text-gray-900">{{ $reassessment['assessment']->title }}</h4>
-                                <p class="text-sm text-gray-500">{{ $reassessment['course']->name }}</p>
+                                <p class="text-sm text-gray-500">{{ $reassessment['display_course_name'] }}</p>
                                 <div class="flex items-center space-x-2 mt-1">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                         <i class="fas fa-redo mr-1"></i>
@@ -107,7 +107,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
-                                        {{ $result->enrollment->batch->course->name }}
+                                        {{ $result->enrollment->display_course_name }}
                                     </div>
                                     <div class="text-sm text-gray-500">
                                         {{ $result->enrollment->batch->batch_name }}

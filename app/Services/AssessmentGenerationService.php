@@ -145,7 +145,14 @@ class AssessmentGenerationService
                 'student_id' => $attempt->student_id,
                 'assessment_id' => $attempt->assessment_id,
                 'attempt_id' => $attempt->id,
-                'enrollment_id' => $attempt->student->enrollments()->where('course_id', $attempt->assessment->course_id)->first()?->id,
+                'enrollment_id' => $attempt->student->enrollments()
+                    ->where('status', 'active')
+                    ->where(function ($q) use ($attempt) {
+                        $cid = $attempt->assessment->course_id;
+                        $q->where('legacy_link_course_id', $cid)
+                            ->orWhereHas('batch', fn ($b) => $b->where('course_id', $cid));
+                    })
+                    ->first()?->id,
                 'attempt_number' => $attempt->attempt_number,
                 'total_questions' => 25,
                 'correct_answers' => $correctAnswers,

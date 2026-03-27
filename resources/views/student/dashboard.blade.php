@@ -96,9 +96,9 @@
                         @foreach($enrollments->take(3) as $enrollment)
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                                 <div class="flex-1">
-                                    <h4 class="text-sm font-medium text-gray-900">{{ $enrollment->batch->course->name }}</h4>
+                                    <h4 class="text-sm font-medium text-gray-900">{{ $enrollment->display_course_name }}</h4>
                                     @if($enrollment->batch)
-                                        <p class="text-sm text-gray-500">Batch: {{ $enrollment->batch->name }}</p>
+                                        <p class="text-sm text-gray-500">Batch: {{ $enrollment->batch->batch_name }}</p>
                                     @endif
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                         {{ $enrollment->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
@@ -179,7 +179,7 @@
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                                 <div class="flex-1">
                                     <h4 class="text-sm font-medium text-gray-900">{{ $assessmentData['assessment']->title }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $assessmentData['course']->name }}</p>
+                                    <p class="text-sm text-gray-500">{{ $assessmentData['display_course_name'] }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         @if($assessmentData['is_reassessment'] ?? false)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -227,7 +227,7 @@
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                                 <div class="flex-1">
                                     <h4 class="text-sm font-medium text-gray-900">{{ $assessmentData['assessment']->title }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $assessmentData['course']->name }}</p>
+                                    <p class="text-sm text-gray-500">{{ $assessmentData['display_course_name'] }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                             <i class="fas fa-clock mr-1"></i>
@@ -236,7 +236,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs text-gray-500">Batch ends: {{ $assessmentData['batch']->end_date->format('M d, Y') }}</span>
+                                    <span class="text-xs text-gray-500">Period ends: {{ $assessmentData['period_end']->format('M d, Y') }}</span>
                                 </div>
                             </div>
                         @endforeach
@@ -269,7 +269,7 @@
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                                 <div class="flex-1">
                                     <h4 class="text-sm font-medium text-gray-900">{{ $result->assessment->title ?? 'Exam' }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $result->enrollment->batch->course->name }}</p>
+                                    <p class="text-sm text-gray-500">{{ $result->enrollment->display_course_name }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                             {{ $result->grade === 'A+' ? 'bg-green-100 text-green-800' : 

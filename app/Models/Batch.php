@@ -16,12 +16,14 @@ class Batch extends Model
         'end_date',
         'max_students',
         'is_active',
+        'is_legacy_batch',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_legacy_batch' => 'boolean',
     ];
 
     // Relationships

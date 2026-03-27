@@ -31,6 +31,11 @@ class CertificateTemplateService
             ->first();
         $enrollmentNumber = $enrollment?->enrollment_number ?? 'N/A';
 
+        $certificateCourseName = $course?->name ?? '______';
+        if ($enrollment?->is_legacy) {
+            $certificateCourseName = $enrollment->display_course_name;
+        }
+
         // Training partner logo (top-right, mirrors SoftPro logo). Omit if missing — space stays blank.
         $trainingPartnerLogoPath = null;
         $partner = $student->trainingPartner;
@@ -100,6 +105,7 @@ class CertificateTemplateService
             'certificate' => $certificate,
             'student' => $student,
             'course' => $course,
+            'certificateCourseName' => $certificateCourseName,
             'batch' => $batch,
             'enrollmentNumber' => $enrollmentNumber,
             'trainingPartnerLogoPath' => $trainingPartnerLogoPath,
@@ -166,6 +172,7 @@ class CertificateTemplateService
             'certificate' => $certificate,
             'student' => $student,
             'course' => $course,
+            'certificateCourseName' => $course->name,
             'batch' => $batch,
             'enrollmentNumber' => 'SP20260001',
             'trainingPartnerLogoPath' => null,

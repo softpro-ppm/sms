@@ -368,8 +368,11 @@
                                     <i class="fas fa-book text-white"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-900">{{ $enrollment->batch->course->name ?? 'N/A' }}</h4>
+                                    <h4 class="font-semibold text-gray-900">{{ $enrollment->display_course_name }}</h4>
                                     <p class="text-sm text-gray-600">{{ $enrollment->batch->batch_name ?? 'N/A' }}</p>
+                                    @if($enrollment->is_legacy)
+                                        <span class="inline-flex mt-1 items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900">Legacy</span>
+                                    @endif
                                 </div>
                             </div>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
@@ -408,7 +411,7 @@
                         <div class="mt-4 pt-3 border-t">
                             <div class="flex justify-between items-center">
                                 <div class="text-xs text-gray-500">
-                                    <span>{{ $enrollment->batch->start_date->format('M d') ?? 'N/A' }} - {{ $enrollment->batch->end_date->format('M d, Y') ?? 'N/A' }}</span>
+                                    <span>{{ $enrollment->effective_start_date?->format('M d') ?? 'N/A' }} — {{ $enrollment->effective_end_date?->format('M d, Y') ?? 'N/A' }}</span>
                                 </div>
                                 <div class="flex space-x-2">
                                 @if($enrollment->status === 'active')
@@ -438,7 +441,14 @@
                             <i class="fas fa-plus mr-2"></i>
                             Enroll in New Batch
                         </button>
-                        
+                        @if(($canEnrollLegacy ?? false) && !($hasLegacyEnrollment ?? false))
+                        <button type="button" onclick="showLegacyEnrollModal()"
+                                class="inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
+                            <i class="fas fa-archive mr-2"></i>
+                            Enroll as Legacy (HQ)
+                        </button>
+                        @endif
+
                         @if($student->enrollments->count() > 0)
                         <button onclick="showForceDeleteModal()" 
                                 class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
@@ -458,12 +468,19 @@
                     </div>
                     <h3 class="text-lg font-medium text-gray-900 mb-2">No Enrollments</h3>
                     <p class="text-gray-600 mb-6">This student is not enrolled in any batch yet.</p>
-                    <div class="flex justify-center gap-3">
+                    <div class="flex justify-center flex-wrap gap-3">
                         <button onclick="showEnrollModal()" 
                                 class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
                             <i class="fas fa-plus mr-2"></i>
                             Enroll in Batch
                         </button>
+                        @if(($canEnrollLegacy ?? false) && !($hasLegacyEnrollment ?? false))
+                        <button type="button" onclick="showLegacyEnrollModal()"
+                                class="inline-flex items-center px-4 py-2 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
+                            <i class="fas fa-archive mr-2"></i>
+                            Enroll as Legacy (HQ)
+                        </button>
+                        @endif
                         <button onclick="showForceDeleteModal()" 
                                 class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -1103,7 +1120,118 @@
     </div>
 </div>
 
+<!-- Legacy (HQ) enrollment modal -->
+<div id="legacyEnrollModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[10000]">
+    <div class="relative top-8 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white mb-10">
+        <div class="mt-1">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Legacy enrollment (HQ)</h3>
+                    <p class="text-xs text-gray-500 mt-1">Custom course name, training period, and fees. Student registers publicly; approve first, then enroll here.</p>
+                </div>
+                <button type="button" onclick="closeLegacyEnrollModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="legacyEnrollForm" action="{{ route('admin.students.enroll-legacy', $student) }}" method="POST">
+                @csrf
+                <div class="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Course name (on certificate / records)</label>
+                        <input type="text" name="legacy_course_name" required maxlength="255"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                               placeholder="e.g. Custom programme title"
+                               value="{{ old('legacy_course_name') }}">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Training start</label>
+                            <input type="date" name="legacy_start_date" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                   value="{{ old('legacy_start_date') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Training end</label>
+                            <input type="date" name="legacy_end_date" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                   value="{{ old('legacy_end_date') }}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment date</label>
+                        <input type="date" name="enrollment_date" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                               value="{{ old('enrollment_date', date('Y-m-d')) }}">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Registration (₹)</label>
+                            <input type="number" name="registration_fee" step="0.01" min="0" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                   value="{{ old('registration_fee', '0') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Course fee (₹)</label>
+                            <input type="number" name="course_fee" step="0.01" min="0" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                   value="{{ old('course_fee', '0') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assessment (₹)</label>
+                            <input type="number" name="assessment_fee" step="0.01" min="0" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                   value="{{ old('assessment_fee', '0') }}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Link to catalogue course (optional)</label>
+                        <select name="legacy_link_course_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="">— None (no online exam for this record) —</option>
+                            @foreach($linkCoursesForLegacy as $lc)
+                                <option value="{{ $lc->id }}" @selected(old('legacy_link_course_id') == $lc->id)>{{ $lc->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">If set, eligible students can take the active assessment tied to this course after payment and batch rules.</p>
+                    </div>
+                    @if(($student->credit_balance ?? 0) > 0)
+                    <div class="border border-green-200 rounded-lg p-3 bg-green-50">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="fas fa-wallet text-green-600 mr-1"></i>Apply credit (₹)
+                        </label>
+                        <p class="text-xs text-gray-600 mb-2">Available: <strong>₹{{ number_format($student->credit_balance, 0) }}</strong></p>
+                        <input type="number" name="credit_to_apply" step="0.01" min="0"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                               placeholder="0" value="{{ old('credit_to_apply', '0') }}">
+                    </div>
+                    @endif
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6 pt-2 border-t border-gray-100">
+                    <button type="button" onclick="closeLegacyEnrollModal()"
+                            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 transition-colors duration-200">
+                        <i class="fas fa-archive mr-2"></i>Create legacy enrollment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+function showLegacyEnrollModal() {
+    document.getElementById('legacyEnrollModal').classList.remove('hidden');
+}
+function closeLegacyEnrollModal() {
+    document.getElementById('legacyEnrollModal').classList.add('hidden');
+    const f = document.getElementById('legacyEnrollForm');
+    if (f) { f.reset(); }
+}
 // Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
     const studentCreditBalance = {{ ($student->credit_balance ?? 0) }};

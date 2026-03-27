@@ -21,7 +21,12 @@ class Enrollment extends Model
         'is_eligible_for_assessment',
         'registration_fee',
         'course_fee',
-        'assessment_fee'
+        'assessment_fee',
+        'is_legacy',
+        'legacy_course_name',
+        'legacy_start_date',
+        'legacy_end_date',
+        'legacy_link_course_id',
     ];
 
     protected $casts = [
@@ -32,7 +37,10 @@ class Enrollment extends Model
         'is_eligible_for_assessment' => 'boolean',
         'registration_fee' => 'decimal:2',
         'course_fee' => 'decimal:2',
-        'assessment_fee' => 'decimal:2'
+        'assessment_fee' => 'decimal:2',
+        'is_legacy' => 'boolean',
+        'legacy_start_date' => 'date',
+        'legacy_end_date' => 'date',
     ];
 
     // Relationships
@@ -44,6 +52,11 @@ class Enrollment extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batch::class);
+    }
+
+    public function legacyLinkCourse(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'legacy_link_course_id');
     }
 
     public function payments(): HasMany
@@ -62,9 +75,60 @@ class Enrollment extends Model
     }
 
     // Accessors
-    public function getCourseAttribute(): Course
+    /**
+     * Course used for assessments / certificate FK when legacy links to catalogue; else batch course.
+     */
+    public function getCourseAttribute(): ?Course
     {
-        return $this->batch->course;
+        if ($this->is_legacy && $this->legacy_link_course_id) {
+            return $this->legacyLinkCourse;
+        }
+
+        return $this->batch?->course;
+    }
+
+    /** Display name: custom text for legacy; otherwise batch course name. */
+    public function getDisplayCourseNameAttribute(): string
+    {
+        if ($this->is_legacy) {
+            if ($this->legacy_course_name) {
+                return $this->legacy_course_name;
+            }
+
+            return $this->legacyLinkCourse->name
+                ?? $this->batch?->course?->name
+                ?? 'Course';
+        }
+
+        return $this->batch?->course?->name ?? 'N/A';
+    }
+
+    public function getEffectiveStartDateAttribute(): ?Carbon
+    {
+        if ($this->is_legacy && $this->legacy_start_date) {
+            return $this->legacy_start_date;
+        }
+
+        return $this->batch?->start_date;
+    }
+
+    public function getEffectiveEndDateAttribute(): ?Carbon
+    {
+        if ($this->is_legacy && $this->legacy_end_date) {
+            return $this->legacy_end_date;
+        }
+
+        return $this->batch?->end_date;
+    }
+
+    /** Course id used to match Assessment / question bank (legacy uses optional link). */
+    public function getAssessmentCourseIdAttribute(): ?int
+    {
+        if ($this->is_legacy) {
+            return $this->legacy_link_course_id ? (int) $this->legacy_link_course_id : null;
+        }
+
+        return $this->batch?->course_id ? (int) $this->batch->course_id : null;
     }
 
     public function getIsFullyPaidAttribute(): bool
@@ -74,16 +138,21 @@ class Enrollment extends Model
 
     public function getCanTakeAssessmentAttribute(): bool
     {
-        if (!$this->batch || !$this->batch->end_date) {
+        if (! $this->is_eligible_for_assessment || ! $this->is_fully_paid) {
+            return false;
+        }
+
+        if ($this->is_legacy) {
+            return (bool) $this->legacy_link_course_id;
+        }
+
+        if (! $this->batch || ! $this->batch->end_date) {
             return false;
         }
 
         $endDate = Carbon::parse($this->batch->end_date);
         $validUntil = $endDate->copy()->addYear();
 
-        return $this->is_eligible_for_assessment &&
-               $this->is_fully_paid &&
-               now()->gte($endDate) &&
-               now()->lte($validUntil);
+        return now()->gte($endDate) && now()->lte($validUntil);
     }
 }

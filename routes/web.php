@@ -100,6 +100,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
             Route::patch('/students/{student}/approve', [StudentController::class, 'approve'])->name('students.approve');
             Route::patch('/students/{student}/reject', [StudentController::class, 'reject'])->name('students.reject');
             Route::post('/students/{student}/enroll', [StudentController::class, 'enroll'])->name('students.enroll');
+            Route::post('/students/{student}/enroll-legacy', [StudentController::class, 'enrollLegacy'])->name('students.enroll-legacy');
             Route::patch('/enrollments/{enrollment}/drop', [StudentController::class, 'dropEnrollment'])->name('enrollments.drop');
             Route::delete('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete');
             Route::post('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete.post');

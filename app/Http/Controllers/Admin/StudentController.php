@@ -16,6 +16,7 @@ use App\Mail\AccountApprovedMail;
 use App\Mail\EnrollmentConfirmationMail;
 use App\Mail\StudentRegistrationMail;
 use App\Services\EnrollmentNumberService;
+use App\Services\LegacyEnrollmentService;
 use App\Services\DocumentUploadService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
@@ -79,16 +80,38 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $this->ensureStudentBelongsToPartner($student);
-        $student->load(['user', 'enrollments.batch.course', 'payments', 'assessmentResults.assessment', 'documents']);
+        $student->load(['user', 'enrollments.batch.course', 'enrollments.legacyLinkCourse', 'payments', 'assessmentResults.assessment', 'documents']);
 
         $tpId = $this->getTrainingPartnerId();
+        $legacyCourseId = LegacyEnrollmentService::legacyCourseId();
         $courses = Course::query()
             ->where('is_active', true)
             ->visibleToTrainingPartner($tpId)
+            ->when($legacyCourseId, fn ($q) => $q->where('id', '!=', $legacyCourseId))
             ->orderBy('name')
             ->get();
 
-        return view('admin.students.show', compact('student', 'courses'));
+        $canEnrollLegacy = $student->trainingPartner?->is_hq
+            && $student->status === 'approved'
+            && LegacyEnrollmentService::isConfigured();
+
+        $linkCoursesForLegacy = $canEnrollLegacy
+            ? Course::query()
+                ->where('is_active', true)
+                ->visibleToTrainingPartner($tpId)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $hasLegacyEnrollment = $student->enrollments->contains(fn ($e) => $e->batch?->is_legacy_batch);
+
+        return view('admin.students.show', compact(
+            'student',
+            'courses',
+            'canEnrollLegacy',
+            'linkCoursesForLegacy',
+            'hasLegacyEnrollment'
+        ));
     }
 
     public function approve(Student $student)
@@ -182,6 +205,13 @@ class StudentController extends Controller
                 ->with('error', 'Batch not found.')
                 ->withInput();
         }
+
+        if ($batch->is_legacy_batch) {
+            return redirect()->back()
+                ->with('error', 'Use “Enroll as legacy (HQ)” for the Legacy Batch — not this form.')
+                ->withInput();
+        }
+
         $enrollTpId = $this->getTrainingPartnerId();
         if ($enrollTpId !== null && !Batch::query()->whereKey($batch->id)->visibleToTrainingPartner($enrollTpId)->exists()) {
             abort(404);
@@ -268,6 +298,126 @@ class StudentController extends Controller
         } else {
             $msg .= " (Registration: ₹{$registrationFee} + Course: ₹{$request->total_fee} + Assessment: ₹{$assessmentFee})";
         }
+        return redirect()->route('admin.payments.create', ['student_id' => $student->id, 'enrollment_id' => $enrollment->id])
+            ->with('success', $msg);
+    }
+
+    /**
+     * HQ only: enroll in the single Legacy Batch with custom course label, dates, and fees.
+     */
+    public function enrollLegacy(Request $request, Student $student)
+    {
+        $this->ensureStudentBelongsToPartner($student);
+
+        if (! $student->trainingPartner?->is_hq) {
+            abort(403, 'Legacy enrollment is only for students belonging to the HQ training partner.');
+        }
+
+        if ($student->status !== 'approved') {
+            return redirect()->back()
+                ->with('error', 'Approve the student before legacy enrollment.');
+        }
+
+        $legacyBatch = LegacyEnrollmentService::legacyBatch();
+        if (! $legacyBatch) {
+            return redirect()->back()
+                ->with('error', 'Legacy batch is not set up. Ensure an HQ partner exists and migrations have been run.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'legacy_course_name' => ['required', 'string', 'max:255'],
+            'legacy_start_date' => ['required', 'date'],
+            'legacy_end_date' => ['required', 'date', 'after_or_equal:legacy_start_date'],
+            'enrollment_date' => ['required', 'date'],
+            'registration_fee' => ['required', 'numeric', 'min:0'],
+            'course_fee' => ['required', 'numeric', 'min:0'],
+            'assessment_fee' => ['required', 'numeric', 'min:0'],
+            'legacy_link_course_id' => ['nullable', 'exists:courses,id'],
+            'credit_to_apply' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        if ($request->filled('legacy_link_course_id')) {
+            $linkCourse = Course::findOrFail((int) $request->legacy_link_course_id);
+            $this->ensureCourseAccessible($linkCourse);
+        }
+
+        $existingEnrollment = Enrollment::where('student_id', $student->id)
+            ->where('batch_id', $legacyBatch->id)
+            ->first();
+
+        if ($existingEnrollment) {
+            return redirect()->back()
+                ->with('error', 'This student already has a legacy enrollment. Drop or remove it before adding another.');
+        }
+
+        $registrationFee = (float) $request->registration_fee;
+        $courseFee = (float) $request->course_fee;
+        $assessmentFee = (float) $request->assessment_fee;
+        $totalFees = $registrationFee + $courseFee + $assessmentFee;
+
+        $creditToApply = min(
+            (float) ($request->credit_to_apply ?? 0),
+            (float) $student->credit_balance,
+            $totalFees
+        );
+
+        if ($creditToApply > 0 && $creditToApply > (float) $student->credit_balance) {
+            return redirect()->back()
+                ->with('error', 'Insufficient credit balance. Available: ₹' . number_format($student->credit_balance, 0));
+        }
+
+        $enrollmentNumber = EnrollmentNumberService::generateEnrollmentNumber();
+
+        $enrollment = Enrollment::create([
+            'enrollment_number' => $enrollmentNumber,
+            'student_id' => $student->id,
+            'batch_id' => $legacyBatch->id,
+            'enrollment_date' => $request->enrollment_date,
+            'status' => 'active',
+            'total_fee' => $totalFees,
+            'paid_amount' => 0,
+            'outstanding_amount' => $totalFees,
+            'is_eligible_for_assessment' => false,
+            'registration_fee' => $registrationFee,
+            'course_fee' => $courseFee,
+            'assessment_fee' => $assessmentFee,
+            'is_legacy' => true,
+            'legacy_course_name' => $request->legacy_course_name,
+            'legacy_start_date' => $request->legacy_start_date,
+            'legacy_end_date' => $request->legacy_end_date,
+            'legacy_link_course_id' => $request->legacy_link_course_id ?: null,
+        ]);
+
+        if ($creditToApply > 0) {
+            try {
+                $creditService = new \App\Services\StudentCreditService();
+                $creditService->applyCreditToEnrollment($enrollment, $creditToApply);
+            } catch (\Exception $e) {
+                return redirect()->back()
+                    ->with('error', 'Failed to apply credit: ' . $e->getMessage());
+            }
+        }
+
+        try {
+            $enrollment->load(['batch.course', 'student']);
+            Mail::to($student->email)->send(new EnrollmentConfirmationMail($enrollment));
+        } catch (\Exception $e) {
+            \Log::error('Legacy enrollment confirmation email failed: ' . $e->getMessage());
+        }
+        try {
+            app(WhatsAppNotificationService::class)->sendEnrollmentConfirmation($enrollment);
+        } catch (\Exception $e) {
+            \Log::error('Legacy enrollment WhatsApp failed: ' . $e->getMessage());
+        }
+
+        $msg = "Legacy enrollment created. Course: {$enrollment->legacy_course_name}. Enrollment: {$enrollmentNumber}. Total: ₹{$totalFees}";
+
         return redirect()->route('admin.payments.create', ['student_id' => $student->id, 'enrollment_id' => $enrollment->id])
             ->with('success', $msg);
     }
@@ -743,6 +893,7 @@ class StudentController extends Controller
             ->visibleToTrainingPartner($tpId)
             ->where('course_id', $courseId)
             ->where('is_active', true)
+            ->where('is_legacy_batch', false)
             ->where(function ($query) {
                 $gracePeriod = Carbon::today()->subDays(5);
                 $query->whereNull('end_date')

@@ -20,6 +20,22 @@ use Illuminate\Support\Facades\Mail;
 
 class StudentController extends Controller
 {
+    private function findEligibleEnrollmentForAssessmentCourse(Student $student, int $assessmentCourseId): ?Enrollment
+    {
+        return $student->enrollments()
+            ->with(['batch.course', 'legacyLinkCourse'])
+            ->get()
+            ->first(fn (Enrollment $e) => $e->assessment_course_id === $assessmentCourseId && $e->can_take_assessment);
+    }
+
+    private function findEnrollmentForAssessmentCourse(Student $student, int $assessmentCourseId): ?Enrollment
+    {
+        return $student->enrollments()
+            ->with(['batch.course', 'legacyLinkCourse'])
+            ->get()
+            ->first(fn (Enrollment $e) => $e->assessment_course_id === $assessmentCourseId);
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
@@ -33,7 +49,7 @@ class StudentController extends Controller
         
         // Get student's enrollments with course and batch info
         $enrollments = Enrollment::where('student_id', $student->id)
-            ->with(['batch.course', 'batch'])
+            ->with(['batch.course', 'batch', 'legacyLinkCourse'])
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -45,7 +61,7 @@ class StudentController extends Controller
         
         // Get student's assessment results
         $assessmentResults = AssessmentResult::where('student_id', $student->id)
-            ->with(['assessment', 'enrollment.batch.course'])
+            ->with(['assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse'])
             ->orderBy('completed_at', 'desc')
             ->limit(5)
             ->get();
@@ -61,15 +77,17 @@ class StudentController extends Controller
         $availableAssessments = collect();
         $pendingAssessments = collect();
         
-        // Get all course IDs from enrollments
-        $courseIds = $enrollments->pluck('batch.course.id')->unique();
-        
+        // Course IDs that have an active assessment mapping (batch course or legacy link)
+        $courseIds = $enrollments->map(fn (Enrollment $e) => $e->assessment_course_id)->filter()->unique()->values();
+
         // Get all assessments for these courses in one query
-        $assessments = \App\Models\Assessment::whereIn('course_id', $courseIds)
-            ->where('is_active', true)
-            ->get()
-            ->keyBy('course_id');
-            
+        $assessments = $courseIds->isEmpty()
+            ? collect()
+            : \App\Models\Assessment::whereIn('course_id', $courseIds)
+                ->where('is_active', true)
+                ->get()
+                ->keyBy('course_id');
+
         // Get all existing results for this student in one query
         $existingResults = AssessmentResult::where('student_id', $student->id)
             ->where('is_passed', true) // Only consider passed assessments as completed
@@ -83,31 +101,40 @@ class StudentController extends Controller
             ->toArray();
         
         foreach ($enrollments as $enrollment) {
-            $course = $enrollment->batch->course;
             $batch = $enrollment->batch;
-            $assessment = $assessments->get($course->id);
-            
-            if (!$assessment) continue;
-            
+            $assessmentCourseId = $enrollment->assessment_course_id;
+            if (! $assessmentCourseId) {
+                continue;
+            }
+
+            $assessment = $assessments->get($assessmentCourseId);
+            if (! $assessment) {
+                continue;
+            }
+
+            $displayCourseName = $enrollment->display_course_name;
+            $periodEnd = $enrollment->effective_end_date;
+
             if ($enrollment->can_take_assessment) {
-                if (!in_array($assessment->id, $existingResults)) {
+                if (! in_array($assessment->id, $existingResults)) {
                     $isReassessment = in_array($assessment->id, $failedResults);
                     $availableAssessments->push([
                         'assessment' => $assessment,
                         'enrollment' => $enrollment,
-                        'course' => $course,
+                        'display_course_name' => $displayCourseName,
                         'batch' => $batch,
-                        'is_reassessment' => $isReassessment
+                        'is_reassessment' => $isReassessment,
                     ]);
                 }
             } else {
-                if ($batch->end_date && $batch->end_date > now()) {
+                if ($periodEnd && $periodEnd > now()) {
                     $pendingAssessments->push([
                         'assessment' => $assessment,
                         'enrollment' => $enrollment,
-                        'course' => $course,
+                        'display_course_name' => $displayCourseName,
                         'batch' => $batch,
-                        'days_remaining' => now()->diffInDays($batch->end_date)
+                        'days_remaining' => now()->diffInDays($periodEnd),
+                        'period_end' => $periodEnd,
                     ]);
                 }
             }
@@ -158,7 +185,7 @@ class StudentController extends Controller
         }
         
         $enrollments = Enrollment::where('student_id', $student->id)
-            ->with(['batch.course', 'batch'])
+            ->with(['batch.course', 'batch', 'legacyLinkCourse'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -193,38 +220,43 @@ class StudentController extends Controller
         }
         
         $assessmentResults = AssessmentResult::where('student_id', $student->id)
-            ->with(['assessment', 'enrollment.batch.course'])
+            ->with(['assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse'])
             ->orderBy('completed_at', 'desc')
             ->paginate(10);
 
         // Get available re-assessments
         $enrollments = Enrollment::where('student_id', $student->id)
-            ->with(['batch.course', 'batch'])
+            ->with(['batch.course', 'batch', 'legacyLinkCourse'])
             ->get();
-            
-        $courseIds = $enrollments->pluck('batch.course.id')->unique();
-        $assessments = \App\Models\Assessment::whereIn('course_id', $courseIds)
-            ->where('is_active', true)
-            ->get()
-            ->keyBy('course_id');
-            
+
+        $courseIds = $enrollments->map(fn (Enrollment $e) => $e->assessment_course_id)->filter()->unique()->values();
+        $assessments = $courseIds->isEmpty()
+            ? collect()
+            : \App\Models\Assessment::whereIn('course_id', $courseIds)
+                ->where('is_active', true)
+                ->get()
+                ->keyBy('course_id');
+
         $failedResults = AssessmentResult::where('student_id', $student->id)
             ->where('is_passed', false)
             ->pluck('assessment_id')
             ->toArray();
-            
+
         $reassessments = collect();
         foreach ($enrollments as $enrollment) {
-            $course = $enrollment->batch->course;
             $batch = $enrollment->batch;
-            $assessment = $assessments->get($course->id);
-            
+            $assessmentCourseId = $enrollment->assessment_course_id;
+            if (! $assessmentCourseId) {
+                continue;
+            }
+            $assessment = $assessments->get($assessmentCourseId);
+
             if ($assessment && $enrollment->can_take_assessment && in_array($assessment->id, $failedResults)) {
                 $reassessments->push([
                     'assessment' => $assessment,
                     'enrollment' => $enrollment,
-                    'course' => $course,
-                    'batch' => $batch
+                    'display_course_name' => $enrollment->display_course_name,
+                    'batch' => $batch,
                 ]);
             }
         }
@@ -375,12 +407,7 @@ class StudentController extends Controller
                 ->with('error', 'You have already passed this assessment.');
         }
 
-        $eligibleEnrollment = $student->enrollments()
-            ->whereHas('batch.course', function($query) use ($assessment) {
-                $query->where('id', $assessment->course_id);
-            })
-            ->get()
-            ->first(fn ($enrollment) => $enrollment->can_take_assessment);
+        $eligibleEnrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
 
         if (!$eligibleEnrollment) {
             return redirect()->route('student.assessments')
@@ -446,12 +473,7 @@ class StudentController extends Controller
                 ->with('error', 'You have already passed this assessment.');
         }
 
-        $eligibleEnrollment = $student->enrollments()
-            ->whereHas('batch.course', function($query) use ($assessment) {
-                $query->where('id', $assessment->course_id);
-            })
-            ->get()
-            ->first(fn ($enrollment) => $enrollment->can_take_assessment);
+        $eligibleEnrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
 
         if (!$eligibleEnrollment) {
             return redirect()->route('student.assessments')
@@ -528,13 +550,9 @@ class StudentController extends Controller
             $timeTakenMinutes = $startTime ? max(1, (int) ceil(now()->diffInSeconds($startTime) / 60)) : 1;
         }
         
-        // Find the correct enrollment for this assessment's course
-        $enrollment = $student->enrollments()
-            ->whereHas('batch.course', function($query) use ($assessment) {
-                $query->where('id', $assessment->course_id);
-            })
-            ->first();
-            
+        $enrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id)
+            ?? $this->findEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
+
         if (!$enrollment) {
             return redirect()->route('student.assessments')
                 ->with('error', 'No enrollment found for this assessment.');
@@ -620,7 +638,7 @@ class StudentController extends Controller
         }
 
         // Load relationships
-        $result->load(['assessment', 'enrollment.batch.course']);
+        $result->load(['assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']);
 
         return view('student.assessments.show', compact('result', 'student'));
     }
@@ -676,9 +694,13 @@ class StudentController extends Controller
         $certificateContent = $this->generateCertificateContent($result, $enrollment);
 
         // Create certificate record
+        $courseIdForCert = $enrollment->is_legacy && $enrollment->legacy_link_course_id
+            ? $enrollment->legacy_link_course_id
+            : $enrollment->batch->course_id;
+
         $certificate = Certificate::create([
             'student_id' => $result->student_id,
-            'course_id' => $enrollment->batch->course_id,
+            'course_id' => $courseIdForCert,
             'batch_id' => $enrollment->batch_id,
             'enrollment_id' => $enrollment->id,
             'assessment_result_id' => $result->id,
@@ -694,7 +716,7 @@ class StudentController extends Controller
     private function generateCertificateContent(AssessmentResult $result, Enrollment $enrollment)
     {
         $student = $result->student;
-        $course = $enrollment->batch->course;
+        $courseName = $enrollment->display_course_name;
         $batch = $enrollment->batch;
         
         // Generate certificate number for display
@@ -711,7 +733,7 @@ class StudentController extends Controller
             <p style='font-size: 18px; margin-bottom: 30px;'>This is to certify that</p>
             <h2 style='color: #1f2937; font-size: 28px; margin-bottom: 30px; text-decoration: underline;'>{$student->full_name}</h2>
             <p style='font-size: 18px; margin-bottom: 20px;'>has successfully completed the course</p>
-            <h3 style='color: #2563eb; font-size: 24px; margin-bottom: 20px;'>{$course->name}</h3>
+            <h3 style='color: #2563eb; font-size: 24px; margin-bottom: 20px;'>{$courseName}</h3>
             <p style='font-size: 16px; margin-bottom: 10px;'>Batch: {$batch->batch_name}</p>
             <p style='font-size: 16px; margin-bottom: 10px;'>Score: {$result->correct_answers}/{$result->total_questions} ({$result->percentage}%)</p>
             <p style='font-size: 16px; margin-bottom: 10px;'>Grade: {$result->grade}</p>

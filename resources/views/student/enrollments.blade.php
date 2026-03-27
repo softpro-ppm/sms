@@ -54,7 +54,7 @@
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900">
-                                                {{ $enrollment->batch->course->name }}
+                                                {{ $enrollment->display_course_name }}
                                             </div>
                                             <div class="text-sm text-gray-500">
                                                 Enrollment #{{ $enrollment->enrollment_number }}
@@ -65,8 +65,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $enrollment->batch->batch_name }}</div>
                                     <div class="text-sm text-gray-500">
-                                        {{ $enrollment->batch->start_date->format('M d, Y') }} - 
-                                        {{ $enrollment->batch->end_date->format('M d, Y') }}
+                                        {{ $enrollment->effective_start_date?->format('M d, Y') ?? '—' }} —
+                                        {{ $enrollment->effective_end_date?->format('M d, Y') ?? '—' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -26,7 +26,7 @@
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h3 class="text-xl font-bold text-gray-900">{{ $result->assessment->title }}</h3>
-                <p class="text-gray-600 mt-1">{{ $result->enrollment->batch->course->name }}</p>
+                <p class="text-gray-600 mt-1">{{ $result->enrollment->display_course_name }}</p>
             </div>
             <div class="text-right">
                 <div class="text-sm text-gray-500">Completed on</div>
