@@ -18,13 +18,26 @@ class WhatsAppWebhookController extends Controller
         $challenge = $request->query('hub.challenge')
             ?? $request->query('hub_challenge');
 
+        // Plain browser GET has no Meta params — endpoint is fine; 403 looked like a misconfiguration.
+        if ($mode === null && $token === null && $challenge === null) {
+            return response(
+                'WhatsApp webhook URL is reachable. Meta verification sends GET with hub.mode, hub.verify_token, and hub.challenge.',
+                200,
+                ['Content-Type' => 'text/plain; charset=UTF-8']
+            );
+        }
+
         if ($mode === 'subscribe' && $expected && is_string($token) && hash_equals($expected, $token)) {
             return response((string) $challenge, 200);
         }
 
-        Log::warning('WhatsApp webhook verify failed', [
-            'mode' => $mode,
-        ]);
+        if ($mode === 'subscribe' && !$expected) {
+            Log::warning('WhatsApp webhook verify failed: WHATSAPP_WEBHOOK_VERIFY_TOKEN is not set');
+        } else {
+            Log::warning('WhatsApp webhook verify failed', [
+                'mode' => $mode,
+            ]);
+        }
 
         return response('Forbidden', 403);
     }
