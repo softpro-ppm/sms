@@ -95,7 +95,8 @@ class StudentCreditService
             // Recalculate enrollment totals including credit
             $allocationService = new PaymentAllocationService();
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalPaid = $enrollment->total_fee - $totalOutstanding;
+            $totalFee = (float) $enrollment->total_fee;
+            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
 
             $enrollment->update([
                 'paid_amount' => $totalPaid,

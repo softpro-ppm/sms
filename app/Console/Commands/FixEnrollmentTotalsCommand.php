@@ -95,7 +95,8 @@ class FixEnrollmentTotalsCommand extends Command
             }
 
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalPaid = (float) $enrollment->total_fee - $totalOutstanding;
+            $totalFee = (float) $enrollment->total_fee;
+            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
 
             $this->line("  Recalculated outstanding: ₹{$totalOutstanding}");
             $this->line("  Recalculated paid: ₹{$totalPaid}");
@@ -142,7 +143,8 @@ class FixEnrollmentTotalsCommand extends Command
             $allocationService->allocatePayment($payment);
             $enrollment = $payment->enrollment;
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalPaid = (float) $enrollment->total_fee - $totalOutstanding;
+            $totalFee = (float) $enrollment->total_fee;
+            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
 
             $enrollment->update([
                 'paid_amount' => $totalPaid,

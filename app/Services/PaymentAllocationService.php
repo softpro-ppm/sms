@@ -48,7 +48,7 @@ class PaymentAllocationService
                 ]);
 
                 $allocations[] = $allocation;
-                $paymentAmount -= $allocatedAmount;
+                $paymentAmount = round($paymentAmount - $allocatedAmount, 2);
             }
         }
 
@@ -74,18 +74,24 @@ class PaymentAllocationService
             ->get();
 
         foreach ($paidAllocations as $allocation) {
-            $outstandingAmounts[$allocation->fee_type] -= $allocation->allocated_amount;
+            $outstandingAmounts[$allocation->fee_type] = round(
+                (float) $outstandingAmounts[$allocation->fee_type] - (float) $allocation->allocated_amount,
+                2
+            );
         }
 
         // Subtract credit allocations
         $creditAllocations = CreditAllocation::where('enrollment_id', $enrollment->id)->get();
         foreach ($creditAllocations as $allocation) {
-            $outstandingAmounts[$allocation->fee_type] -= $allocation->allocated_amount;
+            $outstandingAmounts[$allocation->fee_type] = round(
+                (float) $outstandingAmounts[$allocation->fee_type] - (float) $allocation->allocated_amount,
+                2
+            );
         }
 
-        // Ensure no negative amounts
+        // Ensure no negative amounts (2 dp avoids float noise showing as ₹5199.99 etc.)
         foreach ($outstandingAmounts as $key => $amount) {
-            $outstandingAmounts[$key] = max(0, $amount);
+            $outstandingAmounts[$key] = max(0, round((float) $amount, 2));
         }
 
         return $outstandingAmounts;
@@ -142,6 +148,8 @@ class PaymentAllocationService
     public function getTotalOutstanding(Enrollment $enrollment): float
     {
         $outstandingAmounts = $this->getOutstandingAmounts($enrollment);
-        return array_sum($outstandingAmounts);
+        $sum = round(array_sum($outstandingAmounts), 2);
+
+        return $sum <= 0.004 ? 0.0 : $sum;
     }
 }

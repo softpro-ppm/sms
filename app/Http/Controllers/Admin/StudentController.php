@@ -236,7 +236,7 @@ class StudentController extends Controller
         // Calculate total fees: Registration (₹100) + Course Fee + Assessment (₹100)
         $registrationFee = 100.00;
         $assessmentFee = 100.00;
-        $totalFees = $registrationFee + $request->total_fee + $assessmentFee;
+        $totalFees = round($registrationFee + (float) $request->total_fee + $assessmentFee, 2);
         $creditToApply = min(
             (float) ($request->credit_to_apply ?? 0),
             (float) $student->credit_balance,
@@ -277,6 +277,7 @@ class StudentController extends Controller
                 return redirect()->back()
                     ->with('error', 'Failed to apply credit: ' . $e->getMessage());
             }
+            $enrollment->refresh();
         }
 
         // Send enrollment confirmation email
@@ -359,7 +360,7 @@ class StudentController extends Controller
         $registrationFee = (float) $request->registration_fee;
         $courseFee = (float) $request->course_fee;
         $assessmentFee = (float) $request->assessment_fee;
-        $totalFees = $registrationFee + $courseFee + $assessmentFee;
+        $totalFees = round($registrationFee + $courseFee + $assessmentFee, 2);
 
         $creditToApply = min(
             (float) ($request->credit_to_apply ?? 0),
@@ -402,6 +403,7 @@ class StudentController extends Controller
                 return redirect()->back()
                     ->with('error', 'Failed to apply credit: ' . $e->getMessage());
             }
+            $enrollment->refresh();
         }
 
         try {

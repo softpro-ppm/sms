@@ -272,12 +272,13 @@ class PaymentController extends Controller
             // Update enrollment totals
             $enrollment = $payment->enrollment;
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalPaid = $enrollment->total_fee - $totalOutstanding;
-            
+            $totalFee = (float) $enrollment->total_fee;
+            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+
             $enrollment->update([
                 'paid_amount' => $totalPaid,
                 'outstanding_amount' => $totalOutstanding,
-                'is_eligible_for_assessment' => $totalOutstanding <= 0
+                'is_eligible_for_assessment' => $totalOutstanding <= 0,
             ]);
 
             // Update payment_type: if fully paid, mark all payments as 'full'
@@ -385,12 +386,13 @@ class PaymentController extends Controller
                 // Update enrollment totals
                 $enrollment = $payment->enrollment;
                 $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-                $totalPaid = $enrollment->total_fee - $totalOutstanding;
-                
+                $totalFee = (float) $enrollment->total_fee;
+                $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+
                 $enrollment->update([
                     'paid_amount' => $totalPaid,
                     'outstanding_amount' => $totalOutstanding,
-                    'is_eligible_for_assessment' => $totalOutstanding <= 0
+                    'is_eligible_for_assessment' => $totalOutstanding <= 0,
                 ]);
 
                 if ($totalOutstanding <= 0) {
@@ -463,11 +465,12 @@ class PaymentController extends Controller
         if ($wasApproved && $enrollment) {
             $allocationService = new \App\Services\PaymentAllocationService();
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalPaid = $enrollment->total_fee - $totalOutstanding;
+            $totalFee = (float) $enrollment->total_fee;
+            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
             $enrollment->update([
                 'paid_amount' => $totalPaid,
                 'outstanding_amount' => $totalOutstanding,
-                'is_eligible_for_assessment' => $totalOutstanding <= 0
+                'is_eligible_for_assessment' => $totalOutstanding <= 0,
             ]);
         }
 

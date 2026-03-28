@@ -60,6 +60,12 @@ class WhatsAppNotificationService
         }
     }
 
+    /** Whole rupees for WhatsApp templates (avoid (int) truncate: 5199.99 → 5199). */
+    private static function whatsAppRupeeIntString(float|string|int|null $amount): string
+    {
+        return (string) (int) round((float) $amount, 0);
+    }
+
     private function logWhatsApp(?int $studentId, string $templateName, string $type, string $phone, string $status, ?string $metaMessageId, ?string $errorMessage, ?array $metadata): void
     {
         try {
@@ -174,8 +180,8 @@ class WhatsAppNotificationService
                 $courseName,
                 $batch->batch_name,
                 $enrollment->enrollment_number,
-                (string) (int) $enrollment->total_fee,
-                (string) (int) $enrollment->outstanding_amount,
+                self::whatsAppRupeeIntString($enrollment->total_fee),
+                self::whatsAppRupeeIntString($enrollment->outstanding_amount),
             ],
             null,
             ['student_name', 'course_name', 'batch_name', 'enrollment_number', 'total_fee', 'outstanding_amount']
@@ -208,9 +214,9 @@ class WhatsAppNotificationService
             [
                 $student->full_name,
                 $payment->payment_receipt_number ?? 'N/A',
-                (string) (int) $payment->amount,
+                self::whatsAppRupeeIntString($payment->amount),
                 $course,
-                (string) (int) ($enrollment?->outstanding_amount ?? 0),
+                self::whatsAppRupeeIntString($enrollment?->outstanding_amount ?? 0),
             ],
             null,
             ['student_name', 'receipt_number', 'amount', 'course_name', 'outstanding_amount']
