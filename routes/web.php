@@ -16,6 +16,9 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppLogsController;
+use App\Http\Controllers\Admin\WhatsAppInboxController;
+use App\Http\Controllers\Admin\WhatsAppInboxApiController;
+use App\Http\Controllers\WhatsAppWebhookController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
 use App\Http\Controllers\Admin\TpImpersonationController;
@@ -42,6 +45,10 @@ Route::get('/terms', function () {
 Route::get('/data-deletion', function () {
     return view('public.data-deletion');
 })->name('data-deletion');
+
+// WhatsApp Cloud API webhooks (no auth; verify token on GET)
+Route::get('/webhook/whatsapp', [WhatsAppWebhookController::class, 'verify']);
+Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle']);
 
 // Authentication routes - login same as home (split login view)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -219,6 +226,13 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     
     // WhatsApp logs (monitoring)
     Route::get('/whatsapp-logs', [WhatsAppLogsController::class, 'index'])->name('whatsapp-logs.index');
+
+    // WhatsApp inbox (two-way chat with students)
+    Route::get('/whatsapp/inbox', [WhatsAppInboxController::class, 'index'])->name('whatsapp.inbox');
+    Route::get('/api/whatsapp/conversations', [WhatsAppInboxApiController::class, 'conversations'])->name('api.whatsapp.conversations');
+    Route::get('/api/whatsapp/conversations/{conversationId}/messages', [WhatsAppInboxApiController::class, 'messages'])->name('api.whatsapp.messages');
+    Route::post('/api/whatsapp/conversations/{conversationId}/reply', [WhatsAppInboxApiController::class, 'reply'])->name('api.whatsapp.reply');
+    Route::post('/api/whatsapp/conversations/{conversationId}/link-student', [WhatsAppInboxApiController::class, 'linkStudent'])->name('api.whatsapp.link-student');
 
     // Certificates management
     Route::get('/certificates', [CertificatesController::class, 'index'])->name('certificates.index');

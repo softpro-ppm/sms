@@ -303,6 +303,14 @@
                             <span>Certificates</span>
                         </a>
                     </li>
+
+                    <li>
+                        <a href="{{ route('admin.whatsapp.inbox') }}" 
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.whatsapp.inbox') ? 'active' : '' }}">
+                            <i class="fab fa-whatsapp w-5 h-5 mr-3"></i>
+                            <span>WhatsApp Inbox</span>
+                        </a>
+                    </li>
                     
                     @if(auth()->user()->is_admin)
                     <li>
