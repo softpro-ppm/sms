@@ -7,12 +7,22 @@
 @section('content')
     @php $batch = $enrollment->batch; $course = $batch->course; @endphp
     <p>Hello {{ $enrollment->student->full_name }},</p>
-    <p>All fees for your enrollment have been paid. You are now eligible to take the assessment for <strong>{{ $course->name }}</strong>.</p>
-    <div class="info-box">
-        <div class="info-row"><span class="info-label">Course :</span> <span class="info-value">{{ $course->name }}</span></div>
-        <div class="info-row"><span class="info-label">Batch :</span> <span class="info-value">{{ $batch->batch_name }}</span></div>
-        <div class="info-row"><span class="info-label">Status :</span> <span class="info-value"><span class="status-badge status-pass">Eligible</span></span></div>
-    </div>
-    <p>You can take the assessment once your batch has ended. Log in to your student portal and go to Assessments when ready.</p>
-    <a href="{{ url('/student/assessments') }}" class="cta-button">View Assessments</a>
+    @if($enrollment->is_legacy && $batch?->is_legacy_batch)
+        <p>All fees for your <strong>legacy</strong> enrollment have been paid. Legacy students are not required to take the online exam; your result and certificate are processed automatically when the account is fully paid. Check your email and the student portal.</p>
+        <div class="info-box">
+            <div class="info-row"><span class="info-label">Course :</span> <span class="info-value">{{ $enrollment->display_course_name }}</span></div>
+            <div class="info-row"><span class="info-label">Batch :</span> <span class="info-value">{{ $batch->batch_name }}</span></div>
+            <div class="info-row"><span class="info-label">Status :</span> <span class="info-value"><span class="status-badge status-pass">Fully paid</span></span></div>
+        </div>
+        <a href="{{ url('/student/assessments') }}" class="cta-button">View results &amp; certificate</a>
+    @else
+        <p>All fees for your enrollment have been paid. You are now eligible to take the assessment for <strong>{{ $course->name }}</strong>.</p>
+        <div class="info-box">
+            <div class="info-row"><span class="info-label">Course :</span> <span class="info-value">{{ $course->name }}</span></div>
+            <div class="info-row"><span class="info-label">Batch :</span> <span class="info-value">{{ $batch->batch_name }}</span></div>
+            <div class="info-row"><span class="info-label">Status :</span> <span class="info-value"><span class="status-badge status-pass">Eligible</span></span></div>
+        </div>
+        <p>You can take the assessment once your batch has ended. Log in to your student portal and go to Assessments when ready.</p>
+        <a href="{{ url('/student/assessments') }}" class="cta-button">View Assessments</a>
+    @endif
 @endsection

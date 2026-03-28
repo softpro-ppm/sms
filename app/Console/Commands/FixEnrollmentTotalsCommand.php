@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Services\LegacyAutoCertificationService;
 use App\Services\PaymentAllocationService;
 use Illuminate\Console\Command;
 
@@ -113,6 +114,9 @@ class FixEnrollmentTotalsCommand extends Command
                         Payment::where('enrollment_id', $enrollment->id)
                             ->where('status', 'approved')
                             ->update(['payment_type' => 'full']);
+                        app(LegacyAutoCertificationService::class)->issueIfEligible(
+                            $enrollment->fresh()->loadMissing(['batch', 'student', 'legacyLinkCourse'])
+                        );
                     }
                     $this->info("  ✓ Fixed totals");
                     $fixed++;
@@ -156,6 +160,9 @@ class FixEnrollmentTotalsCommand extends Command
                 Payment::where('enrollment_id', $enrollment->id)
                     ->where('status', 'approved')
                     ->update(['payment_type' => 'full']);
+                app(LegacyAutoCertificationService::class)->issueIfEligible(
+                    $enrollment->fresh()->loadMissing(['batch', 'student', 'legacyLinkCourse'])
+                );
             }
         }
     }

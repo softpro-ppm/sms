@@ -104,6 +104,14 @@ class StudentCreditService
                 'is_eligible_for_assessment' => $totalOutstanding <= 0,
             ]);
 
+            if ($totalOutstanding <= 0) {
+                DB::afterCommit(function () use ($enrollment) {
+                    app(LegacyAutoCertificationService::class)->issueIfEligible(
+                        $enrollment->fresh()->loadMissing(['batch', 'student', 'legacyLinkCourse'])
+                    );
+                });
+            }
+
             return $transaction;
         });
     }

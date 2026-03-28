@@ -6,11 +6,13 @@ use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
 use App\Mail\FullyPaidMail;
 use App\Mail\PaymentApprovedMail;
+use App\Models\Certificate;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Enrollment;
 use App\Models\User;
 use App\Services\AmsSyncService;
+use App\Services\LegacyAutoCertificationService;
 use App\Services\PaymentAllocationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
@@ -298,17 +300,30 @@ class PaymentController extends Controller
         }
         if ($payment->enrollment_id) {
             $enrollment = $payment->enrollment;
+            $enrollment->refresh();
             if ($enrollment->outstanding_amount <= 0) {
-                try {
-                    $enrollment->load(['batch.course', 'student']);
-                    Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
-                } catch (\Exception $e) {
-                    \Log::error('Fully paid email failed: ' . $e->getMessage());
+                $enrollment->loadMissing(['batch', 'student', 'legacyLinkCourse']);
+                if ($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch) {
+                    app(LegacyAutoCertificationService::class)->issueIfEligible($enrollment->fresh(['batch', 'student', 'legacyLinkCourse']));
                 }
-                try {
-                    app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
-                } catch (\Exception $e) {
-                    \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
+                $enrollment->refresh();
+                $hasCert = Certificate::query()
+                    ->where('enrollment_id', $enrollment->id)
+                    ->where('is_issued', true)
+                    ->exists();
+                $isLegacyBatch = $enrollment->is_legacy && $enrollment->batch?->is_legacy_batch;
+                if (! $isLegacyBatch || ! $hasCert) {
+                    try {
+                        $enrollment->load(['batch.course', 'student']);
+                        Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
+                    } catch (\Exception $e) {
+                        \Log::error('Fully paid email failed: ' . $e->getMessage());
+                    }
+                    try {
+                        app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
+                    } catch (\Exception $e) {
+                        \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
+                    }
                 }
             }
         }
@@ -426,6 +441,20 @@ class PaymentController extends Controller
         // Send fully paid emails (one per enrollment that became fully paid)
         foreach ($fullyPaidEnrollmentIds as $enrollment) {
             try {
+                $enrollment->refresh();
+                $enrollment->loadMissing(['batch', 'student', 'legacyLinkCourse']);
+                if ($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch) {
+                    app(LegacyAutoCertificationService::class)->issueIfEligible($enrollment->fresh(['batch', 'student', 'legacyLinkCourse']));
+                }
+                $enrollment->refresh();
+                $hasCert = Certificate::query()
+                    ->where('enrollment_id', $enrollment->id)
+                    ->where('is_issued', true)
+                    ->exists();
+                $isLegacyBatch = $enrollment->is_legacy && $enrollment->batch?->is_legacy_batch;
+                if ($isLegacyBatch && $hasCert) {
+                    continue;
+                }
                 $enrollment->load(['batch.course', 'student']);
                 Mail::to($enrollment->student->email)->send(new FullyPaidMail($enrollment));
                 try {

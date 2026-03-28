@@ -1188,12 +1188,12 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Link to catalogue course (optional)</label>
                         <select name="legacy_link_course_id"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="">— None (no online exam for this record) —</option>
+                            <option value="">— None (certificate uses Legacy archive course) —</option>
                             @foreach($linkCoursesForLegacy as $lc)
                                 <option value="{{ $lc->id }}" @selected(old('legacy_link_course_id') == $lc->id)>{{ $lc->name }}</option>
                             @endforeach
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">If set, eligible students can take the active assessment tied to this course after payment and batch rules.</p>
+                        <p class="text-xs text-gray-500 mt-1">Optional: if set, the issued certificate is linked to that catalogue course. Legacy students do not take the online exam; after full payment an A+ result and certificate are created automatically.</p>
                     </div>
                     @if(($student->credit_balance ?? 0) > 0)
                     <div class="border border-green-200 rounded-lg p-3 bg-green-50">

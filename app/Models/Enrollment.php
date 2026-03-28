@@ -143,7 +143,7 @@ class Enrollment extends Model
         }
 
         if ($this->is_legacy) {
-            return (bool) $this->legacy_link_course_id;
+            return false;
         }
 
         if (! $this->batch || ! $this->batch->end_date) {

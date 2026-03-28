@@ -16,6 +16,7 @@ use App\Mail\AccountApprovedMail;
 use App\Mail\EnrollmentConfirmationMail;
 use App\Mail\StudentRegistrationMail;
 use App\Services\EnrollmentNumberService;
+use App\Services\LegacyAutoCertificationService;
 use App\Services\LegacyEnrollmentService;
 use App\Services\DocumentUploadService;
 use App\Services\WhatsAppNotificationService;
@@ -404,6 +405,12 @@ class StudentController extends Controller
                     ->with('error', 'Failed to apply credit: ' . $e->getMessage());
             }
             $enrollment->refresh();
+        }
+
+        if ($enrollment->outstanding_amount <= 0) {
+            app(LegacyAutoCertificationService::class)->issueIfEligible(
+                $enrollment->fresh()->loadMissing(['batch', 'student', 'legacyLinkCourse'])
+            );
         }
 
         try {
