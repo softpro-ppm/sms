@@ -119,6 +119,9 @@ class WhatsAppInboxApiController extends Controller
                     ? route('admin.students.show', $conversation->student_id)
                     : null,
                 'enrollment_summary' => $enrollmentSummary,
+                'can_reply_freeform' => $this->canSendFreeformReply($conversation),
+                'freeform_reply_until' => optional($this->freeformReplyDeadline($conversation))?->toIso8601String(),
+                'freeform_reply_hours' => (int) config('services.whatsapp.inbox_freeform_reply_hours', 24),
             ],
             'messages' => $messageRows,
             'meta' => [
@@ -142,6 +145,14 @@ class WhatsAppInboxApiController extends Controller
         $conversation = $this->visibleConversationQuery()->whereKey($conversationId)->first();
         if (!$conversation) {
             return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if (!$this->canSendFreeformReply($conversation)) {
+            $hours = (int) config('services.whatsapp.inbox_freeform_reply_hours', 24);
+
+            return response()->json([
+                'error' => "Free-text replies are only allowed within {$hours} hours of the customer’s last message. After that, WhatsApp requires an approved template; sending plain text can fail and may still be chargeable depending on your Meta pricing.",
+            ], 422);
         }
 
         $text = $request->input('message');
@@ -238,5 +249,36 @@ class WhatsAppInboxApiController extends Controller
                         ->whereNull('whatsapp_conversations.student_id');
                 });
         });
+    }
+
+    private function freeformReplyDeadline(WhatsAppConversation $conversation): ?\Illuminate\Support\Carbon
+    {
+        $lastInbound = WhatsAppMessage::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('direction', 'inbound')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$lastInbound?->created_at) {
+            return null;
+        }
+
+        $hours = (int) config('services.whatsapp.inbox_freeform_reply_hours', 24);
+        if ($hours < 1) {
+            $hours = 24;
+        }
+
+        return $lastInbound->created_at->copy()->addHours($hours);
+    }
+
+    private function canSendFreeformReply(WhatsAppConversation $conversation): bool
+    {
+        $deadline = $this->freeformReplyDeadline($conversation);
+        if (!$deadline) {
+            return false;
+        }
+
+        return $deadline->isFuture();
     }
 }

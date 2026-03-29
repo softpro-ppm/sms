@@ -52,6 +52,8 @@ return [
         'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
         /** When an inbound number does not match a student, tag the thread to this TP so centre staff can see it. */
         'inbox_default_training_partner_id' => env('WHATSAPP_INBOX_DEFAULT_TRAINING_PARTNER_ID'),
+        /** Free-text replies allowed only within this many hours after the customer’s last inbound message (WhatsApp policy). */
+        'inbox_freeform_reply_hours' => env('WHATSAPP_INBOX_FREEFORM_REPLY_HOURS', 24),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en_US'),
         // When true: pass empty string for button URL (template has full URL as base, {{1}} is suffix)
         // When false: pass full URL (template has {{1}} as whole URL)

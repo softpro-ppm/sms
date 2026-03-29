@@ -11,7 +11,7 @@
         </div>
     @else
     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p class="text-gray-600 text-sm">Reply within 24 hours of the student&rsquo;s last message (WhatsApp session window). Configure Meta webhook: <code class="text-xs bg-gray-100 px-1 rounded">GET/POST /webhook/whatsapp</code></p>
+        <p class="text-gray-600 text-sm">Free-text replies only during WhatsApp&rsquo;s customer-care window (from the contact&rsquo;s last message; default 24h, configurable). After that use Meta-approved templates. Webhook: <code class="text-xs bg-gray-100 px-1 rounded">GET/POST /webhook/whatsapp</code></p>
         <div class="flex gap-2">
             <input type="search"
                    x-model="searchQ"
@@ -100,15 +100,22 @@
                         </template>
                     </div>
                     <div class="p-3 border-t border-gray-200 bg-white shrink-0">
+                        <div x-show="chatMeta.can_reply_freeform === false"
+                             class="rounded-lg bg-amber-50 border border-amber-200 text-amber-950 text-xs px-3 py-2 mb-2"
+                             x-cloak>
+                            <strong>Reply window closed.</strong> The customer&rsquo;s last message was more than <span x-text="chatMeta.freeform_reply_hours || 24"></span> hours ago. This form is disabled so we don&rsquo;t call Meta with free text that will fail. Use an approved WhatsApp template from Meta Business for outreach outside this window (billing is per Meta&rsquo;s rules).
+                        </div>
                         <p class="text-red-600 text-xs mb-2" x-show="sendError" x-text="sendError"></p>
                         <div class="flex gap-2">
                             <textarea x-model="draft"
                                       rows="2"
-                                      placeholder="Type a reply…"
+                                      :placeholder="chatMeta.can_reply_freeform === false ? 'Window closed — use a Meta template' : 'Type a reply…'"
+                                      :disabled="chatMeta.can_reply_freeform !== true"
+                                      :class="chatMeta.can_reply_freeform !== true ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''"
                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"></textarea>
                             <button type="button"
                                     @click="sendReply"
-                                    :disabled="sending || !draft.trim()"
+                                    :disabled="sending || !draft.trim() || chatMeta.can_reply_freeform !== true"
                                     class="self-end bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50">
                                 Send
                             </button>
@@ -215,7 +222,7 @@ function whatsappInbox() {
 
         async sendReply() {
             const text = this.draft.trim();
-            if (!text || !this.selectedId) return;
+            if (!text || !this.selectedId || this.chatMeta.can_reply_freeform !== true) return;
             this.sending = true;
             this.sendError = '';
             try {
