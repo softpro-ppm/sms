@@ -9,6 +9,8 @@ class WhatsAppMessage extends Model
 {
     public const UPDATED_AT = null;
 
+    protected $table = 'whatsapp_messages';
+
     protected $fillable = [
         'conversation_id',
         'direction',

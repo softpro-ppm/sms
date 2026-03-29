@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WhatsAppConversation extends Model
 {
+    /** Laravel would guess `whats_app_conversations`; migration uses `whatsapp_conversations`. */
+    protected $table = 'whatsapp_conversations';
+
     protected $fillable = [
         'phone',
         'student_id',
