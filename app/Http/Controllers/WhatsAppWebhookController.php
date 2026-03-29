@@ -47,7 +47,14 @@ class WhatsAppWebhookController extends Controller
         try {
             $payload = $request->all();
             if (is_array($payload)) {
-                $webhookService->processWebhookPayload($payload);
+                Log::info('WhatsApp webhook POST', [
+                    'object' => $payload['object'] ?? null,
+                    'entry_count' => isset($payload['entry']) ? count($payload['entry']) : 0,
+                ]);
+                $stored = $webhookService->processWebhookPayload($payload);
+                if ($stored === 0 && ($payload['object'] ?? '') === 'whatsapp_business_account') {
+                    Log::info('WhatsApp webhook: no inbound messages stored (may be status-only or non-message payload)');
+                }
             }
         } catch (\Throwable $e) {
             Log::error('WhatsApp webhook handle error: ' . $e->getMessage(), [

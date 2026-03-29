@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Student;
+use App\Models\TrainingPartner;
 use App\Models\WhatsAppConversation;
 use App\Models\WhatsAppMessage;
 use Illuminate\Support\Facades\DB;
@@ -10,14 +11,20 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookService
 {
-    public function processWebhookPayload(array $payload): void
+    /**
+     * @return int Number of inbound messages stored (0 if duplicate or skipped)
+     */
+    public function processWebhookPayload(array $payload): int
     {
+        $stored = 0;
         foreach ($payload['entry'] ?? [] as $entry) {
             foreach ($entry['changes'] ?? [] as $change) {
                 $value = $change['value'] ?? [];
                 if (!empty($value['messages']) && is_array($value['messages'])) {
                     foreach ($value['messages'] as $msg) {
-                        $this->storeInboundMessage($value, $msg);
+                        if ($this->storeInboundMessage($value, $msg)) {
+                            $stored++;
+                        }
                     }
                 }
                 if (!empty($value['statuses']) && is_array($value['statuses'])) {
@@ -27,31 +34,36 @@ class WhatsAppWebhookService
                 }
             }
         }
+
+        return $stored;
     }
 
-    private function storeInboundMessage(array $value, array $msg): void
+    /**
+     * @return bool True if a new inbound row was written
+     */
+    private function storeInboundMessage(array $value, array $msg): bool
     {
         $from = $msg['from'] ?? null;
         if (!$from || !is_string($from)) {
-            return;
+            return false;
         }
 
         $phone = preg_replace('/\D/', '', $from);
         if ($phone === '') {
-            return;
+            return false;
         }
 
         $metaMessageId = $msg['id'] ?? null;
         if ($metaMessageId && WhatsAppMessage::where('meta_message_id', $metaMessageId)->exists()) {
-            return;
+            return false;
         }
 
         $student = $this->findStudentByPhoneDigits($phone);
-        $defaultTp = config('services.whatsapp.inbox_default_training_partner_id');
+        $tpId = $this->resolveTrainingPartnerId($student);
 
         $conversation = WhatsAppConversation::firstOrNew(['phone' => $phone]);
         if (!$conversation->exists) {
-            $conversation->training_partner_id = $student?->training_partner_id ?? $defaultTp;
+            $conversation->training_partner_id = $tpId;
             $conversation->student_id = $student?->id;
             $conversation->unread_count = 0;
         } else {
@@ -60,8 +72,8 @@ class WhatsAppWebhookService
                 if ($student->training_partner_id) {
                     $conversation->training_partner_id = $student->training_partner_id;
                 }
-            } elseif (!$conversation->training_partner_id && $defaultTp) {
-                $conversation->training_partner_id = $defaultTp;
+            } elseif (!$conversation->training_partner_id && $tpId) {
+                $conversation->training_partner_id = $tpId;
             }
         }
 
@@ -69,7 +81,7 @@ class WhatsAppWebhookService
         [$body, $mediaUrl, $storedType] = $this->extractMessageContent($msg, $type);
 
         try {
-            DB::transaction(function () use ($conversation, $metaMessageId, $storedType, $body, $mediaUrl, $msg) {
+            DB::transaction(function () use ($conversation, $metaMessageId, $storedType, $body, $mediaUrl, $msg, $value) {
                 $conversation->last_message_at = now();
                 $conversation->unread_count = (int) $conversation->unread_count + 1;
                 $conversation->save();
@@ -90,7 +102,39 @@ class WhatsAppWebhookService
                 'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
+
+            return false;
         }
+
+        Log::info('WhatsApp inbox: inbound message stored', [
+            'conversation_id' => $conversation->id,
+            'phone' => $phone,
+            'training_partner_id' => $conversation->training_partner_id,
+            'student_id' => $conversation->student_id,
+        ]);
+
+        return true;
+    }
+
+    private function resolveTrainingPartnerId(?Student $student): ?int
+    {
+        if ($student?->training_partner_id) {
+            return (int) $student->training_partner_id;
+        }
+
+        $default = config('services.whatsapp.inbox_default_training_partner_id');
+        if ($default !== null && $default !== '') {
+            return (int) $default;
+        }
+
+        /** Single-centre installs: orphan chats still show in inbox without extra .env */
+        if (TrainingPartner::query()->count() === 1) {
+            $id = TrainingPartner::query()->orderBy('id')->value('id');
+
+            return $id !== null ? (int) $id : null;
+        }
+
+        return null;
     }
 
     /**
@@ -151,6 +195,16 @@ class WhatsAppWebhookService
         $ten = strlen($phoneDigits) >= 10 ? substr($phoneDigits, -10) : null;
         if (!$ten) {
             return null;
+        }
+
+        $driver = Student::query()->getConnection()->getDriverName();
+        if ($driver === 'mysql') {
+            $strip = "REGEXP_REPLACE(IFNULL(%s, ''), '[^0-9]', '')";
+
+            return Student::query()
+                ->whereRaw('RIGHT(' . sprintf($strip, 'whatsapp_number') . ', 10) = ?', [$ten])
+                ->orWhereRaw('RIGHT(' . sprintf($strip, 'phone') . ', 10) = ?', [$ten])
+                ->first();
         }
 
         return Student::query()
