@@ -215,6 +215,12 @@ class WhatsAppInboxApiController extends Controller
         }
 
         $tpId = $user->training_partner_id ? (int) $user->training_partner_id : null;
+        if (!$tpId) {
+            $fromEnv = config('services.whatsapp.inbox_default_training_partner_id');
+            if ($fromEnv !== null && $fromEnv !== '') {
+                $tpId = (int) $fromEnv;
+            }
+        }
         if (!$tpId && TrainingPartner::query()->count() === 1) {
             $tpId = (int) TrainingPartner::query()->orderBy('id')->value('id');
         }
@@ -222,22 +228,15 @@ class WhatsAppInboxApiController extends Controller
             return WhatsAppConversation::query()->whereRaw('1 = 0');
         }
 
-        $multiCentre = TrainingPartner::query()->count() > 1;
-        $defaultTp = config('services.whatsapp.inbox_default_training_partner_id');
-        $defaultTpInt = ($defaultTp !== null && $defaultTp !== '') ? (int) $defaultTp : null;
-
-        return WhatsAppConversation::query()->where(function ($q) use ($tpId, $multiCentre, $defaultTpInt) {
+        // Centre-scoped threads + shared “unassigned” queue (no student match, no TP on thread).
+        // Same business WhatsApp number: any inbox user can see unassigned until someone links a student.
+        return WhatsAppConversation::query()->where(function ($q) use ($tpId) {
             $q->where('whatsapp_conversations.training_partner_id', $tpId)
-                ->orWhereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
-
-            if (!$multiCentre) {
-                $q->orWhereNull('whatsapp_conversations.training_partner_id');
-            } elseif ($defaultTpInt === $tpId) {
-                $q->orWhere(function ($inner) {
+                ->orWhereHas('student', fn ($s) => $s->where('training_partner_id', $tpId))
+                ->orWhere(function ($inner) {
                     $inner->whereNull('whatsapp_conversations.training_partner_id')
                         ->whereNull('whatsapp_conversations.student_id');
                 });
-            }
         });
     }
 }
