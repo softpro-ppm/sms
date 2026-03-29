@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
+use App\Models\TrainingPartner;
 use App\Models\WhatsAppConversation;
 use App\Models\WhatsAppMessage;
 use App\Services\WhatsAppService;
@@ -213,11 +214,30 @@ class WhatsAppInboxApiController extends Controller
             return WhatsAppConversation::query();
         }
 
-        $tpId = $user->training_partner_id;
+        $tpId = $user->training_partner_id ? (int) $user->training_partner_id : null;
+        if (!$tpId && TrainingPartner::query()->count() === 1) {
+            $tpId = (int) TrainingPartner::query()->orderBy('id')->value('id');
+        }
         if (!$tpId) {
             return WhatsAppConversation::query()->whereRaw('1 = 0');
         }
 
-        return WhatsAppConversation::forTrainingPartner((int) $tpId);
+        $multiCentre = TrainingPartner::query()->count() > 1;
+        $defaultTp = config('services.whatsapp.inbox_default_training_partner_id');
+        $defaultTpInt = ($defaultTp !== null && $defaultTp !== '') ? (int) $defaultTp : null;
+
+        return WhatsAppConversation::query()->where(function ($q) use ($tpId, $multiCentre, $defaultTpInt) {
+            $q->where('whatsapp_conversations.training_partner_id', $tpId)
+                ->orWhereHas('student', fn ($s) => $s->where('training_partner_id', $tpId));
+
+            if (!$multiCentre) {
+                $q->orWhereNull('whatsapp_conversations.training_partner_id');
+            } elseif ($defaultTpInt === $tpId) {
+                $q->orWhere(function ($inner) {
+                    $inner->whereNull('whatsapp_conversations.training_partner_id')
+                        ->whereNull('whatsapp_conversations.student_id');
+                });
+            }
+        });
     }
 }
