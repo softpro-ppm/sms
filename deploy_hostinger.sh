@@ -63,6 +63,7 @@ chmod -R 755 storage bootstrap/cache public
 echo ""
 echo "⚡ Optimizing Laravel..."
 php artisan config:cache
+php artisan route:clear
 php artisan route:cache
 php artisan view:cache
 php artisan cache:clear

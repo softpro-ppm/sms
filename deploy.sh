@@ -83,6 +83,7 @@ echo -e "${GREEN}✅ Permissions set${NC}"
 echo -e "${YELLOW}⚡ Optimizing Laravel...${NC}"
 php artisan view:clear
 php artisan config:cache
+php artisan route:clear
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache

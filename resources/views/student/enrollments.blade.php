@@ -99,7 +99,7 @@
                                         $hasLms = $learnCourse && $learnCourse->relationLoaded('learningModules') && $learnCourse->learningModules->isNotEmpty();
                                     @endphp
                                     @if($hasLms)
-                                        <a href="{{ route('student.learn.resume', $enrollment) }}" class="inline-flex items-center text-primary-600 hover:text-primary-800 font-medium" title="Opens your last lesson, or the course outline">
+                                        <a href="{{ Route::has('student.learn.resume') ? route('student.learn.resume', $enrollment) : route('student.learn.outline', $enrollment) }}" class="inline-flex items-center text-primary-600 hover:text-primary-800 font-medium" title="Opens your last lesson, or the course outline">
                                             <i class="fas fa-book-reader mr-1"></i> Open lessons
                                         </a>
                                     @else
