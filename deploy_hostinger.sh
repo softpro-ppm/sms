@@ -28,8 +28,10 @@ fi
 echo "📍 Current directory: $(pwd)"
 echo ""
 
-echo "📥 Pulling latest code from GitHub..."
-git pull origin main
+echo "📥 Syncing to latest origin/main (fetch + hard reset)..."
+git fetch origin main
+git reset --hard origin/main
+echo "   Deployed commit: $(git rev-parse --short HEAD) ($(git log -1 --format=%s))"
 
 echo ""
 echo "📦 Installing Composer dependencies..."
