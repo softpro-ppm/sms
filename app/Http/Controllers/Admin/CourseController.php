@@ -35,11 +35,13 @@ class CourseController extends Controller
             $query->withCount([
                 'batches as batches_count' => fn ($q) => $q->visibleToTrainingPartner($tpId),
                 'enrollments as enrollments_count' => $enrollmentFilter,
+                'learningModules as learning_modules_count',
             ]);
         } else {
             $query->withCount([
                 'batches',
                 'enrollments' => $enrollmentFilter,
+                'learningModules as learning_modules_count',
             ]);
         }
 

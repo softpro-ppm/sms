@@ -181,6 +181,11 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
+                                <a href="{{ route('admin.courses.learning', $course) }}"
+                                   class="text-emerald-600 hover:text-emerald-800 transition-colors duration-200"
+                                   title="Lessons (LMS){{ ($course->learning_modules_count ?? 0) > 0 ? ' — '.$course->learning_modules_count.' modules' : '' }}">
+                                    <i class="fas fa-book-reader"></i>
+                                </a>
                                 <a href="{{ route('admin.courses.show', $course) }}" 
                                    class="text-primary-600 hover:text-primary-900 transition-colors duration-200"
                                    title="View Details">
