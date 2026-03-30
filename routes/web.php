@@ -1,37 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\AssessmentController;
+use App\Http\Controllers\Admin\BatchController;
+use App\Http\Controllers\Admin\CertificatesController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseLearningController;
-use App\Http\Controllers\Admin\BatchController;
-use App\Http\Controllers\Admin\StudentController;
-use App\Http\Controllers\Admin\PaymentController;
-use App\Http\Controllers\Admin\AssessmentController;
-use App\Http\Controllers\Admin\QuestionBankController;
-use App\Http\Controllers\Admin\ResultsController;
-use App\Http\Controllers\Admin\CertificatesController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmailTemplateController;
-use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ForcePasswordController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\QuestionBankController;
 use App\Http\Controllers\Admin\ReportsController;
-use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Admin\WhatsAppLogsController;
-use App\Http\Controllers\Admin\WhatsAppInboxController;
-use App\Http\Controllers\Admin\WhatsAppInboxApiController;
-use App\Http\Controllers\WhatsAppWebhookController;
+use App\Http\Controllers\Admin\ResultsController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
 use App\Http\Controllers\Admin\TpImpersonationController;
-use App\Http\Controllers\Admin\ForcePasswordController;
-use App\Http\Controllers\Student\StudentController as StudentPortalController;
-use App\Http\Controllers\Student\StudentCourseLearningController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\WhatsAppInboxApiController;
+use App\Http\Controllers\Admin\WhatsAppInboxController;
+use App\Http\Controllers\Admin\WhatsAppLogsController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Public\StudentVerificationController;
 use App\Http\Controllers\Public\PartnerRegistrationController;
+use App\Http\Controllers\Public\StudentVerificationController;
+use App\Http\Controllers\Student\StudentController as StudentPortalController;
+use App\Http\Controllers\Student\StudentCourseLearningController;
+use App\Http\Controllers\WhatsAppWebhookController;
+use Illuminate\Support\Facades\Route;
 
 // Public routes - home shows split login (Student left, Reception/Admin right)
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('home');
@@ -96,71 +96,71 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/dashboard/dismiss-catalog-onboarding', [DashboardController::class, 'dismissCatalogOnboarding'])
         ->name('dashboard.dismiss-catalog-onboarding');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
-    
-            // Students management
-            Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-            Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
-            Route::post('/students', [StudentController::class, 'store'])->name('students.store');
+
+    // Students management
+    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
+    Route::post('/students', [StudentController::class, 'store'])->name('students.store');
     Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
     Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
     Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
     Route::post('/students/{student}/reset-password', [StudentController::class, 'resetPassword'])->name('students.reset-password');
     Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
-            Route::patch('/students/{student}/approve', [StudentController::class, 'approve'])->name('students.approve');
-            Route::patch('/students/{student}/reject', [StudentController::class, 'reject'])->name('students.reject');
-            Route::post('/students/{student}/enroll', [StudentController::class, 'enroll'])->name('students.enroll');
-            Route::post('/students/{student}/enroll-legacy', [StudentController::class, 'enrollLegacy'])->name('students.enroll-legacy');
-            Route::patch('/enrollments/{enrollment}/drop', [StudentController::class, 'dropEnrollment'])->name('enrollments.drop');
-            Route::delete('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete');
-            Route::post('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete.post');
-            Route::delete('/enrollments/{enrollment}/remove', [StudentController::class, 'removeFromEnrollment'])->name('enrollments.remove');
-            Route::get('/api/student-batches/by-course', [StudentController::class, 'getBatchesByCourse'])->name('students.batches-by-course');
-            Route::get('/api/course-details/{courseId}', [StudentController::class, 'getCourseDetails'])->name('students.course-details');
-            
-            // Student Document Management
-            Route::post('/students/{student}/documents', [StudentController::class, 'uploadDocument'])->name('students.upload-document');
-            Route::put('/students/{student}/documents/{document}', [StudentController::class, 'updateDocument'])->name('students.update-document');
-            Route::delete('/students/{student}/documents/{document}', [StudentController::class, 'removeDocument'])->name('students.remove-document');
+    Route::patch('/students/{student}/approve', [StudentController::class, 'approve'])->name('students.approve');
+    Route::patch('/students/{student}/reject', [StudentController::class, 'reject'])->name('students.reject');
+    Route::post('/students/{student}/enroll', [StudentController::class, 'enroll'])->name('students.enroll');
+    Route::post('/students/{student}/enroll-legacy', [StudentController::class, 'enrollLegacy'])->name('students.enroll-legacy');
+    Route::patch('/enrollments/{enrollment}/drop', [StudentController::class, 'dropEnrollment'])->name('enrollments.drop');
+    Route::delete('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete');
+    Route::post('/students/{student}/force-delete', [StudentController::class, 'forceDestroy'])->name('students.force-delete.post');
+    Route::delete('/enrollments/{enrollment}/remove', [StudentController::class, 'removeFromEnrollment'])->name('enrollments.remove');
+    Route::get('/api/student-batches/by-course', [StudentController::class, 'getBatchesByCourse'])->name('students.batches-by-course');
+    Route::get('/api/course-details/{courseId}', [StudentController::class, 'getCourseDetails'])->name('students.course-details');
+
+    // Student Document Management
+    Route::post('/students/{student}/documents', [StudentController::class, 'uploadDocument'])->name('students.upload-document');
+    Route::put('/students/{student}/documents/{document}', [StudentController::class, 'updateDocument'])->name('students.update-document');
+    Route::delete('/students/{student}/documents/{document}', [StudentController::class, 'removeDocument'])->name('students.remove-document');
     Route::get('/documents/{document}/file', [StudentController::class, 'viewDocument'])->name('documents.view');
-            Route::get('/students/{student}/id-card/preview', [StudentController::class, 'idCardPreview'])->name('students.id-card.preview');
-            Route::get('/students/{student}/id-card', [StudentController::class, 'idCard'])->name('students.id-card');
-            Route::get('/students/{student}/id-card/download', [StudentController::class, 'downloadIdCard'])->name('students.id-card.download');
-    
-            // Payments management
-            Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-            Route::get('/payments/pending', [PaymentController::class, 'pending'])->name('payments.pending');
-            Route::get('/payments/debug', [PaymentController::class, 'debug'])->name('payments.debug');
-            Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
-            Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
-            Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
-            Route::patch('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
-            Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
-            Route::post('/payments/bulk-approve', [PaymentController::class, 'bulkApprove'])->name('payments.bulk-approve');
-            Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
-            Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'downloadReceiptPdf'])->name('payments.receipt.pdf');
-            Route::get('/payments/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('payments.receipt');
-            
-            // API Routes for AJAX requests
-            Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
-            Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
-    
-            // Courses: list/show for TP admin & reception only (not Super Admin). CUD: centre admin only.
-            // Register /courses/create before /courses/{course} so "create" is not captured as an id.
-            Route::middleware('role:admin,reception')->group(function () {
-                Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            });
-            Route::middleware('role:admin')->group(function () {
-                Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
-                Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
-                Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
-                Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
-                Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
-                Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
-            });
-            Route::middleware('role:admin,reception')->group(function () {
-                Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
-                Route::get('/courses/{course}/learning', [CourseLearningController::class, 'show'])->name('courses.learning');
-            });
+    Route::get('/students/{student}/id-card/preview', [StudentController::class, 'idCardPreview'])->name('students.id-card.preview');
+    Route::get('/students/{student}/id-card', [StudentController::class, 'idCard'])->name('students.id-card');
+    Route::get('/students/{student}/id-card/download', [StudentController::class, 'downloadIdCard'])->name('students.id-card.download');
+
+    // Payments management
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/pending', [PaymentController::class, 'pending'])->name('payments.pending');
+    Route::get('/payments/debug', [PaymentController::class, 'debug'])->name('payments.debug');
+    Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::patch('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
+    Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
+    Route::post('/payments/bulk-approve', [PaymentController::class, 'bulkApprove'])->name('payments.bulk-approve');
+    Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+    Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'downloadReceiptPdf'])->name('payments.receipt.pdf');
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('payments.receipt');
+
+    // API Routes for AJAX requests
+    Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
+    Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
+
+    // Courses: list/show for TP admin & reception only (not Super Admin). CUD: centre admin only.
+    // Register /courses/create before /courses/{course} so "create" is not captured as an id.
+    Route::middleware('role:admin,reception')->group(function () {
+        Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+    });
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+        Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+        Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+        Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+        Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
+    });
+    Route::middleware('role:admin,reception')->group(function () {
+        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+        Route::get('/courses/{course}/learning', [CourseLearningController::class, 'show'])->name('courses.learning');
+    });
 
     // Batches management
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
@@ -174,7 +174,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::delete('/batches/{batch}', [BatchController::class, 'destroy'])->name('batches.destroy');
     Route::patch('/batches/{batch}/toggle-status', [BatchController::class, 'toggleStatus'])->name('batches.toggle-status');
     Route::get('/api/batches/by-course', [BatchController::class, 'getBatchesByCourse'])->name('batches.by-course');
-    
+
     // Assessments (Exams) — TP centre admin only (not Reception, not Super Admin).
     Route::middleware('role:admin')->group(function () {
         Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
@@ -214,7 +214,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/api/question-banks/subjects/by-course', [QuestionBankController::class, 'getSubjectsByCourse'])->name('question-banks.subjects-by-course');
         Route::get('/api/question-banks/stats', [QuestionBankController::class, 'getQuestionStats'])->name('question-banks.stats');
     });
-    
+
     // Results management
     Route::get('/results', [ResultsController::class, 'index'])->name('results.index');
     Route::get('/results/{result}', [ResultsController::class, 'show'])->name('results.show');
@@ -226,7 +226,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
         Route::get('/reports/export/{report}/{format}', [ReportsController::class, 'export'])->name('reports.export');
     });
-    
+
     // WhatsApp logs (monitoring)
     Route::get('/whatsapp-logs', [WhatsAppLogsController::class, 'index'])->name('whatsapp-logs.index');
 
@@ -249,7 +249,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::patch('/certificates/{certificate}/revoke', [CertificatesController::class, 'revoke'])->name('certificates.revoke');
     Route::get('/api/batches/by-course', [CertificatesController::class, 'getBatchesByCourse'])->name('certificates.batches-by-course');
     Route::get('/api/certificates/stats', [CertificatesController::class, 'getStats'])->name('certificates.stats');
-    
+
     // Settings (Admin only)
     Route::middleware('role:admin')->group(function () {
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -273,7 +273,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/settings/users/{user}/change-password', [UserManagementController::class, 'showChangePassword'])->name('settings.users.change-password');
         Route::post('/settings/users/{user}/change-password', [UserManagementController::class, 'changePassword'])->name('settings.users.change-password.post');
     });
-    
+
 });
 
 // Super Admin routes (Platform owner – Training Partner management)
@@ -298,6 +298,7 @@ Route::middleware(['auth', 'role:reception'])->prefix('admin')->name('admin.')->
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/learn/enrollments/{enrollment}', [StudentCourseLearningController::class, 'outline'])->name('learn.outline');
     Route::get('/learn/enrollments/{enrollment}/lessons/{lesson}', [StudentCourseLearningController::class, 'lesson'])->name('learn.lesson');
+    Route::post('/learn/enrollments/{enrollment}/lessons/{lesson}/complete', [StudentCourseLearningController::class, 'completeLesson'])->name('learn.lesson.complete');
     Route::get('/dashboard', [StudentPortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [StudentPortalController::class, 'profile'])->name('profile');
     Route::get('/enrollments', [StudentPortalController::class, 'enrollments'])->name('enrollments');

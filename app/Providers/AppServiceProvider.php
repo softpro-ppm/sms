@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Enrollment;
 use App\Support\AdminLayoutScopes;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('layouts.admin', function ($view) {
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return;
             }
 
@@ -42,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
 
                         return [
                             'title' => 'Payment pending approval',
-                            'message' => '₹' . number_format($payment->amount, 2) . ' from ' . $studentName,
+                            'message' => '₹'.number_format($payment->amount, 2).' from '.$studentName,
                             'time' => $payment->created_at,
                             'type' => 'warning',
                             'url' => route('admin.payments.pending'),
@@ -59,8 +60,8 @@ class AppServiceProvider extends ServiceProvider
                     ->get()
                     ->map(function ($student) {
                         $message = $student->full_name;
-                        if (!empty($student->email)) {
-                            $message .= ' (' . $student->email . ')';
+                        if (! empty($student->email)) {
+                            $message .= ' ('.$student->email.')';
                         }
 
                         return [
@@ -79,6 +80,23 @@ class AppServiceProvider extends ServiceProvider
                 'topbarNotifications' => $notifications,
                 'topbarNotificationCount' => $notificationCount,
             ]);
+        });
+
+        View::composer('layouts.student', function ($view) {
+            $user = auth()->user();
+            if (! $user?->is_student || ! $user->student) {
+                $view->with(['studentExamsUnlocked' => false]);
+
+                return;
+            }
+
+            $unlocked = Enrollment::query()
+                ->where('student_id', $user->student->id)
+                ->where('status', 'active')
+                ->get()
+                ->contains(fn (Enrollment $e) => $e->can_take_assessment);
+
+            $view->with(['studentExamsUnlocked' => $unlocked]);
         });
     }
 }

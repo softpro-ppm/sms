@@ -112,10 +112,16 @@
                     </li>
                     
                     <li>
-                        <a href="{{ route('student.assessments') }}" 
-                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('student.assessments') ? 'active' : '' }}">
+                        <a href="{{ route('student.assessments') }}"
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('student.assessments*') ? 'active' : '' }}"
+                           title="{{ ($studentExamsUnlocked ?? false) ? '' : 'View results anytime. Taking a new exam unlocks when all online lessons are done, your batch end date has passed, and fees are fully paid.' }}">
                             <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
-                            <span>Exams</span>
+                            <span class="flex-1">Exams</span>
+                            @if(!($studentExamsUnlocked ?? false))
+                                <i class="fas fa-lock text-xs text-primary-200/90" aria-hidden="true"></i>
+                            @else
+                                <i class="fas fa-unlock text-xs text-emerald-300" aria-hidden="true"></i>
+                            @endif
                         </a>
                     </li>
                     

@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
-use App\Models\Enrollment;
-use App\Models\Payment;
-use App\Models\AssessmentResult;
-use App\Models\Certificate;
-use App\Models\QuestionBank;
 use App\Mail\AssessmentResultMail;
 use App\Mail\CertificateIssuedMail;
+use App\Models\AssessmentResult;
+use App\Models\Certificate;
+use App\Models\Enrollment;
+use App\Models\Payment;
+use App\Models\QuestionBank;
+use App\Models\Student;
 use App\Services\CertificateIssuanceService;
 use App\Services\CertificatePdfService;
 use App\Services\CertificateTemplateService;
@@ -41,43 +41,43 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student; // Get the related Student model
-        
-        if (!$student) {
+
+        if (! $student) {
             // If no student record exists, create a basic one or handle gracefully
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
-        
+
         // Get student's enrollments with course and batch info
         $enrollments = Enrollment::where('student_id', $student->id)
             ->with(['batch.course', 'batch', 'legacyLinkCourse'])
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         // Get student's payments
         $payments = Payment::where('student_id', $student->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
-        
+
         // Get student's assessment results
         $assessmentResults = AssessmentResult::where('student_id', $student->id)
             ->with(['assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse'])
             ->orderBy('completed_at', 'desc')
             ->limit(5)
             ->get();
-        
+
         // Get student's certificates
         $certificates = Certificate::where('student_id', $student->id)
             ->with(['course', 'batch'])
             ->orderBy('issue_date', 'desc')
             ->limit(5)
             ->get();
-        
+
         // Get available assessments based on batch end dates (optimized)
         $availableAssessments = collect();
         $pendingAssessments = collect();
-        
+
         // Course IDs that have an active assessment mapping (batch course or legacy link)
         $courseIds = $enrollments->map(fn (Enrollment $e) => $e->assessment_course_id)->filter()->unique()->values();
 
@@ -94,13 +94,13 @@ class StudentController extends Controller
             ->where('is_passed', true) // Only consider passed assessments as completed
             ->pluck('assessment_id')
             ->toArray();
-            
+
         // Get failed assessments for re-assessment
         $failedResults = AssessmentResult::where('student_id', $student->id)
             ->where('is_passed', false)
             ->pluck('assessment_id')
             ->toArray();
-        
+
         foreach ($enrollments as $enrollment) {
             $batch = $enrollment->batch;
             $assessmentCourseId = $enrollment->assessment_course_id;
@@ -140,7 +140,7 @@ class StudentController extends Controller
                 }
             }
         }
-        
+
         // Calculate statistics
         $stats = [
             'total_courses' => $enrollments->count(),
@@ -156,10 +156,10 @@ class StudentController extends Controller
         return view('student.dashboard', compact(
             'user',
             'student',
-            'enrollments', 
-            'payments', 
-            'assessmentResults', 
-            'certificates', 
+            'enrollments',
+            'payments',
+            'assessmentResults',
+            'certificates',
             'availableAssessments',
             'pendingAssessments',
             'stats'
@@ -170,6 +170,7 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
+
         return view('student.profile', compact('user', 'student'));
     }
 
@@ -179,12 +180,12 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
-        
+
         $enrollments = Enrollment::where('student_id', $student->id)
             ->with([
                 'batch',
@@ -201,12 +202,12 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
-        
+
         $payments = Payment::where('student_id', $student->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -218,12 +219,12 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
-        
+
         $assessmentResults = AssessmentResult::where('student_id', $student->id)
             ->with(['assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse'])
             ->orderBy('completed_at', 'desc')
@@ -266,19 +267,25 @@ class StudentController extends Controller
             }
         }
 
-        return view('student.assessments', compact('assessmentResults', 'reassessments'));
+        $examStatusEnrollments = Enrollment::where('student_id', $student->id)
+            ->where('status', 'active')
+            ->with(['batch.course', 'legacyLinkCourse'])
+            ->get()
+            ->filter(fn (Enrollment $e) => $e->assessment_course_id !== null);
+
+        return view('student.assessments', compact('assessmentResults', 'reassessments', 'examStatusEnrollments'));
     }
 
     public function certificates()
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
-        
+
         $certificates = Certificate::where('student_id', $student->id)
             ->with(['course', 'batch'])
             ->orderBy('issue_date', 'desc')
@@ -292,11 +299,11 @@ class StudentController extends Controller
         $user = Auth::user();
         $student = $user->student;
 
-        if (!$student || $certificate->student_id !== $student->id) {
+        if (! $student || $certificate->student_id !== $student->id) {
             abort(403, 'Unauthorized access to certificate.');
         }
 
-        if (!$certificate->is_issued || !$certificate->certificate_number) {
+        if (! $certificate->is_issued || ! $certificate->certificate_number) {
             return redirect()->back()
                 ->with('error', 'Certificate is not yet issued.');
         }
@@ -314,7 +321,7 @@ class StudentController extends Controller
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="certificate_' . $certificate->certificate_number . '.pdf"',
+            'Content-Disposition' => 'attachment; filename="certificate_'.$certificate->certificate_number.'.pdf"',
             'Content-Length' => strlen($pdfContent),
         ]);
     }
@@ -323,12 +330,13 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        if (!$student) {
+        if (! $student) {
             return redirect()->route('student.profile')->with('error', 'Student profile not found.');
         }
         $student->load(['documents', 'enrollments.batch.course']);
         $pdf = Pdf::loadView('admin.students.id-card-pdf', compact('student'));
         $pdf->setPaper([0, 0, 242.65, 153.07]); // CR80: 85.6mm x 54mm
+
         return $pdf->stream('id-card.pdf');
     }
 
@@ -336,22 +344,23 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        if (!$student) {
+        if (! $student) {
             return redirect()->route('student.profile')->with('error', 'Student profile not found.');
         }
         $student->load(['documents', 'enrollments.batch.course']);
         $pdf = Pdf::loadView('admin.students.id-card-pdf', compact('student'));
         $pdf->setPaper([0, 0, 242.65, 153.07]); // CR80: 85.6mm x 54mm
-        return $pdf->download('id-card-' . $student->full_name . '.pdf');
+
+        return $pdf->download('id-card-'.$student->full_name.'.pdf');
     }
 
     public function downloadReceipt(Payment $payment)
     {
         $user = Auth::user();
         $student = $user->student;
-        
+
         // Ensure the payment belongs to the authenticated student
-        if (!$student || $payment->student_id !== $student->id) {
+        if (! $student || $payment->student_id !== $student->id) {
             abort(403, 'Unauthorized access to payment receipt.');
         }
 
@@ -362,19 +371,19 @@ class StudentController extends Controller
         }
 
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
-        
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
         $pdf->setPaper('a4', 'portrait'); // A4 vertical: 210mm x 297mm
 
-        return $pdf->stream('receipt_' . $payment->payment_receipt_number . '.pdf');
+        return $pdf->stream('receipt_'.$payment->payment_receipt_number.'.pdf');
     }
 
     public function downloadReceiptPdf(Payment $payment)
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student || $payment->student_id !== $student->id) {
+
+        if (! $student || $payment->student_id !== $student->id) {
             abort(403, 'Unauthorized access to payment receipt.');
         }
 
@@ -384,19 +393,19 @@ class StudentController extends Controller
         }
 
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
-        
+
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
         $pdf->setPaper('a4', 'portrait'); // A4 vertical: 210mm x 297mm
-        
-        return $pdf->download('receipt_' . $payment->payment_receipt_number . '.pdf');
+
+        return $pdf->download('receipt_'.$payment->payment_receipt_number.'.pdf');
     }
 
     public function takeAssessment(\App\Models\Assessment $assessment)
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
@@ -406,7 +415,7 @@ class StudentController extends Controller
             ->where('assessment_id', $assessment->id)
             ->where('is_passed', true)
             ->first();
-            
+
         if ($passedResult) {
             return redirect()->route('student.assessments')
                 ->with('error', 'You have already passed this assessment.');
@@ -414,18 +423,18 @@ class StudentController extends Controller
 
         $eligibleEnrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
 
-        if (!$eligibleEnrollment) {
+        if (! $eligibleEnrollment) {
             return redirect()->route('student.assessments')
-                ->with('error', 'Assessment is not available. Ensure batch is completed, fee is fully paid, and exam is within one year from batch end.');
+                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, wait until after your batch end date, clear all fees, and ensure your institute has marked you eligible for the exam.');
         }
 
         // Check if assessment has started (session check)
-        if (!session()->has('assessment_started_' . $assessment->id)) {
+        if (! session()->has('assessment_started_'.$assessment->id)) {
             // Show instructions first
             return view('student.assessments.instructions', compact('assessment'));
         }
 
-        $questionSessionKey = 'assessment_question_ids_' . $assessment->id;
+        $questionSessionKey = 'assessment_question_ids_'.$assessment->id;
         $questionIds = session($questionSessionKey, []);
 
         if (empty($questionIds)) {
@@ -461,8 +470,8 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
@@ -472,7 +481,7 @@ class StudentController extends Controller
             ->where('assessment_id', $assessment->id)
             ->where('is_passed', true)
             ->first();
-            
+
         if ($passedResult) {
             return redirect()->route('student.assessments')
                 ->with('error', 'You have already passed this assessment.');
@@ -480,14 +489,14 @@ class StudentController extends Controller
 
         $eligibleEnrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
 
-        if (!$eligibleEnrollment) {
+        if (! $eligibleEnrollment) {
             return redirect()->route('student.assessments')
-                ->with('error', 'Assessment is not available. Ensure batch is completed, fee is fully paid, and exam is within one year from batch end.');
+                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, wait until after your batch end date, clear all fees, and ensure your institute has marked you eligible for the exam.');
         }
 
         // Mark assessment as started in session
-        session(['assessment_started_' . $assessment->id => true]);
-        session(['assessment_start_time_' . $assessment->id => now()]);
+        session(['assessment_started_'.$assessment->id => true]);
+        session(['assessment_start_time_'.$assessment->id => now()]);
 
         // Redirect to the actual assessment
         return redirect()->route('student.assessments.take', $assessment);
@@ -497,8 +506,8 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
@@ -508,13 +517,13 @@ class StudentController extends Controller
             ->where('assessment_id', $assessment->id)
             ->where('is_passed', true)
             ->first();
-            
+
         if ($passedResult) {
             return redirect()->route('student.assessments')
                 ->with('error', 'You have already passed this assessment.');
         }
 
-        $questionSessionKey = 'assessment_question_ids_' . $assessment->id;
+        $questionSessionKey = 'assessment_question_ids_'.$assessment->id;
         $questionIds = session($questionSessionKey, []);
 
         if (empty($questionIds)) {
@@ -528,7 +537,7 @@ class StudentController extends Controller
         $totalQuestions = count($questionIds);
 
         $questionsById = QuestionBank::whereIn('id', $questionIds)->get()->keyBy('id');
-        
+
         foreach ($questionIds as $questionId) {
             $question = $questionsById->get($questionId);
             $selectedAnswer = $answers[$questionId] ?? null;
@@ -536,29 +545,33 @@ class StudentController extends Controller
                 $correctAnswers++;
             }
         }
-        
+
         $percentage = $totalQuestions > 0 ? ($correctAnswers / $totalQuestions) * 100 : 0;
         $isPassed = $percentage >= 35;
-        
+
         // Determine grade: A+ (80%+), A (60-80%), B (35-60%), C (below 35%)
         $grade = 'C';
-        if ($percentage >= 80) $grade = 'A+';
-        elseif ($percentage >= 60) $grade = 'A';
-        elseif ($percentage >= 35) $grade = 'B';
-        
+        if ($percentage >= 80) {
+            $grade = 'A+';
+        } elseif ($percentage >= 60) {
+            $grade = 'A';
+        } elseif ($percentage >= 35) {
+            $grade = 'B';
+        }
+
         // Calculate actual time taken - prefer client-side value (includes tab switch time)
-        $startTime = session('assessment_start_time_' . $assessment->id);
+        $startTime = session('assessment_start_time_'.$assessment->id);
         $timeTakenSeconds = (int) $request->input('time_taken_seconds');
         if ($timeTakenSeconds > 0) {
             $timeTakenMinutes = max(1, (int) ceil($timeTakenSeconds / 60));
         } else {
             $timeTakenMinutes = $startTime ? max(1, (int) ceil(now()->diffInSeconds($startTime) / 60)) : 1;
         }
-        
+
         $enrollment = $this->findEligibleEnrollmentForAssessmentCourse($student, (int) $assessment->course_id)
             ?? $this->findEnrollmentForAssessmentCourse($student, (int) $assessment->course_id);
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             return redirect()->route('student.assessments')
                 ->with('error', 'No enrollment found for this assessment.');
         }
@@ -578,7 +591,7 @@ class StudentController extends Controller
             'started_at' => $startTime,
             'completed_at' => now(),
             'time_taken_minutes' => $timeTakenMinutes,
-            'answers' => json_encode($answers)
+            'answers' => json_encode($answers),
         ]);
 
         // Generate certificate if student passed
@@ -592,14 +605,14 @@ class StudentController extends Controller
                         try {
                             app(\App\Services\WhatsAppNotificationService::class)->sendCertificateIssued($certificate);
                         } catch (\Exception $e) {
-                            \Log::error('Certificate WhatsApp failed: ' . $e->getMessage());
+                            \Log::error('Certificate WhatsApp failed: '.$e->getMessage());
                         }
                     } catch (\Exception $e) {
-                        \Log::error('Certificate email failed: ' . $e->getMessage());
+                        \Log::error('Certificate email failed: '.$e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                \Log::error('Certificate generation failed: ' . $e->getMessage());
+                \Log::error('Certificate generation failed: '.$e->getMessage());
             }
         }
 
@@ -610,17 +623,17 @@ class StudentController extends Controller
             try {
                 app(\App\Services\WhatsAppNotificationService::class)->sendAssessmentResult($result);
             } catch (\Exception $e) {
-                \Log::error('Assessment result WhatsApp failed: ' . $e->getMessage());
+                \Log::error('Assessment result WhatsApp failed: '.$e->getMessage());
             }
         } catch (\Exception $e) {
-            \Log::error('Assessment result email failed: ' . $e->getMessage());
+            \Log::error('Assessment result email failed: '.$e->getMessage());
         }
 
         // Clear session data
         session()->forget([
-            'assessment_started_' . $assessment->id,
-            'assessment_start_time_' . $assessment->id,
-            $questionSessionKey
+            'assessment_started_'.$assessment->id,
+            'assessment_start_time_'.$assessment->id,
+            $questionSessionKey,
         ]);
 
         return redirect()->route('student.assessments.show', $result->id)
@@ -631,8 +644,8 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         $student = $user->student;
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect()->route('student.profile')
                 ->with('error', 'Please complete your student profile first.');
         }
@@ -654,7 +667,7 @@ class StudentController extends Controller
         $student = $user->student;
 
         // Ensure the certificate belongs to the authenticated student
-        if (!$student || $certificate->student_id !== $student->id) {
+        if (! $student || $certificate->student_id !== $student->id) {
             abort(403, 'Unauthorized access to certificate.');
         }
 
@@ -668,7 +681,7 @@ class StudentController extends Controller
         $user = Auth::user();
         $student = $user->student;
 
-        if (!$student || $certificate->student_id !== $student->id) {
+        if (! $student || $certificate->student_id !== $student->id) {
             abort(403, 'Unauthorized access to certificate.');
         }
 
@@ -684,18 +697,17 @@ class StudentController extends Controller
 
         // Generate HTML content using Training Certification template
         $htmlContent = $templateService->generateHtml($certificate);
-        
+
         // Create file path
-        $fileName = 'certificate_' . $certificate->certificate_number . '.html';
-        $filePath = 'certificates/' . $fileName;
-        
+        $fileName = 'certificate_'.$certificate->certificate_number.'.html';
+        $filePath = 'certificates/'.$fileName;
+
         // Store the file
         \Storage::put($filePath, $htmlContent);
-        
+
         // Update certificate with file path
         $certificate->update(['certificate_file_path' => $filePath]);
-        
+
         return $filePath;
     }
-
 }

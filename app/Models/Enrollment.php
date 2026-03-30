@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class Enrollment extends Model
 {
@@ -72,6 +73,94 @@ class Enrollment extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    public function lessonCompletions(): HasMany
+    {
+        return $this->hasMany(EnrollmentLessonCompletion::class);
+    }
+
+    /** @return Collection<int, int> */
+    public function activeLessonIdsForCourse(Course $course): Collection
+    {
+        return CourseLesson::query()
+            ->where('is_active', true)
+            ->whereHas('module', function ($q) use ($course) {
+                $q->where('course_id', $course->id)->where('is_active', true);
+            })
+            ->pluck('id');
+    }
+
+    /**
+     * Progress for online lessons, or null when this course has no active LMS lessons.
+     *
+     * @return array{total:int,completed:int,percent:float}|null
+     */
+    public function lmsProgressForCourse(?Course $course): ?array
+    {
+        if (! $course) {
+            return null;
+        }
+
+        $ids = $this->activeLessonIdsForCourse($course);
+        if ($ids->isEmpty()) {
+            return null;
+        }
+
+        $done = $this->lessonCompletions()->whereIn('course_lesson_id', $ids)->count();
+        $total = $ids->count();
+
+        return [
+            'total' => $total,
+            'completed' => $done,
+            'percent' => $total > 0 ? round(100 * $done / $total, 1) : 0.0,
+        ];
+    }
+
+    public function isLmsFullyCompleteForCourse(?Course $course): bool
+    {
+        if (! $course) {
+            return true;
+        }
+
+        $ids = $this->activeLessonIdsForCourse($course);
+        if ($ids->isEmpty()) {
+            return true;
+        }
+
+        $done = $this->lessonCompletions()->whereIn('course_lesson_id', $ids)->count();
+
+        return $done >= $ids->count();
+    }
+
+    /**
+     * Human-readable checklist for the Exams screen (and debugging).
+     *
+     * @return array<string, mixed>
+     */
+    public function getExamEligibilityChecklistAttribute(): array
+    {
+        $course = $this->course;
+        $lms = $course ? $this->lmsProgressForCourse($course) : null;
+
+        $batchEnded = false;
+        $inWindow = false;
+        if ($this->batch?->end_date) {
+            $end = Carbon::parse($this->batch->end_date)->startOfDay();
+            $batchEnded = now()->startOfDay()->gte($end);
+            $inWindow = $batchEnded && now()->lte($end->copy()->addYear());
+        }
+
+        return [
+            'institute_eligible' => (bool) $this->is_eligible_for_assessment,
+            'fee_fully_paid' => (bool) $this->is_fully_paid,
+            'batch_ended' => $batchEnded,
+            'within_exam_window' => $inWindow,
+            'online_lessons_complete' => $lms === null ? true : ($lms['completed'] >= $lms['total']),
+            'lms_progress' => $lms,
+            'can_take' => (bool) $this->can_take_assessment,
+            'is_legacy' => (bool) $this->is_legacy,
+        ];
     }
 
     // Accessors
@@ -153,6 +242,15 @@ class Enrollment extends Model
         $endDate = Carbon::parse($this->batch->end_date);
         $validUntil = $endDate->copy()->addYear();
 
-        return now()->gte($endDate) && now()->lte($validUntil);
+        if (! (now()->gte($endDate) && now()->lte($validUntil))) {
+            return false;
+        }
+
+        $course = $this->course;
+        if ($course && ! $this->isLmsFullyCompleteForCourse($course)) {
+            return false;
+        }
+
+        return true;
     }
 }

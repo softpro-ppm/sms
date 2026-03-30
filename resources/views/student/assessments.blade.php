@@ -5,6 +5,54 @@
 
 @section('content')
 <div class="space-y-6">
+    @if(isset($examStatusEnrollments) && $examStatusEnrollments->count() > 0)
+        <div class="rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-50 to-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-white/80">
+                <h3 class="text-lg font-semibold text-gray-900">Exam eligibility</h3>
+                <p class="text-sm text-gray-600 mt-1">You can start or retake an exam only when every item below is satisfied for that enrollment.</p>
+            </div>
+            <div class="p-6 space-y-4">
+                @foreach($examStatusEnrollments as $examEnr)
+                    @php $ch = $examEnr->exam_eligibility_checklist; @endphp
+                    <div class="rounded-xl border {{ $ch['can_take'] ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-white' }} p-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                            <div>
+                                <h4 class="font-semibold text-gray-900">{{ $examEnr->display_course_name }}</h4>
+                                @if($examEnr->batch?->batch_name)
+                                    <p class="text-sm text-gray-500">{{ $examEnr->batch->batch_name }}</p>
+                                @endif
+                            </div>
+                            @if($ch['can_take'])
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 w-fit">
+                                    <i class="fas fa-unlock"></i> Ready for exam
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 w-fit">
+                                    <i class="fas fa-lock"></i> Not yet eligible
+                                </span>
+                            @endif
+                        </div>
+                        <ul class="grid sm:grid-cols-2 gap-2 text-sm">
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['institute_eligible'], 'label' => 'Institute marked exam-eligible'])
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['fee_fully_paid'], 'label' => 'Fees fully paid'])
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['batch_ended'], 'label' => 'Batch end date passed'])
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['within_exam_window'], 'label' => 'Inside exam window (1 year after batch end)'])
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['online_lessons_complete'], 'label' => $ch['lms_progress'] ? 'All online lessons done ('.$ch['lms_progress']['completed'].'/'.$ch['lms_progress']['total'].')' : 'Online lessons (none or N/A)'])
+                        </ul>
+                        @if($ch['is_legacy'])
+                            <p class="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">Legacy enrollment: online exams may not apply. Contact your centre if you need help.</p>
+                        @endif
+                        @if(! $ch['online_lessons_complete'] && $ch['lms_progress'])
+                            <a href="{{ route('student.enrollments') }}" class="mt-4 inline-flex text-sm font-medium text-primary-600 hover:text-primary-800">
+                                <i class="fas fa-book-reader mr-2"></i> Continue lessons under My courses
+                            </a>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <!-- Available Re-assessments -->
     @if($reassessments->count() > 0)
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
