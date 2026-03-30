@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\CourseLearningController;
 use App\Http\Controllers\Admin\BatchController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Admin\Super\TrainingPartnerController;
 use App\Http\Controllers\Admin\TpImpersonationController;
 use App\Http\Controllers\Admin\ForcePasswordController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
+use App\Http\Controllers\Student\StudentCourseLearningController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -157,6 +159,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
             });
             Route::middleware('role:admin,reception')->group(function () {
                 Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+                Route::get('/courses/{course}/learning', [CourseLearningController::class, 'show'])->name('courses.learning');
             });
 
     // Batches management
@@ -293,6 +296,8 @@ Route::middleware(['auth', 'role:reception'])->prefix('admin')->name('admin.')->
 
 // Student routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/learn/enrollments/{enrollment}', [StudentCourseLearningController::class, 'outline'])->name('learn.outline');
+    Route::get('/learn/enrollments/{enrollment}/lessons/{lesson}', [StudentCourseLearningController::class, 'lesson'])->name('learn.lesson');
     Route::get('/dashboard', [StudentPortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [StudentPortalController::class, 'profile'])->name('profile');
     Route::get('/enrollments', [StudentPortalController::class, 'enrollments'])->name('enrollments');

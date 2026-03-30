@@ -186,7 +186,11 @@ class StudentController extends Controller
         }
         
         $enrollments = Enrollment::where('student_id', $student->id)
-            ->with(['batch.course', 'batch', 'legacyLinkCourse'])
+            ->with([
+                'batch',
+                'batch.course.learningModules',
+                'legacyLinkCourse.learningModules',
+            ])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 

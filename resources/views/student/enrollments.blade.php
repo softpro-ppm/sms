@@ -40,6 +40,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Fees
                             </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Learning
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -89,6 +92,19 @@
                                             <div class="text-green-600">Fully Paid</div>
                                         @endif
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @php
+                                        $learnCourse = $enrollment->course;
+                                        $hasLms = $learnCourse && $learnCourse->relationLoaded('learningModules') && $learnCourse->learningModules->isNotEmpty();
+                                    @endphp
+                                    @if($hasLms)
+                                        <a href="{{ route('student.learn.outline', $enrollment) }}" class="inline-flex items-center text-primary-600 hover:text-primary-800 font-medium">
+                                            <i class="fas fa-book-reader mr-1"></i> Open lessons
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

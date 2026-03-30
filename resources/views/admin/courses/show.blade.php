@@ -19,6 +19,11 @@
                 Edit Course
             </a>
             @endif
+            <a href="{{ route('admin.courses.learning', $course) }}" 
+               class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+                <i class="fas fa-book-reader mr-2"></i>
+                Learning (LMS)
+            </a>
             <a href="{{ route('admin.courses.index') }}" 
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>

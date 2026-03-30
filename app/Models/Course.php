@@ -93,6 +93,12 @@ class Course extends Model
         return $this->hasMany(Batch::class);
     }
 
+    /** LMS-style modules (lessons) attached to this course catalogue entry */
+    public function learningModules(): HasMany
+    {
+        return $this->hasMany(CourseModule::class, 'course_id')->orderBy('sort_order');
+    }
+
     public function assessments(): HasMany
     {
         return $this->hasMany(Assessment::class);
