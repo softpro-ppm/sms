@@ -28,6 +28,7 @@ class Enrollment extends Model
         'legacy_start_date',
         'legacy_end_date',
         'legacy_link_course_id',
+        'last_accessed_course_lesson_id',
     ];
 
     protected $casts = [
@@ -58,6 +59,11 @@ class Enrollment extends Model
     public function legacyLinkCourse(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'legacy_link_course_id');
+    }
+
+    public function lastAccessedLesson(): BelongsTo
+    {
+        return $this->belongsTo(CourseLesson::class, 'last_accessed_course_lesson_id');
     }
 
     public function payments(): HasMany

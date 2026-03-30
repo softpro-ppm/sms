@@ -8,6 +8,19 @@
     $pct = $progress ? (float) $progress['percent'] : 100;
 @endphp
 <div class="max-w-3xl mx-auto space-y-6 pb-8">
+    @if(! empty($resumeLesson))
+        <div class="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+            <div class="text-sm text-primary-950">
+                <span class="font-semibold">Continue where you left off:</span>
+                <span class="text-primary-900">{{ $resumeLesson->title }}</span>
+            </div>
+            <a href="{{ route('student.learn.lesson', [$enrollment, $resumeLesson]) }}"
+               class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 shrink-0">
+                <i class="fas fa-play mr-2 text-xs"></i> Resume lesson
+            </a>
+        </div>
+    @endif
+
     {{-- Progress + exam readiness --}}
     <div class="rounded-2xl bg-gradient-to-br from-slate-900 via-primary-900 to-primary-800 text-white shadow-xl overflow-hidden">
         <div class="p-6 sm:p-8">

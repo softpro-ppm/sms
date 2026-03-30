@@ -27,12 +27,17 @@
                             <i class="fas fa-check-circle"></i> Completed
                         </span>
                     @else
-                        <form method="POST" action="{{ route('student.learn.lesson.complete', [$enrollment, $lesson]) }}">
-                            @csrf
-                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 shadow-sm transition">
-                                <i class="fas fa-check"></i> Mark lesson complete
-                            </button>
-                        </form>
+                        <div class="flex flex-col items-stretch sm:items-end gap-1">
+                            <form method="POST" action="{{ route('student.learn.lesson.complete', [$enrollment, $lesson]) }}">
+                                @csrf
+                                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 shadow-sm transition">
+                                    <i class="fas fa-check"></i> Mark lesson complete
+                                </button>
+                            </form>
+                            <p class="text-xs text-gray-500 text-center sm:text-right max-w-xs sm:max-w-sm">
+                                Or use <strong>Next lesson</strong> at the bottom — it marks this lesson done and opens the next automatically.
+                            </p>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -84,9 +89,12 @@
             <span></span>
         @endif
         @if($next)
-            <a href="{{ route('student.learn.lesson', [$enrollment, $next]) }}" class="inline-flex items-center justify-center sm:justify-end gap-2 px-4 py-3 rounded-xl border border-primary-200 bg-primary-50 text-sm font-semibold text-primary-800 hover:bg-primary-100 transition">
-                Next lesson <i class="fas fa-arrow-right"></i>
-            </a>
+            <form method="POST" action="{{ route('student.learn.lesson.continue', [$enrollment, $lesson, $next]) }}" class="inline w-full sm:w-auto">
+                @csrf
+                <button type="submit" class="w-full inline-flex items-center justify-center sm:justify-end gap-2 px-4 py-3 rounded-xl border border-primary-200 bg-primary-50 text-sm font-semibold text-primary-800 hover:bg-primary-100 transition">
+                    Next lesson <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
         @endif
     </div>
 </div>

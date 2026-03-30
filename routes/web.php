@@ -296,9 +296,11 @@ Route::middleware(['auth', 'role:reception'])->prefix('admin')->name('admin.')->
 
 // Student routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/learn/enrollments/{enrollment}/resume', [StudentCourseLearningController::class, 'resume'])->name('learn.resume');
     Route::get('/learn/enrollments/{enrollment}', [StudentCourseLearningController::class, 'outline'])->name('learn.outline');
     Route::get('/learn/enrollments/{enrollment}/lessons/{lesson}', [StudentCourseLearningController::class, 'lesson'])->name('learn.lesson');
     Route::post('/learn/enrollments/{enrollment}/lessons/{lesson}/complete', [StudentCourseLearningController::class, 'completeLesson'])->name('learn.lesson.complete');
+    Route::post('/learn/enrollments/{enrollment}/lessons/{lesson}/continue/{next}', [StudentCourseLearningController::class, 'completeAndGoToNext'])->name('learn.lesson.continue');
     Route::get('/dashboard', [StudentPortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [StudentPortalController::class, 'profile'])->name('profile');
     Route::get('/enrollments', [StudentPortalController::class, 'enrollments'])->name('enrollments');
