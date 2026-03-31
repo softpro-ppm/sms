@@ -33,10 +33,13 @@
                         class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('course_id') border-red-500 @enderror">
                     <option value="">Choose a course...</option>
                     @foreach($courses as $course)
-                        <option value="{{ $course->id }}" 
+                        <option value="{{ $course->id }}"
                                 data-duration="{{ $course->duration_days }}"
+                                data-course-fee="{{ $course->course_fee }}"
+                                data-registration-fee="{{ $course->registration_fee }}"
+                                data-assessment-fee="{{ $course->assessment_fee }}"
                                 {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                            {{ $course->name }} - ₹{{ number_format($course->total_fee) }} ({{ $course->duration_days ?? 'N/A' }} days)
+                            {{ $course->name }} — catalogue ₹{{ number_format($course->total_fee) }} · {{ $course->duration_days ?? '—' }} days
                         </option>
                     @endforeach
                 </select>
@@ -143,6 +146,47 @@
                 </div>
             </div>
 
+            <!-- Per-batch fees & duration (defaults from course; adjust for this batch) -->
+            <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-6 space-y-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-amber-700"></i>
+                    Fees &amp; duration for this batch
+                </h3>
+                <p class="text-sm text-gray-600">Prefilled from the selected course. Change here if this batch uses different amounts or length.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="registration_fee" class="block text-sm font-medium text-gray-700 mb-1">Registration fee (₹)</label>
+                        <input type="number" step="0.01" min="0" name="registration_fee" id="registration_fee"
+                               value="{{ old('registration_fee') }}"
+                               class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 @error('registration_fee') border-red-500 @enderror" required>
+                        @error('registration_fee')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="assessment_fee" class="block text-sm font-medium text-gray-700 mb-1">Exam / assessment fee (₹)</label>
+                        <input type="number" step="0.01" min="0" name="assessment_fee" id="assessment_fee"
+                               value="{{ old('assessment_fee') }}"
+                               class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 @error('assessment_fee') border-red-500 @enderror" required>
+                        @error('assessment_fee')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="course_fee" class="block text-sm font-medium text-gray-700 mb-1">Tuition / course fee (₹)</label>
+                        <input type="number" step="0.01" min="0" name="course_fee" id="course_fee"
+                               value="{{ old('course_fee') }}"
+                               class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 @error('course_fee') border-red-500 @enderror" required>
+                        @error('course_fee')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="duration_days" class="block text-sm font-medium text-gray-700 mb-1">Duration (calendar days)</label>
+                        <input type="number" min="1" name="duration_days" id="duration_days"
+                               value="{{ old('duration_days') }}"
+                               class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 @error('duration_days') border-red-500 @enderror">
+                        @error('duration_days')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        <p class="mt-1 text-xs text-gray-500">Used for “auto-calculate end date” from start date.</p>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-800">Batch total: <span id="batch-fee-total-preview">—</span></p>
+            </div>
+
             <!-- Capacity Section -->
             <div>
                 <label for="max_students" class="block text-sm font-medium text-gray-700 mb-2">
@@ -203,22 +247,55 @@
 <script>
     let courseDuration = null;
     
+    function updateBatchFeePreview() {
+        const r = parseFloat(document.getElementById('registration_fee')?.value) || 0;
+        const c = parseFloat(document.getElementById('course_fee')?.value) || 0;
+        const a = parseFloat(document.getElementById('assessment_fee')?.value) || 0;
+        const el = document.getElementById('batch-fee-total-preview');
+        if (el) el.textContent = '₹' + (r + c + a).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    ['registration_fee', 'course_fee', 'assessment_fee'].forEach(function(id) {
+        document.getElementById(id)?.addEventListener('input', updateBatchFeePreview);
+    });
+
     // Course selection handler
     document.getElementById('course_id').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        courseDuration = selectedOption.getAttribute('data-duration');
-        
+        const dur = selectedOption.getAttribute('data-duration');
+        courseDuration = dur && dur !== 'null' ? dur : null;
+
+        const reg = selectedOption.getAttribute('data-registration-fee');
+        const ass = selectedOption.getAttribute('data-assessment-fee');
+        const tut = selectedOption.getAttribute('data-course-fee');
+        if (document.getElementById('registration_fee') && reg != null) document.getElementById('registration_fee').value = reg;
+        if (document.getElementById('assessment_fee') && ass != null) document.getElementById('assessment_fee').value = ass;
+        if (document.getElementById('course_fee') && tut != null) document.getElementById('course_fee').value = tut;
+        if (document.getElementById('duration_days') && courseDuration) document.getElementById('duration_days').value = courseDuration;
+        updateBatchDurationInputListener();
+        updateBatchFeePreview();
+
         const courseDurationInfo = document.getElementById('course-duration-info');
         const courseDurationText = document.getElementById('course-duration-text');
-        
+
         if (courseDuration && courseDuration !== 'null') {
             courseDurationText.textContent = courseDuration + ' days (working + sundays)';
             courseDurationInfo.classList.remove('hidden');
         } else {
             courseDurationInfo.classList.add('hidden');
         }
-        
-        // Auto-calculate if start date is set
+
+        if (document.getElementById('start_date').value) {
+            autoCalculateEndDate();
+        }
+    });
+
+    function updateBatchDurationInputListener() {
+        const d = document.getElementById('duration_days');
+        courseDuration = d && d.value ? d.value : courseDuration;
+    }
+    document.getElementById('duration_days')?.addEventListener('input', function() {
+        courseDuration = this.value || null;
         if (document.getElementById('start_date').value) {
             autoCalculateEndDate();
         }
@@ -310,10 +387,10 @@
     
     document.getElementById('end_date').addEventListener('change', calculateDuration);
     
-    // Auto-calculate button
     document.getElementById('auto-calculate-btn').addEventListener('click', function() {
+        updateBatchDurationInputListener();
         if (!courseDuration) {
-            alert('Please select a course first to auto-calculate the end date.');
+            alert('Please select a course or enter duration (days) first.');
             return;
         }
         autoCalculateEndDate();
@@ -326,6 +403,8 @@
     const courseSelect = document.getElementById('course_id');
     if (courseSelect.value) {
         courseSelect.dispatchEvent(new Event('change'));
+    } else {
+        updateBatchFeePreview();
     }
 </script>
 @endsection

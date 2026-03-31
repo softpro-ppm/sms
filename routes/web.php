@@ -144,22 +144,23 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/api/students', [PaymentController::class, 'getStudents'])->name('api.students');
     Route::get('/api/students/{student}/enrollments', [PaymentController::class, 'getStudentEnrollments'])->name('api.student.enrollments');
 
-    // Courses: list/show for TP admin & reception only (not Super Admin). CUD: centre admin only.
-    // Register /courses/create before /courses/{course} so "create" is not captured as an id.
-    Route::middleware('role:admin,reception')->group(function () {
+    // Courses: global catalogue — register /courses/create before /courses/{course}.
+    Route::middleware('role:admin,reception,super_admin')->group(function () {
         Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     });
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware(['super_admin', 'password.force'])->group(function () {
         Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
         Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+    });
+    Route::middleware('role:admin,reception,super_admin')->group(function () {
+        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+        Route::get('/courses/{course}/learning', [CourseLearningController::class, 'show'])->name('courses.learning');
+    });
+    Route::middleware(['super_admin', 'password.force'])->group(function () {
         Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
         Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
         Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
         Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
-    });
-    Route::middleware('role:admin,reception')->group(function () {
-        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
-        Route::get('/courses/{course}/learning', [CourseLearningController::class, 'show'])->name('courses.learning');
     });
 
     // Batches management
@@ -174,6 +175,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::delete('/batches/{batch}', [BatchController::class, 'destroy'])->name('batches.destroy');
     Route::patch('/batches/{batch}/toggle-status', [BatchController::class, 'toggleStatus'])->name('batches.toggle-status');
     Route::get('/api/batches/by-course', [BatchController::class, 'getBatchesByCourse'])->name('batches.by-course');
+    Route::get('/api/batches/{batch}/fee-details', [BatchController::class, 'feeDetails'])->name('batches.fee-details');
 
     // Assessments (Exams) — TP centre admin only (not Reception, not Super Admin).
     Route::middleware('role:admin')->group(function () {

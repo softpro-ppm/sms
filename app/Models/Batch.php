@@ -15,6 +15,10 @@ class Batch extends Model
         'start_date',
         'end_date',
         'max_students',
+        'course_fee',
+        'registration_fee',
+        'assessment_fee',
+        'duration_days',
         'is_active',
         'is_legacy_batch',
     ];
@@ -24,6 +28,9 @@ class Batch extends Model
         'end_date' => 'date',
         'is_active' => 'boolean',
         'is_legacy_batch' => 'boolean',
+        'course_fee' => 'decimal:2',
+        'registration_fee' => 'decimal:2',
+        'assessment_fee' => 'decimal:2',
     ];
 
     // Relationships
@@ -61,6 +68,43 @@ class Batch extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    /** Tuition fee for this batch (override), else from catalogue course. */
+    public function getResolvedCourseFeeAttribute(): float
+    {
+        $this->loadMissing('course');
+
+        return (float) ($this->course_fee ?? $this->course?->course_fee ?? 0);
+    }
+
+    public function getResolvedRegistrationFeeAttribute(): float
+    {
+        $this->loadMissing('course');
+
+        return (float) ($this->registration_fee ?? $this->course?->registration_fee ?? 0);
+    }
+
+    public function getResolvedAssessmentFeeAttribute(): float
+    {
+        $this->loadMissing('course');
+
+        return (float) ($this->assessment_fee ?? $this->course?->assessment_fee ?? 0);
+    }
+
+    public function getResolvedTotalFeeAttribute(): float
+    {
+        return $this->resolved_course_fee + $this->resolved_registration_fee + $this->resolved_assessment_fee;
+    }
+
+    public function getResolvedDurationDaysAttribute(): ?int
+    {
+        $this->loadMissing('course');
+        if ($this->duration_days !== null) {
+            return (int) $this->duration_days;
+        }
+
+        return $this->course?->duration_days !== null ? (int) $this->course->duration_days : null;
     }
 
     // Accessors

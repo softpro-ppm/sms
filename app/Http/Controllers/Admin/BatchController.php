@@ -130,7 +130,11 @@ class BatchController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'max_students' => 'nullable|integer|min:1',
-            'is_active' => 'boolean'
+            'course_fee' => 'required|numeric|min:0',
+            'registration_fee' => 'required|numeric|min:0',
+            'assessment_fee' => 'required|numeric|min:0',
+            'duration_days' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -139,10 +143,10 @@ class BatchController extends Controller
                 ->withInput();
         }
 
-        $tpId = $this->getTrainingPartnerId();
-        if ($tpId !== null && !Course::query()->visibleToTrainingPartner($tpId)->whereKey((int) $request->course_id)->exists()) {
+        $course = Course::query()->where('is_active', true)->whereKey((int) $request->course_id)->first();
+        if (! $course) {
             return redirect()->back()
-                ->withErrors(['course_id' => 'Invalid course.'])
+                ->withErrors(['course_id' => 'Invalid or inactive course.'])
                 ->withInput();
         }
 
@@ -196,7 +200,11 @@ class BatchController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'max_students' => $request->max_students ?: 20,
-            'is_active' => $request->has('is_active')
+            'course_fee' => $request->course_fee,
+            'registration_fee' => $request->registration_fee,
+            'assessment_fee' => $request->assessment_fee,
+            'duration_days' => $request->duration_days,
+            'is_active' => $request->has('is_active'),
         ]);
 
         return redirect()->route('admin.batches.index')
@@ -218,6 +226,7 @@ class BatchController extends Controller
     public function edit(Batch $batch)
     {
         $this->ensureBatchAccessible($batch);
+        $batch->load('course');
         $tpId = $this->getTrainingPartnerId();
         $courses = Course::query()
             ->where('is_active', true)
@@ -240,7 +249,11 @@ class BatchController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'max_students' => 'nullable|integer|min:1',
-            'is_active' => 'boolean'
+            'course_fee' => 'required|numeric|min:0',
+            'registration_fee' => 'required|numeric|min:0',
+            'assessment_fee' => 'required|numeric|min:0',
+            'duration_days' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -249,10 +262,10 @@ class BatchController extends Controller
                 ->withInput();
         }
 
-        $tpId = $this->getTrainingPartnerId();
-        if ($tpId !== null && !Course::query()->visibleToTrainingPartner($tpId)->whereKey((int) $request->course_id)->exists()) {
+        $course = Course::query()->where('is_active', true)->whereKey((int) $request->course_id)->first();
+        if (! $course) {
             return redirect()->back()
-                ->withErrors(['course_id' => 'Invalid course.'])
+                ->withErrors(['course_id' => 'Invalid or inactive course.'])
                 ->withInput();
         }
 
@@ -300,7 +313,11 @@ class BatchController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'max_students' => $request->max_students,
-            'is_active' => $request->has('is_active')
+            'course_fee' => $request->course_fee,
+            'registration_fee' => $request->registration_fee,
+            'assessment_fee' => $request->assessment_fee,
+            'duration_days' => $request->duration_days,
+            'is_active' => $request->has('is_active'),
         ]);
 
         return redirect()->route('admin.batches.index')
@@ -372,10 +389,10 @@ class BatchController extends Controller
             ->appends($request->query());
 
         $course = $batch->course;
-        $registrationFee = (float) ($course->registration_fee ?? 100);
-        $assessmentFee = (float) ($course->assessment_fee ?? 100);
-        $courseFee = (float) ($course->course_fee ?? 0);
-        $totalFee = $registrationFee + $courseFee + $assessmentFee;
+        $registrationFee = $batch->resolved_registration_fee;
+        $assessmentFee = $batch->resolved_assessment_fee;
+        $courseFee = $batch->resolved_course_fee;
+        $totalFee = $batch->resolved_total_fee;
 
         return view('admin.batches.enroll', compact('batch', 'students', 'course', 'registrationFee', 'assessmentFee', 'courseFee', 'totalFee'));
     }
@@ -399,11 +416,10 @@ class BatchController extends Controller
         }
 
         $batch->load('course');
-        $course = $batch->course;
-        $registrationFee = (float) ($course->registration_fee ?? 100);
-        $assessmentFee = (float) ($course->assessment_fee ?? 100);
-        $courseFee = (float) ($course->course_fee ?? 0);
-        $totalFees = $registrationFee + $courseFee + $assessmentFee;
+        $registrationFee = $batch->resolved_registration_fee;
+        $assessmentFee = $batch->resolved_assessment_fee;
+        $courseFee = $batch->resolved_course_fee;
+        $totalFees = round($batch->resolved_total_fee, 2);
 
         $studentIds = array_unique($request->student_ids);
         $enrolled = 0;
@@ -515,5 +531,25 @@ class BatchController extends Controller
             ->get(['id', 'batch_name', 'start_date', 'end_date']);
 
         return response()->json($batches);
+    }
+
+    /**
+     * Resolved fee/duration for this batch (API for enrollment forms).
+     */
+    public function feeDetails(Batch $batch)
+    {
+        $this->ensureBatchAccessible($batch);
+        $batch->load('course');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'course_fee' => $batch->resolved_course_fee,
+                'registration_fee' => $batch->resolved_registration_fee,
+                'assessment_fee' => $batch->resolved_assessment_fee,
+                'total_fee' => $batch->resolved_total_fee,
+                'duration_days' => $batch->resolved_duration_days,
+            ],
+        ]);
     }
 }

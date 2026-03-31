@@ -18,12 +18,6 @@ class CourseLearningController extends Controller
                 ->with('error', 'Run migrations to enable course learning (course_modules).');
         }
 
-        $tpId = $this->getTrainingPartnerId();
-        if ($tpId !== null) {
-            $allowed = Course::query()->visibleToTrainingPartner($tpId)->whereKey($course->id)->exists();
-            abort_unless($allowed, 403);
-        }
-
         $modules = $course->learningModules()
             ->with(['lessons' => fn ($q) => $q->orderBy('sort_order')])
             ->orderBy('sort_order')

@@ -76,8 +76,13 @@
                                     @if(!empty($onboarding['course_done']))<i class="fas fa-check text-xs"></i>@else<i class="fas fa-circle-notch text-xs opacity-80"></i>@endif
                                 </span>
                                 <div class="min-w-0">
-                                    <a href="{{ route('admin.courses.create') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Create a course</a>
-                                    <p class="text-slate-600 text-xs mt-0.5">Fees, duration, and assessment settings.</p>
+                                    @if(auth()->user()->is_super_admin)
+                                        <a href="{{ route('admin.courses.create') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">Create a course</a>
+                                        <p class="text-slate-600 text-xs mt-0.5">Global catalogue — fees, duration, LMS. TP staff view-only.</p>
+                                    @else
+                                        <a href="{{ route('admin.courses.index') }}" class="font-semibold text-primary-700 hover:text-primary-800 hover:underline">View courses</a>
+                                        <p class="text-slate-600 text-xs mt-0.5">Catalogue is managed by super admin; set per-batch fees when you create a batch.</p>
+                                    @endif
                                 </div>
                             </li>
                             <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3 {{ !empty($onboarding['batch_done']) ? 'border-emerald-100 bg-emerald-50/40' : '' }}">

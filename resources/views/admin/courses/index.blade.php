@@ -11,7 +11,7 @@
             <h2 class="text-2xl font-bold text-gray-900">Courses</h2>
             <p class="text-gray-600 mt-1">Manage your institute's courses and programs</p>
         </div>
-        @if(auth()->user()->is_super_admin || auth()->user()->is_admin)
+        @if(auth()->user()->is_super_admin)
         <div class="mt-4 sm:mt-0">
             <a href="{{ route('admin.courses.create') }}" 
                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg">
@@ -163,7 +163,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @if(auth()->user()->is_super_admin || auth()->user()->is_admin)
+                            @if(auth()->user()->is_super_admin)
                             <form method="POST" action="{{ route('admin.courses.toggle-status', $course) }}" class="inline">
                                 @csrf
                                 @method('PATCH')
@@ -191,7 +191,7 @@
                                    title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                @if(auth()->user()->is_super_admin || auth()->user()->is_admin)
+                                @if(auth()->user()->is_super_admin)
                                 <a href="{{ route('admin.courses.edit', $course) }}" 
                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
                                    title="Edit Course">
@@ -219,7 +219,7 @@
                                 <i class="fas fa-book text-4xl mb-4"></i>
                                 <p class="text-lg font-medium">No courses found</p>
                                 <p class="text-sm">Get started by creating your first course.</p>
-                                @if(auth()->user()->is_super_admin || auth()->user()->is_admin)
+                                @if(auth()->user()->is_super_admin)
                                 <a href="{{ route('admin.courses.create') }}" 
                                    class="inline-flex items-center px-4 py-2 mt-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors duration-200">
                                     <i class="fas fa-plus mr-2"></i>

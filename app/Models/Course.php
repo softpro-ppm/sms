@@ -48,38 +48,20 @@ class Course extends Model
     }
 
     /**
-     * Courses visible to a partner admin: always their own; plus platform catalog only for HQ partners.
-     *
-     * @param  ?bool  $includePlatformCatalog  null = derive from partner type (HQ vs STANDARD)
+     * Catalogue listing: all training partners see the same platform courses (maintained by super admin).
+     * Kept as a named scope for call-site clarity; no row filter is applied.
      */
     public function scopeVisibleToTrainingPartner($query, ?int $trainingPartnerId, ?bool $includePlatformCatalog = null)
     {
-        if ($trainingPartnerId === null) {
-            return $query;
-        }
-
-        $includePlatformCatalog ??= static::includePlatformCatalogForPartner($trainingPartnerId);
-
-        if ($includePlatformCatalog) {
-            return $query->where(function ($q) use ($trainingPartnerId) {
-                $q->where('training_partner_id', $trainingPartnerId)
-                    ->orWhereNull('training_partner_id');
-            });
-        }
-
-        return $query->where('training_partner_id', $trainingPartnerId);
+        return $query;
     }
 
     /**
-     * Courses a partner may edit or attach exclusive content to (question banks, assessments). Super admin: all.
+     * Assessments / question banks: TP staff work against the shared catalogue (same visibility as listing).
      */
     public function scopeWritableByTrainingPartner($query, ?int $trainingPartnerId)
     {
-        if ($trainingPartnerId === null) {
-            return $query;
-        }
-
-        return $query->where('training_partner_id', $trainingPartnerId);
+        return $query;
     }
 
     public function trainingPartner(): BelongsTo

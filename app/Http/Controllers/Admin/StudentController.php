@@ -87,7 +87,6 @@ class StudentController extends Controller
         $legacyCourseId = LegacyEnrollmentService::legacyCourseId();
         $courses = Course::query()
             ->where('is_active', true)
-            ->visibleToTrainingPartner($tpId)
             ->when($legacyCourseId, fn ($q) => $q->where('id', '!=', $legacyCourseId))
             ->orderBy('name')
             ->get();
@@ -99,7 +98,6 @@ class StudentController extends Controller
         $linkCoursesForLegacy = $canEnrollLegacy
             ? Course::query()
                 ->where('is_active', true)
-                ->visibleToTrainingPartner($tpId)
                 ->orderBy('name')
                 ->get()
             : collect();
@@ -189,9 +187,8 @@ class StudentController extends Controller
         $validator = Validator::make($request->all(), [
             'batch_id' => 'required|exists:batches,id',
             'enrollment_date' => 'required|date',
-            'total_fee' => 'required|numeric|min:0',
             'credit_to_apply' => 'nullable|numeric|min:0',
-            'remarks' => 'nullable|string'
+            'remarks' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -234,10 +231,11 @@ class StudentController extends Controller
                 ->with('error', 'Batch is full. Cannot enroll more students.');
         }
 
-        // Calculate total fees: Registration (₹100) + Course Fee + Assessment (₹100)
-        $registrationFee = 100.00;
-        $assessmentFee = 100.00;
-        $totalFees = round($registrationFee + (float) $request->total_fee + $assessmentFee, 2);
+        $batch->load('course');
+        $registrationFee = $batch->resolved_registration_fee;
+        $assessmentFee = $batch->resolved_assessment_fee;
+        $courseFee = $batch->resolved_course_fee;
+        $totalFees = round($batch->resolved_total_fee, 2);
         $creditToApply = min(
             (float) ($request->credit_to_apply ?? 0),
             (float) $student->credit_balance,
@@ -265,7 +263,7 @@ class StudentController extends Controller
             'is_eligible_for_assessment' => false,
             // Store fee breakdown
             'registration_fee' => $registrationFee,
-            'course_fee' => $request->total_fee,
+            'course_fee' => $courseFee,
             'assessment_fee' => $assessmentFee,
         ]);
 
@@ -298,7 +296,7 @@ class StudentController extends Controller
         if ($creditToApply > 0) {
             $msg .= " (₹" . number_format($creditToApply, 0) . " credit applied, ₹" . number_format($enrollment->outstanding_amount, 0) . " outstanding)";
         } else {
-            $msg .= " (Registration: ₹{$registrationFee} + Course: ₹{$request->total_fee} + Assessment: ₹{$assessmentFee})";
+            $msg .= " (Registration: ₹{$registrationFee} + Course: ₹{$courseFee} + Assessment: ₹{$assessmentFee})";
         }
         return redirect()->route('admin.payments.create', ['student_id' => $student->id, 'enrollment_id' => $enrollment->id])
             ->with('success', $msg);

@@ -70,25 +70,15 @@ trait ScopesByTrainingPartner
     }
 
     /**
-     * TP may access platform catalog courses and their own; not another partner's courses.
+     * Catalogue courses are platform-wide; all authenticated admin/reception users may view them.
      */
     protected function ensureCourseAccessible(Course $course): void
     {
-        $tpId = $this->getTrainingPartnerId();
-        if ($tpId === null) {
-            return;
-        }
-        $ownerId = $course->training_partner_id;
-        if ($ownerId !== null && (int) $ownerId !== $tpId) {
-            abort(404);
-        }
-        if ($ownerId === null && !Course::includePlatformCatalogForPartner($tpId)) {
-            abort(404);
-        }
+        //
     }
 
     /**
-     * Mutations to course rows or partner-owned curriculum: platform catalog is super-admin only.
+     * Legacy: partner-specific course rows (rare). Platform catalogue (null owner) is open to all TPs.
      */
     protected function ensureTrainingPartnerOwnsCourse(Course $course): void
     {
@@ -96,10 +86,7 @@ trait ScopesByTrainingPartner
         if ($tpId === null) {
             return;
         }
-        if ($course->training_partner_id === null) {
-            abort(403);
-        }
-        if ((int) $course->training_partner_id !== $tpId) {
+        if ($course->training_partner_id !== null && (int) $course->training_partner_id !== $tpId) {
             abort(404);
         }
     }

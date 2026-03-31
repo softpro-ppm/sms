@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
-use App\Models\Course;
 use App\Models\Batch;
+use App\Models\Course;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -27,9 +27,6 @@ class CourseController extends Controller
             : fn ($q) => $q->where('status', 'active');
 
         $query = Course::query();
-        if ($tpId !== null) {
-            $query->visibleToTrainingPartner($tpId);
-        }
 
         if ($tpId !== null) {
             $query->withCount([
@@ -48,7 +45,7 @@ class CourseController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -57,12 +54,8 @@ class CourseController extends Controller
             ->appends($request->query());
 
         $stats = [
-            'total_courses' => $tpId !== null
-                ? Course::query()->visibleToTrainingPartner($tpId)->count()
-                : Course::count(),
-            'active_courses' => $tpId !== null
-                ? Course::query()->visibleToTrainingPartner($tpId)->where('is_active', true)->count()
-                : Course::where('is_active', true)->count(),
+            'total_courses' => Course::count(),
+            'active_courses' => Course::where('is_active', true)->count(),
             'total_batches' => $tpId !== null
                 ? Batch::query()->visibleToTrainingPartner($tpId)->count()
                 : Batch::count(),
@@ -81,19 +74,12 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        $tpId = $this->getTrainingPartnerId();
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('courses', 'name')->where(function ($q) use ($tpId) {
-                    if ($tpId === null) {
-                        return $q->whereNull('training_partner_id');
-                    }
-
-                    return $q->where('training_partner_id', $tpId);
-                }),
+                Rule::unique('courses', 'name'),
             ],
             'description' => 'nullable|string',
             'course_fee' => 'required|numeric|min:0',
@@ -110,7 +96,7 @@ class CourseController extends Controller
         }
 
         $course = Course::create([
-            'training_partner_id' => $tpId,
+            'training_partner_id' => null,
             'name' => $request->name,
             'description' => $request->description,
             'course_fee' => $request->course_fee,
@@ -135,7 +121,6 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $this->ensureCourseAccessible($course);
-        $this->ensureTrainingPartnerOwnsCourse($course);
 
         return view('admin.courses.edit', compact('course'));
     }
@@ -143,20 +128,12 @@ class CourseController extends Controller
     public function update(Request $request, Course $course)
     {
         $this->ensureCourseAccessible($course);
-        $this->ensureTrainingPartnerOwnsCourse($course);
-        $ownerTpId = $course->training_partner_id;
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('courses', 'name')->ignore($course->id)->where(function ($q) use ($ownerTpId) {
-                    if ($ownerTpId === null) {
-                        return $q->whereNull('training_partner_id');
-                    }
-
-                    return $q->where('training_partner_id', $ownerTpId);
-                }),
+                Rule::unique('courses', 'name')->ignore($course->id),
             ],
             'description' => 'nullable|string',
             'course_fee' => 'required|numeric|min:0',
@@ -173,6 +150,7 @@ class CourseController extends Controller
         }
 
         $course->update([
+            'training_partner_id' => null,
             'name' => $request->name,
             'description' => $request->description,
             'course_fee' => $request->course_fee,
@@ -189,7 +167,6 @@ class CourseController extends Controller
     public function destroy(Course $course)
     {
         $this->ensureCourseAccessible($course);
-        $this->ensureTrainingPartnerOwnsCourse($course);
         if ($course->batches()->count() > 0) {
             return redirect()->back()
                 ->with('error', 'Cannot delete course with existing batches. Please delete batches first.');
@@ -209,8 +186,7 @@ class CourseController extends Controller
     public function toggleStatus(Course $course)
     {
         $this->ensureCourseAccessible($course);
-        $this->ensureTrainingPartnerOwnsCourse($course);
-        $course->update(['is_active' => !$course->is_active]);
+        $course->update(['is_active' => ! $course->is_active]);
 
         $status = $course->is_active ? 'activated' : 'deactivated';
 
