@@ -45,8 +45,15 @@ if command -v npm &> /dev/null; then
 fi
 
 echo ""
-echo "🔑 Generating application key..."
-php artisan key:generate --force
+echo "🔑 Application key (never rotate on routine deploy)..."
+if [ ! -f .env ]; then
+    echo "   ⚠️  .env not found — create it on the server and set APP_KEY if this is a new install."
+elif ! grep -qE '^APP_KEY=' .env 2>/dev/null || grep -qE '^APP_KEY=[[:space:]]*$' .env 2>/dev/null; then
+    echo "   APP_KEY missing or empty — generating once..."
+    php artisan key:generate --force
+else
+    echo "   APP_KEY already set — skipping key:generate (sessions stay valid)."
+fi
 
 echo ""
 echo "🗄️  Running database migrations..."
