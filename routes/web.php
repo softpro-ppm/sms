@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BatchController;
 use App\Http\Controllers\Admin\CertificatesController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseLearningController;
+use App\Http\Controllers\Admin\CourseLearningManageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\ForcePasswordController;
@@ -161,6 +162,18 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
         Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
         Route::patch('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
+
+        // LMS modules / lessons (super admin only — catalogue content)
+        Route::get('/courses/{course}/learning/modules/create', [CourseLearningManageController::class, 'createModule'])->name('courses.learning.modules.create');
+        Route::post('/courses/{course}/learning/modules', [CourseLearningManageController::class, 'storeModule'])->name('courses.learning.modules.store');
+        Route::get('/courses/{course}/learning/modules/{module}/edit', [CourseLearningManageController::class, 'editModule'])->name('courses.learning.modules.edit');
+        Route::put('/courses/{course}/learning/modules/{module}', [CourseLearningManageController::class, 'updateModule'])->name('courses.learning.modules.update');
+        Route::delete('/courses/{course}/learning/modules/{module}', [CourseLearningManageController::class, 'destroyModule'])->name('courses.learning.modules.destroy');
+        Route::get('/courses/{course}/learning/modules/{module}/lessons/create', [CourseLearningManageController::class, 'createLesson'])->name('courses.learning.lessons.create');
+        Route::post('/courses/{course}/learning/modules/{module}/lessons', [CourseLearningManageController::class, 'storeLesson'])->name('courses.learning.lessons.store');
+        Route::get('/courses/{course}/learning/modules/{module}/lessons/{lesson}/edit', [CourseLearningManageController::class, 'editLesson'])->name('courses.learning.lessons.edit');
+        Route::put('/courses/{course}/learning/modules/{module}/lessons/{lesson}', [CourseLearningManageController::class, 'updateLesson'])->name('courses.learning.lessons.update');
+        Route::delete('/courses/{course}/learning/modules/{module}/lessons/{lesson}', [CourseLearningManageController::class, 'destroyLesson'])->name('courses.learning.lessons.destroy');
     });
 
     // Batches management
