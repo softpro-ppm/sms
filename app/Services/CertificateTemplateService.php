@@ -32,8 +32,18 @@ class CertificateTemplateService
         $enrollmentNumber = $enrollment?->enrollment_number ?? 'N/A';
 
         $certificateCourseName = $course?->name ?? '______';
-        if ($enrollment?->is_legacy) {
-            $certificateCourseName = $enrollment->display_course_name;
+        $legacyBatchContext = $batch?->is_legacy_batch
+            || ($enrollment?->batch?->is_legacy_batch ?? false);
+        if ($enrollment && ($enrollment->is_legacy || $legacyBatchContext)) {
+            $enrollment->loadMissing(['batch.course', 'legacyLinkCourse']);
+            $certificateCourseName = $enrollment->is_legacy
+                ? $enrollment->display_course_name
+                : (
+                    $enrollment->legacy_course_name
+                    ?: $enrollment->legacyLinkCourse?->name
+                    ?: $enrollment->batch?->course?->name
+                    ?: ($course?->name ?? '______')
+                );
         }
 
         // Training partner logo (top-right, mirrors SoftPro logo). Omit if missing — space stays blank.

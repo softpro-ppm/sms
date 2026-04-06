@@ -410,7 +410,7 @@
                 <div class="section-paragraph">
                     <table style="width: 100%" cellpadding="0" cellspacing="0"><tr><td align="center">
                     <p class="course-line">
-                        has successfully completed the course <span class="course-name">{{ $certificateCourseName ?? $course->name }}</span>
+                        has successfully completed the course <span class="course-name">{{ $certificateCourseName }}</span>
                         @if($batch)
                         (Batch: {{ $batch->batch_name }})
                         @endif

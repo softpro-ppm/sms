@@ -206,7 +206,7 @@
                                 <tr class="bg-gray-50">
                                     <th class="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">Exam</th>
                                     <th class="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Date</th>
-                                    <th class="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Score</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Marks</th>
                                     <th class="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Status</th>
                                 </tr>
                             </thead>
@@ -220,8 +220,14 @@
                                         {{ $result->created_at->format('d-m-Y') }}
                                     </td>
                                     <td class="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center font-semibold">
-                                        @if($result->total_questions && $result->correct_answers !== null)
-                                            {{ $result->correct_answers }}/{{ $result->total_questions }} ({{ number_format($result->percentage ?? 0, 1) }}%)
+                                        @if($result->total_questions)
+                                            @php
+                                                $maxMarks = (int) $result->total_questions * 4;
+                                                $earnedMarks = $result->total_marks !== null && $result->total_marks !== ''
+                                                    ? (int) $result->total_marks
+                                                    : (int) (($result->correct_answers ?? 0) * 4);
+                                            @endphp
+                                            {{ $earnedMarks }}/{{ $maxMarks }} ({{ number_format($result->percentage ?? 0, 1) }}%)
                                         @else
                                             {{ $result->percentage !== null ? number_format($result->percentage, 1) . '%' : 'N/A' }}
                                         @endif
