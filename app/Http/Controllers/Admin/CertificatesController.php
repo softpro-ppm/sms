@@ -112,7 +112,7 @@ class CertificatesController extends Controller
         if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
             abort(404);
         }
-        $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
+        $certificate->load(['student', 'course', 'batch', 'assessmentResult', 'enrollment']);
 
         return view('admin.certificates.show', compact('certificate'));
     }
@@ -123,7 +123,7 @@ class CertificatesController extends Controller
         if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
             abort(404);
         }
-        $certificate->load(['student', 'course', 'batch', 'assessmentResult']);
+        $certificate->load(['student', 'course', 'batch', 'assessmentResult', 'enrollment']);
 
         $templateService = app(CertificateTemplateService::class);
         $html = $templateService->generateHtml($certificate);

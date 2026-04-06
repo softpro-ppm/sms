@@ -79,8 +79,13 @@
                                             {{ $certificate->batch->batch_name }}
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            {{ $certificate->batch->start_date->format('M Y') }} - 
-                                            {{ $certificate->batch->end_date->format('M Y') }}
+                                            @php
+                                                $e = $certificate->enrollment;
+                                                $ds = $e?->effective_start_date ?? $certificate->batch->start_date;
+                                                $de = $e?->effective_end_date ?? $certificate->batch->end_date;
+                                            @endphp
+                                            {{ $ds?->format('M Y') ?? '—' }} -
+                                            {{ $de?->format('M Y') ?? '—' }}
                                         </div>
                                     @else
                                         <span class="text-sm text-gray-500">N/A</span>

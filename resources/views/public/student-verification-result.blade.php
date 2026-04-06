@@ -183,7 +183,7 @@
                             <div>
                                 <p class="text-sm text-gray-600"><strong>Batch Duration:</strong></p>
                                 <p class="text-lg text-gray-900">
-                                    {{ $enrollment->batch->start_date->format('d-m-Y') }} to {{ $enrollment->batch->end_date->format('d-m-Y') }}
+                                    {{ $enrollment->effective_start_date?->format('d-m-Y') ?? '—' }} to {{ $enrollment->effective_end_date?->format('d-m-Y') ?? '—' }}
                                 </p>
                             </div>
                         </div>

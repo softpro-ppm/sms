@@ -287,7 +287,7 @@ class StudentController extends Controller
         }
 
         $certificates = Certificate::where('student_id', $student->id)
-            ->with(['course', 'batch'])
+            ->with(['course', 'batch', 'enrollment'])
             ->orderBy('issue_date', 'desc')
             ->paginate(10);
 

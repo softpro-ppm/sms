@@ -79,9 +79,11 @@ class CertificateTemplateService
         };
         $parentName = trim($student->father_name ?? '');
 
-        // Batch dates (e.g., 01 Jan 2026 – 15 Mar 2026)
-        $startDate = $batch?->start_date ? $batch->start_date->format('d M Y') : '______';
-        $endDate = $batch?->end_date ? $batch->end_date->format('d M Y') : '______';
+        // Period on certificate: legacy enrollments use stored legacy dates; else batch dates
+        $periodStart = $enrollment?->effective_start_date ?? $batch?->start_date;
+        $periodEnd = $enrollment?->effective_end_date ?? $batch?->end_date;
+        $startDate = $periodStart ? $periodStart->format('d M Y') : '______';
+        $endDate = $periodEnd ? $periodEnd->format('d M Y') : '______';
 
         // Grade from assessment result
         $grade = $result?->grade ?? 'N/A';

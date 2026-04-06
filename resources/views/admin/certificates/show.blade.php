@@ -127,9 +127,14 @@
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Batch</h4>
                         <p class="mt-1 text-lg font-semibold text-gray-900">{{ $certificate->batch->batch_name }}</p>
+                        @php
+                            $certEnrollment = $certificate->enrollment;
+                            $periodStart = $certEnrollment?->effective_start_date ?? $certificate->batch?->start_date;
+                            $periodEnd = $certEnrollment?->effective_end_date ?? $certificate->batch?->end_date;
+                        @endphp
                         <div class="text-sm text-gray-500 mt-1">
-                            <div>Start Date: {{ $certificate->batch->start_date->format('M d, Y') }}</div>
-                            <div>End Date: {{ $certificate->batch->end_date->format('M d, Y') }}</div>
+                            <div>Start Date: {{ $periodStart?->format('M d, Y') ?? '—' }}</div>
+                            <div>End Date: {{ $periodEnd?->format('M d, Y') ?? '—' }}</div>
                         </div>
                     </div>
                     @endif
