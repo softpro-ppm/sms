@@ -205,6 +205,8 @@
             color: #2c1810;
             font-size: 12pt;
             font-family: 'DejaVu Sans', Arial, sans-serif;
+            /* Keep full range (e.g. 01 Mar 2026 – 30 Mar 2026) on one line in DomPDF */
+            white-space: nowrap;
         }
 
         /* 7) ISSUE DATE: inside body-text-wrapper */
@@ -412,7 +414,7 @@
                         @if($batch)
                         (Batch: {{ $batch->batch_name }})
                         @endif
-                        conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }} – {{ $endDate }}</span>
+                        conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }}&nbsp;–&nbsp;{{ $endDate }}</span>
                         @if($grade && $grade !== 'N/A')
                         and has secured grade <strong>{{ $grade }}</strong>
                         @endif

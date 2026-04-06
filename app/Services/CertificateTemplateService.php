@@ -82,8 +82,13 @@ class CertificateTemplateService
         // Period on certificate: legacy enrollments use stored legacy dates; else batch dates
         $periodStart = $enrollment?->effective_start_date ?? $batch?->start_date;
         $periodEnd = $enrollment?->effective_end_date ?? $batch?->end_date;
-        $startDate = $periodStart ? $periodStart->format('d M Y') : '______';
-        $endDate = $periodEnd ? $periodEnd->format('d M Y') : '______';
+        // NBSP inside each date so DomPDF does not break e.g. "30" / "Mar 2026" across lines
+        $startDate = $periodStart
+            ? str_replace(' ', "\u{00A0}", $periodStart->format('d M Y'))
+            : '______';
+        $endDate = $periodEnd
+            ? str_replace(' ', "\u{00A0}", $periodEnd->format('d M Y'))
+            : '______';
 
         // Grade from assessment result
         $grade = $result?->grade ?? 'N/A';
@@ -182,8 +187,8 @@ class CertificateTemplateService
             'salutation' => 'Ms.',
             'parentLabel' => 'D/o',
             'parentName' => 'Rajesh Gulla',
-            'startDate' => '01 Jan 2026',
-            'endDate' => '15 Mar 2026',
+            'startDate' => str_replace(' ', "\u{00A0}", '01 Jan 2026'),
+            'endDate' => str_replace(' ', "\u{00A0}", '15 Mar 2026'),
             'grade' => 'A',
             'issueDate' => now()->format('d M Y'),
             'qrUrl' => $qrUrl,
