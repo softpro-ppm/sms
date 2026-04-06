@@ -461,7 +461,7 @@
 
         <!-- 10) FOOTER: absolute, relative to certificate -->
         <div class="section-footer">
-            <span class="footer-left">Enrol. <strong>{{ $enrollmentNumber }}</strong></span>
+            <span class="footer-left">Enrol. No. <strong>{{ $enrollmentNumber }}</strong></span>
             <span class="footer-center">{{ $isoText }}</span>
             <span class="footer-right">Cert No. <strong>{{ $certificate->certificate_number }}</strong></span>
         </div>
