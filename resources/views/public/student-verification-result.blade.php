@@ -214,7 +214,16 @@
                                 @foreach($student->assessmentResults as $result)
                                 <tr class="hover:bg-gray-50">
                                     <td class="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                                        {{ $result->assessment->title ?? 'Unknown Exam' }}
+                                        @php
+                                            $legacyAutoTitle = \App\Services\LegacyEnrollmentService::LEGACY_COMPLETION_ASSESSMENT_TITLE;
+                                            $isLegacyAutoRow = $result->assessment
+                                                && trim((string) $result->assessment->title) === $legacyAutoTitle;
+                                        @endphp
+                                        @if($isLegacyAutoRow && $result->enrollment)
+                                            {{ $result->enrollment->display_course_name }}
+                                        @else
+                                            {{ $result->assessment->title ?? 'Unknown Exam' }}
+                                        @endif
                                     </td>
                                     <td class="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
                                         {{ $result->created_at->format('d-m-Y') }}

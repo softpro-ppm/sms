@@ -30,7 +30,9 @@ class StudentVerificationController extends Controller
         $student->load([
             'enrollments.batch.course',
             'assessmentResults.assessment',
-            'documents'
+            'assessmentResults.enrollment.batch.course',
+            'assessmentResults.enrollment.legacyLinkCourse',
+            'documents',
         ]);
 
         return view('public.student-verification-result', compact('student'));
@@ -78,7 +80,9 @@ class StudentVerificationController extends Controller
         $student->load([
             'enrollments.batch.course',
             'assessmentResults.assessment',
-            'documents'
+            'assessmentResults.enrollment.batch.course',
+            'assessmentResults.enrollment.legacyLinkCourse',
+            'documents',
         ]);
 
         return view('public.student-verification-result', compact('student'));
@@ -123,7 +127,9 @@ class StudentVerificationController extends Controller
         ->with([
             'enrollments.batch.course',
             'assessmentResults.assessment',
-            'documents'
+            'assessmentResults.enrollment.batch.course',
+            'assessmentResults.enrollment.legacyLinkCourse',
+            'documents',
         ])
         ->get()
         ->unique('id')
