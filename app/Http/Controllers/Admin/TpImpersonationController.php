@@ -7,6 +7,7 @@ use App\Models\TrainingPartner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TpImpersonationController extends Controller
@@ -62,11 +63,25 @@ class TpImpersonationController extends Controller
 
         $superAdminId = (int) $request->user()->id;
 
+        $auditId = null;
+        if (DB::getSchemaBuilder()->hasTable('impersonation_audit_logs')) {
+            $auditId = DB::table('impersonation_audit_logs')->insertGetId([
+                'super_admin_user_id' => $superAdminId,
+                'target_user_id' => $target->id,
+                'training_partner_id' => $trainingPartner->id,
+                'started_at' => now(),
+                'ended_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         $request->session()->put('impersonation', [
             'original_user_id' => $superAdminId,
             'training_partner_id' => $trainingPartner->id,
             'training_partner_name' => $trainingPartner->name,
             'target_user_id' => $target->id,
+            'audit_id' => $auditId,
         ]);
 
         Auth::login($target);
@@ -109,6 +124,12 @@ class TpImpersonationController extends Controller
         }
 
         $tpId = $imp['training_partner_id'] ?? null;
+        $auditId = $imp['audit_id'] ?? null;
+        if ($auditId && DB::getSchemaBuilder()->hasTable('impersonation_audit_logs')) {
+            DB::table('impersonation_audit_logs')
+                ->where('id', (int) $auditId)
+                ->update(['ended_at' => now(), 'updated_at' => now()]);
+        }
         $request->session()->forget('impersonation');
         Auth::login($original);
         $request->session()->regenerate();

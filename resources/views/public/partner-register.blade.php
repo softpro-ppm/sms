@@ -14,6 +14,14 @@
                 </div>
             </div>
 
+            <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <p class="font-medium mb-1">How billing works after you are approved</p>
+                <p class="text-amber-900/90 leading-relaxed">
+                    Your centre will use a <strong>prepaid wallet</strong>. Head office will set a small <strong>fixed charge each time a student is approved</strong> (this is separate from the course fees students pay).
+                    You may need wallet top-ups from time to time—your approval email will explain login and next steps.
+                </p>
+            </div>
+
             <form method="POST" action="{{ route('partner.register') }}" enctype="multipart/form-data" class="space-y-5">
                 @csrf
 

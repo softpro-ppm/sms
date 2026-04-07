@@ -195,10 +195,24 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('admin.help') }}"
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.help') ? 'active' : '' }}">
+                            <i class="fas fa-circle-question w-5 h-5 mr-3"></i>
+                            <span>How it works</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.super.training-partners.index') }}" 
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.training-partners.*') ? 'active' : '' }}">
                             <i class="fas fa-building w-5 h-5 mr-3"></i>
                             <span>Training Partners</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.super.impersonation-log.index') }}"
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.super.impersonation-log.*') ? 'active' : '' }}">
+                            <i class="fas fa-user-secret w-5 h-5 mr-3"></i>
+                            <span>Impersonation log</span>
                         </a>
                     </li>
                     <li>
@@ -215,6 +229,13 @@
                            class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                             <i class="fas fa-tachometer-alt w-5 h-5 mr-3"></i>
                             <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.help') }}"
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.help') ? 'active' : '' }}">
+                            <i class="fas fa-circle-question w-5 h-5 mr-3"></i>
+                            <span>How it works</span>
                         </a>
                     </li>
                     

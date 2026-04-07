@@ -112,6 +112,14 @@ class DashboardController extends Controller
     }
 
     /**
+     * Plain-language process guide for staff (Phase 1 — operational clarity).
+     */
+    public function help()
+    {
+        return view('admin.help');
+    }
+
+    /**
      * Persist “don’t show catalogue setup popup again” for this admin (TP centre).
      */
     public function dismissCatalogOnboarding(Request $request)

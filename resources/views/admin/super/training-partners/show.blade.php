@@ -166,8 +166,12 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
             <h3 class="font-semibold text-gray-900">Wallet Transactions</h3>
+            <a href="{{ route('admin.super.training-partners.wallet-export', $trainingPartner) }}"
+               class="inline-flex items-center text-sm font-medium text-primary-700 hover:text-primary-900">
+                <i class="fas fa-download mr-2"></i>Export full history (CSV)
+            </a>
         </div>
         @if($trainingPartner->walletTransactions && $trainingPartner->walletTransactions->isNotEmpty())
         <div class="overflow-x-auto">
@@ -208,7 +212,9 @@
         <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Approve Partner</h3>
             <p class="text-sm text-gray-600 mb-4">Assign a unique code and set the student approval deduction amount (₹) to deduct from this partner's wallet when each student is approved.</p>
-            <form method="POST" action="{{ route('admin.super.training-partners.approve', $trainingPartner) }}">
+            <form id="approvePartnerForm" method="POST" action="{{ route('admin.super.training-partners.approve', $trainingPartner) }}"
+                  data-is-standard="{{ $trainingPartner->is_standard ? '1' : '0' }}"
+                  onsubmit="return confirmStandardPartnerApprove(this);">
                 @csrf
                 <div class="mb-4">
                     <label for="approve_code" class="block text-sm font-medium text-gray-700 mb-2">Partner Code <span class="text-red-500">*</span></label>
@@ -273,4 +279,16 @@
         </div>
     </div>
 </div>
+<script>
+function confirmStandardPartnerApprove(form) {
+    var isStandard = form.getAttribute('data-is-standard') === '1';
+    var input = document.getElementById('approve_deduction');
+    if (!input) return true;
+    var val = parseFloat(input.value);
+    if (isStandard && (isNaN(val) || val <= 0)) {
+        return confirm('This is a standard training partner with ₹0 per-student approval charge. Usually you set a positive amount so the wallet model works. Approve anyway?');
+    }
+    return true;
+}
+</script>
 @endsection

@@ -18,6 +18,13 @@
         </div>
     </div>
 
+    @if(auth()->user()->is_reception && $payment->status === 'pending')
+    <div class="max-w-4xl mx-auto mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
+        This payment is waiting for a <strong>centre admin</strong> to approve or reject it.
+    </div>
+    @endif
+
     <div class="max-w-4xl mx-auto">
         <!-- Payment Status Card -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">

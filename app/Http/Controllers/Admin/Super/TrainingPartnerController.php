@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -181,6 +182,33 @@ class TrainingPartnerController extends Controller
             'recentCertificates',
             'canImpersonate'
         ));
+    }
+
+    public function exportWalletTransactions(TrainingPartner $trainingPartner): StreamedResponse
+    {
+        $filename = 'wallet-' . preg_replace('/[^a-zA-Z0-9_-]+/', '', $trainingPartner->code ?: 'partner') . '-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($trainingPartner) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Date', 'Type', 'Amount (₹)', 'Balance after (₹)', 'Description', 'Reference']);
+            $trainingPartner->walletTransactions()
+                ->latest('id')
+                ->chunk(500, function ($chunk) use ($out) {
+                    foreach ($chunk as $tx) {
+                        fputcsv($out, [
+                            $tx->created_at?->format('Y-m-d H:i:s'),
+                            $tx->type,
+                            $tx->amount,
+                            $tx->balance_after,
+                            $tx->description,
+                            ($tx->reference_type ? $tx->reference_type . '#' . $tx->reference_id : ''),
+                        ]);
+                    }
+                });
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function recharge(Request $request, TrainingPartner $trainingPartner)

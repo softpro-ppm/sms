@@ -60,6 +60,24 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-amber-100">
+            <p class="text-sm font-medium text-gray-600">Pending partner applications</p>
+            <p class="text-3xl font-bold text-amber-600">{{ $stats['pending_partners'] }}</p>
+            <a href="{{ route('admin.super.training-partners.index', ['status' => 'pending']) }}" class="text-xs text-primary-600 hover:underline mt-2 inline-block">Review →</a>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-orange-100">
+            <p class="text-sm font-medium text-gray-600">Students awaiting approval</p>
+            <p class="text-3xl font-bold text-orange-600">{{ $stats['students_pending'] }}</p>
+            <p class="text-xs text-gray-500 mt-2">Across all centres</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-yellow-100">
+            <p class="text-sm font-medium text-gray-600">Payments pending approval</p>
+            <p class="text-3xl font-bold text-yellow-700">{{ $stats['pending_payments_all'] }}</p>
+            <p class="text-xs text-gray-500 mt-2">All centres — centre admin approves</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
             <div class="flex items-center justify-between">
                 <div>

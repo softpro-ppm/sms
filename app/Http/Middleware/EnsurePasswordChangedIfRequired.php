@@ -23,6 +23,14 @@ class EnsurePasswordChangedIfRequired
             return $next($request);
         }
 
+        if ($user->role === 'student' && $user->must_change_password) {
+            if ($request->routeIs('student.password.force', 'student.password.force.update', 'logout')) {
+                return $next($request);
+            }
+
+            return redirect()->route('student.password.force');
+        }
+
         if (!in_array($user->role, ['admin', 'reception'], true)) {
             return $next($request);
         }

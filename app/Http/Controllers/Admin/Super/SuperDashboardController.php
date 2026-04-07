@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Super;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Models\Student;
 use App\Models\TrainingPartner;
 use App\Models\User;
@@ -17,10 +18,13 @@ class SuperDashboardController extends Controller
         $stats = [
             'total_partners' => TrainingPartner::count(),
             'active_partners' => TrainingPartner::where('status', 'active')->count(),
+            'pending_partners' => TrainingPartner::where('status', 'pending')->count(),
             'hq_partners' => TrainingPartner::where('type', 'HQ')->count(),
             'standard_partners' => TrainingPartner::where('type', 'STANDARD')->count(),
             'total_students' => Student::count(),
+            'students_pending' => Student::where('status', 'pending')->count(),
             'total_staff' => User::whereIn('role', ['admin', 'reception'])->count(),
+            'pending_payments_all' => Payment::where('status', 'pending')->count(),
         ];
 
         $recentPartners = TrainingPartner::latest('created_at')->limit(5)->get();

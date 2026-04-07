@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\Super\ImpersonationAuditController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
 use App\Http\Controllers\Admin\TpImpersonationController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Public\PartnerRegistrationController;
 use App\Http\Controllers\Public\StudentVerificationController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
 use App\Http\Controllers\Student\StudentCourseLearningController;
+use App\Http\Controllers\Student\ForcePasswordController as StudentForcePasswordController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -93,6 +95,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/first-login-password', [ForcePasswordController::class, 'update'])->name('password.force.update');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/help', [DashboardController::class, 'help'])->name('help');
     Route::post('/impersonation/leave', [TpImpersonationController::class, 'leave'])->name('impersonation.leave');
     Route::post('/dashboard/dismiss-catalog-onboarding', [DashboardController::class, 'dismissCatalogOnboarding'])
         ->name('dashboard.dismiss-catalog-onboarding');
@@ -294,7 +297,9 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
 // Super Admin routes (Platform owner – Training Partner management)
 Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.super.')->group(function () {
     Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
+    Route::get('impersonation-log', [ImpersonationAuditController::class, 'index'])->name('impersonation-log.index');
     Route::post('training-partners/{training_partner}/impersonate', [TpImpersonationController::class, 'start'])->name('training-partners.impersonate');
+    Route::get('training-partners/{training_partner}/wallet-export', [TrainingPartnerController::class, 'exportWalletTransactions'])->name('training-partners.wallet-export');
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
     Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');
@@ -310,7 +315,9 @@ Route::middleware(['auth', 'role:reception'])->prefix('admin')->name('admin.')->
 });
 
 // Student routes
-Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+Route::middleware(['auth', 'role:student', 'password.force'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/first-login-password', [StudentForcePasswordController::class, 'show'])->name('password.force');
+    Route::post('/first-login-password', [StudentForcePasswordController::class, 'update'])->name('password.force.update');
     Route::get('/learn/enrollments/{enrollment}/resume', [StudentCourseLearningController::class, 'resume'])->name('learn.resume');
     Route::get('/learn/enrollments/{enrollment}', [StudentCourseLearningController::class, 'outline'])->name('learn.outline');
     Route::get('/learn/enrollments/{enrollment}/lessons/{lesson}', [StudentCourseLearningController::class, 'lesson'])->name('learn.lesson');

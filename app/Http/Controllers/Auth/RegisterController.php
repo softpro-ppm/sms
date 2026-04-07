@@ -16,9 +16,19 @@ use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
-        return view('auth.register');
+        $partnerCode = trim((string) $request->query('partner', ''));
+        $registrationPartner = null;
+        if ($partnerCode !== '') {
+            $registrationPartner = TrainingPartner::query()
+                ->where('code', $partnerCode)
+                ->where('status', 'active')
+                ->where('type', 'STANDARD')
+                ->first();
+        }
+
+        return view('auth.register', compact('registrationPartner', 'partnerCode'));
     }
 
     public function register(Request $request)
@@ -44,10 +54,21 @@ class RegisterController extends Controller
                 ->withInput($request->except('whatsapp_number'));
         }
 
-        // Create student record (public registration defaults to HQ for now)
-        $hqId = TrainingPartner::where('code', 'HQ')->value('id');
+        $trainingPartnerId = TrainingPartner::where('code', 'HQ')->value('id');
+        $submittedPartner = trim((string) $request->input('partner', ''));
+        if ($submittedPartner !== '') {
+            $tp = TrainingPartner::query()
+                ->where('code', $submittedPartner)
+                ->where('status', 'active')
+                ->where('type', 'STANDARD')
+                ->first();
+            if ($tp) {
+                $trainingPartnerId = $tp->id;
+            }
+        }
+
         $student = Student::create([
-            'training_partner_id' => $hqId,
+            'training_partner_id' => $trainingPartnerId,
             'aadhar_number' => $request->aadhar_number,
             'full_name' => $request->full_name,
             'father_name' => $request->father_name,
@@ -72,6 +93,7 @@ class RegisterController extends Controller
             'role' => 'student',
             'student_id' => $student->id,
             'is_active' => false, // Will be activated after admin approval
+            'must_change_password' => true, // Set a proper password on first login (Phase 2)
         ]);
 
         // Send self-registration acknowledgement email

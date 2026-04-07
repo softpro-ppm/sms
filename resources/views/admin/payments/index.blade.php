@@ -21,6 +21,13 @@
         </div>
     </div>
 
+    @if(auth()->user()->is_reception)
+    <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
+        <strong>Reception:</strong> You can record payments and view details. <strong>Approving or rejecting</strong> pending payments is done by a <strong>centre admin</strong> only.
+    </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Payments -->

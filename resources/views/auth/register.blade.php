@@ -5,8 +5,21 @@
 @section('subheading', 'Join our institute today')
 
 @section('content')
+@if(!empty($registrationPartner))
+<div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+    <strong>Registering with {{ $registrationPartner->name }}</strong> (partner code <span class="font-mono">{{ $registrationPartner->code }}</span>). Your application will go to this centre after you submit.
+</div>
+@elseif(!empty($partnerCode))
+<div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    Partner code <span class="font-mono">{{ $partnerCode }}</span> was not found or is inactive. You will be registered under the default head office unless you fix the link.
+</div>
+@endif
+
 <form method="POST" action="{{ route('register') }}" class="space-y-6">
     @csrf
+    @if(old('partner', $partnerCode ?? ''))
+    <input type="hidden" name="partner" value="{{ old('partner', $partnerCode ?? '') }}">
+    @endif
     
     <!-- Aadhar Number -->
     <div>
