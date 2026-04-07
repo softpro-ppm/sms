@@ -41,7 +41,7 @@
             @if(auth()->user()->is_super_admin)
                 <p>
                     <a href="{{ route('admin.courses.learning.modules.create', $course) }}" class="font-semibold text-amber-950 underline">Create the first module</a>
-                    or seed sample content: <code class="bg-amber-100 px-1 rounded">php artisan db:seed --class=MSOfficeCourseSeeder</code>
+                    or seed sample content: <code class="bg-amber-100 px-1 rounded">php artisan db:seed --class=MSOfficeCourseSeeder</code> or <code class="bg-amber-100 px-1 rounded">php artisan db:seed --class=TallyErp9CourseSeeder</code>
                 </p>
             @else
                 <p>A super admin can add modules and lessons, or run the sample seeder on the server.</p>
