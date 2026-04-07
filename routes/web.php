@@ -140,6 +140,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::patch('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
     Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
     Route::post('/payments/bulk-approve', [PaymentController::class, 'bulkApprove'])->name('payments.bulk-approve');
+    Route::post('/payments/{payment}/ams/retry', [PaymentController::class, 'retryAmsSync'])->name('payments.ams.retry');
     Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
     Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'downloadReceiptPdf'])->name('payments.receipt.pdf');
     Route::get('/payments/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('payments.receipt');

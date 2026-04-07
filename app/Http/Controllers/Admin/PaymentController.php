@@ -335,8 +335,33 @@ class PaymentController extends Controller
 
         // Sync income to AMS (Option A: sync only on approve)
         try {
-            app(AmsSyncService::class)->syncPayment($payment);
-        } catch (\Exception $e) {
+            $payment->forceFill([
+                'ams_sync_status' => 'pending',
+                'ams_last_attempt_at' => now(),
+                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+            ])->save();
+
+            $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
+            if (! empty($result['ok'])) {
+                $payment->forceFill([
+                    'ams_sync_status' => 'synced',
+                    'ams_synced_at' => now(),
+                    'ams_last_error' => null,
+                    'ams_transaction_id' => $result['transaction_id'] ?? null,
+                ])->save();
+            } else {
+                $payment->forceFill([
+                    'ams_sync_status' => 'failed',
+                    'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
+                ])->save();
+            }
+        } catch (\Throwable $e) {
+            $payment->forceFill([
+                'ams_sync_status' => 'failed',
+                'ams_last_attempt_at' => now(),
+                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+                'ams_last_error' => $e->getMessage(),
+            ])->save();
             \Log::error('AMS sync failed: ' . $e->getMessage());
         }
 
@@ -430,8 +455,33 @@ class PaymentController extends Controller
 
             // Sync income to AMS (Option A: sync only on approve)
             try {
-                app(AmsSyncService::class)->syncPayment($payment);
-            } catch (\Exception $e) {
+                $payment->forceFill([
+                    'ams_sync_status' => 'pending',
+                    'ams_last_attempt_at' => now(),
+                    'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+                ])->save();
+
+                $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
+                if (! empty($result['ok'])) {
+                    $payment->forceFill([
+                        'ams_sync_status' => 'synced',
+                        'ams_synced_at' => now(),
+                        'ams_last_error' => null,
+                        'ams_transaction_id' => $result['transaction_id'] ?? null,
+                    ])->save();
+                } else {
+                    $payment->forceFill([
+                        'ams_sync_status' => 'failed',
+                        'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
+                    ])->save();
+                }
+            } catch (\Throwable $e) {
+                $payment->forceFill([
+                    'ams_sync_status' => 'failed',
+                    'ams_last_attempt_at' => now(),
+                    'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+                    'ams_last_error' => $e->getMessage(),
+                ])->save();
                 \Log::error('AMS sync failed: ' . $e->getMessage());
             }
 
@@ -477,6 +527,55 @@ class PaymentController extends Controller
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy']);
         
         return view('admin.payments.show', compact('payment'));
+    }
+
+    public function retryAmsSync(Payment $payment)
+    {
+        $this->ensurePaymentBelongsToPartner($payment);
+
+        if (! auth()->user()->is_super_admin) {
+            return redirect()->back()->with('error', 'Only Super Admin can retry AMS sync.');
+        }
+
+        if ($payment->status !== 'approved') {
+            return redirect()->back()->with('error', 'Only approved payments can be synced to AMS.');
+        }
+
+        try {
+            $payment->forceFill([
+                'ams_sync_status' => 'pending',
+                'ams_last_attempt_at' => now(),
+                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+            ])->save();
+
+            $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
+            if (! empty($result['ok'])) {
+                $payment->forceFill([
+                    'ams_sync_status' => 'synced',
+                    'ams_synced_at' => now(),
+                    'ams_last_error' => null,
+                    'ams_transaction_id' => $result['transaction_id'] ?? null,
+                ])->save();
+
+                return redirect()->back()->with('success', 'AMS sync successful for receipt #'.$payment->payment_receipt_number.'.');
+            }
+
+            $payment->forceFill([
+                'ams_sync_status' => 'failed',
+                'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
+            ])->save();
+
+            return redirect()->back()->with('error', 'AMS sync failed: '.$payment->ams_last_error);
+        } catch (\Throwable $e) {
+            $payment->forceFill([
+                'ams_sync_status' => 'failed',
+                'ams_last_attempt_at' => now(),
+                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
+                'ams_last_error' => $e->getMessage(),
+            ])->save();
+
+            return redirect()->back()->with('error', 'AMS sync error: '.$e->getMessage());
+        }
     }
 
     public function destroy(Payment $payment)

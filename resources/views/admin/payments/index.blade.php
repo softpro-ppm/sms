@@ -260,6 +260,30 @@
                                     <i class="fas fa-check-circle mr-1"></i>
                                     Approved
                                 </span>
+                                @if(auth()->user()->is_super_admin)
+                                    @php
+                                        $amsStatus = $payment->ams_sync_status ?: 'not_tracked';
+                                        $amsClasses = [
+                                            'synced' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                            'failed' => 'bg-red-50 text-red-700 border-red-200',
+                                            'pending' => 'bg-amber-50 text-amber-800 border-amber-200',
+                                            'not_tracked' => 'bg-slate-50 text-slate-600 border-slate-200',
+                                        ];
+                                        $amsLabel = [
+                                            'synced' => 'AMS: Synced',
+                                            'failed' => 'AMS: Failed',
+                                            'pending' => 'AMS: Pending',
+                                            'not_tracked' => 'AMS: —',
+                                        ];
+                                    @endphp
+                                    <div class="mt-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $amsClasses[$amsStatus] ?? $amsClasses['not_tracked'] }}"
+                                              title="{{ $payment->ams_last_error ? Str::limit($payment->ams_last_error, 160) : '' }}">
+                                            <i class="fas {{ $amsStatus === 'synced' ? 'fa-cloud-arrow-up' : ($amsStatus === 'failed' ? 'fa-triangle-exclamation' : ($amsStatus === 'pending' ? 'fa-clock' : 'fa-minus')) }} text-[10px]"></i>
+                                            {{ $amsLabel[$amsStatus] ?? $amsLabel['not_tracked'] }}
+                                        </span>
+                                    </div>
+                                @endif
                                 @if($payment->approvedBy)
                                     <div class="text-xs text-gray-500 mt-1">by {{ $payment->approvedBy->name }}</div>
                                 @endif
@@ -330,6 +354,17 @@
                                        title="View Receipt">
                                         <i class="fas fa-file-invoice"></i>
                                     </a>
+                                    @if(auth()->user()->is_super_admin && ($payment->ams_sync_status === 'failed'))
+                                        <form method="POST" action="{{ route('admin.payments.ams.retry', $payment) }}" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                    title="Retry AMS sync"
+                                                    onclick="return confirm('Retry AMS sync for receipt #{{ $payment->payment_receipt_number }}?')">
+                                                <i class="fas fa-rotate-right"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 @endif
                                 
                                 @if(auth()->user()->is_admin)

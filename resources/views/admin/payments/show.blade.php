@@ -106,6 +106,64 @@
                                 {{ ucfirst($payment->status) }}
                             </span>
                         </div>
+
+                        @if($payment->status === 'approved' && auth()->user()->is_super_admin)
+                        @php
+                            $amsStatus = $payment->ams_sync_status ?: 'not_tracked';
+                            $amsClasses = [
+                                'synced' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                'failed' => 'bg-red-50 text-red-700 border-red-200',
+                                'pending' => 'bg-amber-50 text-amber-800 border-amber-200',
+                                'not_tracked' => 'bg-slate-50 text-slate-600 border-slate-200',
+                            ];
+                            $amsLabel = [
+                                'synced' => 'Synced',
+                                'failed' => 'Failed',
+                                'pending' => 'Pending',
+                                'not_tracked' => '—',
+                            ];
+                        @endphp
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">AMS Sync</span>
+                            <span class="inline-flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold {{ $amsClasses[$amsStatus] ?? $amsClasses['not_tracked'] }}"
+                                      title="{{ $payment->ams_last_error ? Str::limit($payment->ams_last_error, 200) : '' }}">
+                                    <i class="fas {{ $amsStatus === 'synced' ? 'fa-cloud-arrow-up' : ($amsStatus === 'failed' ? 'fa-triangle-exclamation' : ($amsStatus === 'pending' ? 'fa-clock' : 'fa-minus')) }} text-xs"></i>
+                                    {{ $amsLabel[$amsStatus] ?? '—' }}
+                                </span>
+                                @if($payment->ams_transaction_id)
+                                    <span class="text-xs text-gray-500">Txn #{{ $payment->ams_transaction_id }}</span>
+                                @endif
+                            </span>
+                        </div>
+
+                        @if($payment->ams_last_attempt_at)
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">AMS Last Attempt</span>
+                            <span class="text-gray-900 font-semibold">{{ $payment->ams_last_attempt_at->format('M d, Y h:i A') }} ({{ (int) ($payment->ams_attempt_count ?? 0) }} tries)</span>
+                        </div>
+                        @endif
+
+                        @if($payment->ams_sync_status === 'failed' && $payment->ams_last_error)
+                        <div class="py-2 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium block mb-2">AMS Error</span>
+                            <p class="text-gray-900 bg-red-50 border border-red-100 p-3 rounded-lg text-xs whitespace-pre-wrap">{{ $payment->ams_last_error }}</p>
+                        </div>
+                        @endif
+
+                        @if($payment->ams_sync_status === 'failed')
+                        <div class="pt-2">
+                            <form method="POST" action="{{ route('admin.payments.ams.retry', $payment) }}">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full inline-flex items-center justify-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium"
+                                        onclick="return confirm('Retry AMS sync for receipt #{{ $payment->payment_receipt_number }}?')">
+                                    <i class="fas fa-rotate-right mr-2"></i> Retry AMS sync
+                                </button>
+                            </form>
+                        </div>
+                        @endif
+                        @endif
                         
                         <div class="flex justify-between items-center py-2 border-b border-gray-200">
                             <span class="text-gray-600 font-medium">Created Date</span>

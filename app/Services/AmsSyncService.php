@@ -20,9 +20,25 @@ class AmsSyncService
      */
     public function syncPayment(Payment $payment): bool
     {
+        return $this->syncPaymentWithResult($payment)['ok'] ?? false;
+    }
+
+    /**
+     * Sync an approved payment's income to AMS and return a structured result.
+     *
+     * @return array{ok: bool, http_status: int|null, transaction_id: string|null, error: string|null}
+     */
+    public function syncPaymentWithResult(Payment $payment): array
+    {
         if ($payment->status !== 'approved') {
             Log::error('AMS sync skipped: payment not approved', ['payment_id' => $payment->id]);
-            return false;
+
+            return [
+                'ok' => false,
+                'http_status' => null,
+                'transaction_id' => null,
+                'error' => 'payment_not_approved',
+            ];
         }
 
         $studentName = $payment->student?->full_name ?? 'Unknown';
@@ -41,14 +57,19 @@ class AmsSyncService
     /**
      * Send income payload to AMS API.
      */
-    protected function sendIncome(array $payload): bool
+    protected function sendIncome(array $payload): array
     {
         $url = config('services.ams.api_url');
         $key = config('services.ams.api_key');
 
         if (empty($url) || empty($key)) {
             Log::error('AMS sync skipped: API URL or key not configured');
-            return false;
+            return [
+                'ok' => false,
+                'http_status' => null,
+                'transaction_id' => null,
+                'error' => 'api_not_configured',
+            ];
         }
 
         $body = array_merge([
@@ -68,8 +89,24 @@ class AmsSyncService
             ])->post($url, $body);
 
             if ($response->successful()) {
-                Log::error('AMS income synced OK', ['reference' => $body['reference'] ?? null, 'payment_id' => $body['meta']['sms_payment_id'] ?? null]);
-                return true;
+                $json = $response->json() ?? [];
+                $transactionId = null;
+                if (is_array($json)) {
+                    $transactionId = $json['transaction_id'] ?? ($json['id'] ?? null);
+                }
+
+                Log::error('AMS income synced OK', [
+                    'reference' => $body['reference'] ?? null,
+                    'payment_id' => $body['meta']['sms_payment_id'] ?? null,
+                    'transaction_id' => $transactionId,
+                ]);
+
+                return [
+                    'ok' => true,
+                    'http_status' => $response->status(),
+                    'transaction_id' => $transactionId ? (string) $transactionId : null,
+                    'error' => null,
+                ];
             }
 
             Log::error('AMS sync failed', [
@@ -77,13 +114,23 @@ class AmsSyncService
                 'body' => $response->body(),
                 'reference' => $body['reference'] ?? null,
             ]);
-            return false;
+            return [
+                'ok' => false,
+                'http_status' => $response->status(),
+                'transaction_id' => null,
+                'error' => $response->body(),
+            ];
         } catch (\Throwable $e) {
             Log::error('AMS sync error', [
                 'error' => $e->getMessage(),
                 'reference' => $body['reference'] ?? null,
             ]);
-            return false;
+            return [
+                'ok' => false,
+                'http_status' => null,
+                'transaction_id' => null,
+                'error' => $e->getMessage(),
+            ];
         }
     }
 }

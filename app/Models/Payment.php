@@ -17,12 +17,20 @@ class Payment extends Model
         'status',
         'remarks',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'ams_sync_status',
+        'ams_last_attempt_at',
+        'ams_attempt_count',
+        'ams_synced_at',
+        'ams_last_error',
+        'ams_transaction_id',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'approved_at' => 'datetime'
+        'approved_at' => 'datetime',
+        'ams_last_attempt_at' => 'datetime',
+        'ams_synced_at' => 'datetime',
     ];
 
     // Relationships
