@@ -89,10 +89,12 @@ class Enrollment extends Model
     /** @return Collection<int, int> */
     public function activeLessonIdsForCourse(Course $course): Collection
     {
+        $lmsHost = $course->lmsHostCourse();
+
         return CourseLesson::query()
             ->where('is_active', true)
-            ->whereHas('module', function ($q) use ($course) {
-                $q->where('course_id', $course->id)->where('is_active', true);
+            ->whereHas('module', function ($q) use ($lmsHost) {
+                $q->where('course_id', $lmsHost->id)->where('is_active', true);
             })
             ->pluck('id');
     }

@@ -96,7 +96,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     @php
                                         $learnCourse = $enrollment->course;
-                                        $hasLms = $learnCourse && $learnCourse->relationLoaded('learningModules') && $learnCourse->learningModules->isNotEmpty();
+                                        $hasLms = $learnCourse && $learnCourse->lmsHostHasActiveLessons();
                                     @endphp
                                     @if($hasLms)
                                         <a href="{{ Route::has('student.learn.resume') ? route('student.learn.resume', $enrollment) : route('student.learn.outline', $enrollment) }}" class="inline-flex items-center text-primary-600 hover:text-primary-800 font-medium" title="Opens your last lesson, or the course outline">

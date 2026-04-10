@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\Enrollment;
 use App\Models\EnrollmentLessonCompletion;
@@ -21,7 +22,7 @@ class StudentCourseLearningController extends Controller
         $student = Auth::user()->student;
         abort_unless($student && (int) $enrollment->student_id === (int) $student->id, 403);
 
-        [$course, $modules] = $this->courseAndModules($enrollment);
+        [$course, $lmsHost, $modules] = $this->courseAndModules($enrollment);
         abort_if($modules->isEmpty(), 404);
 
         $flat = $this->flattenLessons($modules);
@@ -29,7 +30,7 @@ class StudentCourseLearningController extends Controller
         if ($lastId && Schema::hasColumn('enrollments', 'last_accessed_course_lesson_id')) {
             $last = CourseLesson::with('module')->find($lastId);
             if ($last && $last->is_active && $last->module?->is_active
-                && (int) $last->module->course_id === (int) $course->id
+                && (int) $last->module->course_id === (int) $lmsHost->id
                 && $flat->contains(fn ($l) => (int) $l->id === (int) $last->id)) {
                 return redirect()->route('student.learn.lesson', [$enrollment, $last]);
             }
@@ -49,7 +50,7 @@ class StudentCourseLearningController extends Controller
         $student = Auth::user()->student;
         abort_unless($student && (int) $enrollment->student_id === (int) $student->id, 403);
 
-        [$course, $modules] = $this->courseAndModules($enrollment);
+        [$course, $lmsHost, $modules] = $this->courseAndModules($enrollment);
         abort_if($modules->isEmpty(), 404);
 
         $progress = $enrollment->lmsProgressForCourse($course);
@@ -61,7 +62,7 @@ class StudentCourseLearningController extends Controller
             $candidate = CourseLesson::with('module')->find($enrollment->last_accessed_course_lesson_id);
             $flat = $this->flattenLessons($modules);
             if ($candidate && $candidate->is_active && $candidate->module?->is_active
-                && (int) $candidate->module->course_id === (int) $course->id
+                && (int) $candidate->module->course_id === (int) $lmsHost->id
                 && $flat->contains(fn ($l) => (int) $l->id === (int) $candidate->id)) {
                 $resumeLesson = $candidate;
             } else {
@@ -89,8 +90,8 @@ class StudentCourseLearningController extends Controller
         $student = Auth::user()->student;
         abort_unless($student && (int) $enrollment->student_id === (int) $student->id, 403);
 
-        [$course, $modules] = $this->courseAndModules($enrollment);
-        $this->assertLessonBelongsToEnrollmentCourse($lesson, $course);
+        [$course, $lmsHost, $modules] = $this->courseAndModules($enrollment);
+        $this->assertLessonBelongsToLmsHost($lesson, $lmsHost);
 
         if (Schema::hasColumn('enrollments', 'last_accessed_course_lesson_id')) {
             $enrollment->update(['last_accessed_course_lesson_id' => $lesson->id]);
@@ -122,8 +123,8 @@ class StudentCourseLearningController extends Controller
         $student = Auth::user()->student;
         abort_unless($student && (int) $enrollment->student_id === (int) $student->id, 403);
 
-        [$course] = $this->courseAndModules($enrollment);
-        $this->assertLessonBelongsToEnrollmentCourse($lesson, $course);
+        [$course, $lmsHost] = $this->courseAndModules($enrollment);
+        $this->assertLessonBelongsToLmsHost($lesson, $lmsHost);
 
         EnrollmentLessonCompletion::firstOrCreate([
             'enrollment_id' => $enrollment->id,
@@ -147,9 +148,9 @@ class StudentCourseLearningController extends Controller
         $student = Auth::user()->student;
         abort_unless($student && (int) $enrollment->student_id === (int) $student->id, 403);
 
-        [$course, $modules] = $this->courseAndModules($enrollment);
-        $this->assertLessonBelongsToEnrollmentCourse($lesson, $course);
-        $this->assertLessonBelongsToEnrollmentCourse($next, $course);
+        [$course, $lmsHost, $modules] = $this->courseAndModules($enrollment);
+        $this->assertLessonBelongsToLmsHost($lesson, $lmsHost);
+        $this->assertLessonBelongsToLmsHost($next, $lmsHost);
 
         $flat = $this->flattenLessons($modules);
         $idx = $flat->search(fn ($l) => (int) $l->id === (int) $lesson->id);
@@ -170,14 +171,15 @@ class StudentCourseLearningController extends Controller
     }
 
     /**
-     * @return array{0: \App\Models\Course, 1: Collection}
+     * @return array{0: \App\Models\Course, 1: \App\Models\Course, 2: Collection}
      */
     private function courseAndModules(Enrollment $enrollment): array
     {
         $course = $enrollment->course;
         abort_unless($course, 404);
 
-        $modules = $course->learningModules()
+        $lmsHost = $course->lmsHostCourse();
+        $modules = $lmsHost->learningModules()
             ->where('is_active', true)
             ->with(['lessons' => function ($q) {
                 $q->where('is_active', true)->orderBy('sort_order');
@@ -185,7 +187,7 @@ class StudentCourseLearningController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return [$course, $modules];
+        return [$course, $lmsHost, $modules];
     }
 
     private function flattenLessons(Collection $modules): Collection
@@ -200,11 +202,11 @@ class StudentCourseLearningController extends Controller
         return $flat;
     }
 
-    private function assertLessonBelongsToEnrollmentCourse(CourseLesson $lesson, $course): void
+    private function assertLessonBelongsToLmsHost(CourseLesson $lesson, Course $lmsHost): void
     {
         $lesson->loadMissing('module');
         abort_unless($lesson->module, 404);
-        abort_unless((int) $lesson->module->course_id === (int) $course->id, 404);
+        abort_unless((int) $lesson->module->course_id === (int) $lmsHost->id, 404);
         abort_unless($lesson->is_active && $lesson->module->is_active, 404);
     }
 }

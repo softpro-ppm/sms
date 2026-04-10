@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Course extends Model
 {
+    /** @var array<int, self> */
+    private static array $lmsHostCourseCache = [];
+
+    /** @var array<int, bool> */
+    private static array $lmsHostHasActiveLessonsCache = [];
+
     protected $fillable = [
         'training_partner_id',
         'name',
@@ -79,6 +85,87 @@ class Course extends Model
     public function learningModules(): HasMany
     {
         return $this->hasMany(CourseModule::class, 'course_id')->orderBy('sort_order');
+    }
+
+    public static function normalizedCatalogName(string $name): string
+    {
+        return strtolower(trim($name));
+    }
+
+    /**
+     * Whether this catalogue name shares the MS Office / MS Office Advanced LMS bundle.
+     */
+    public function isMsOfficeCatalogPairMember(): bool
+    {
+        $n = static::normalizedCatalogName((string) $this->name);
+
+        return $n === 'ms office' || $n === 'ms office advanced';
+    }
+
+    public function catalogHasActiveLmsLessons(): bool
+    {
+        return $this->learningModules()
+            ->where('is_active', true)
+            ->whereHas('lessons', fn ($q) => $q->where('is_active', true))
+            ->exists();
+    }
+
+    /**
+     * Course row whose modules/lessons students should use for this catalogue entry.
+     * MS Office and MS Office Advanced share one LMS host (whichever has active lessons; prefers Advanced).
+     */
+    public function lmsHostCourse(): self
+    {
+        $id = (int) $this->id;
+        if (! array_key_exists($id, static::$lmsHostCourseCache)) {
+            static::$lmsHostCourseCache[$id] = $this->resolveLmsHostCourseUncached();
+        }
+
+        return static::$lmsHostCourseCache[$id];
+    }
+
+    public function lmsHostHasActiveLessons(): bool
+    {
+        $id = (int) $this->id;
+        if (! array_key_exists($id, static::$lmsHostHasActiveLessonsCache)) {
+            static::$lmsHostHasActiveLessonsCache[$id] = $this->lmsHostCourse()->catalogHasActiveLmsLessons();
+        }
+
+        return static::$lmsHostHasActiveLessonsCache[$id];
+    }
+
+    public static function forgetLmsHostCourseCache(): void
+    {
+        static::$lmsHostCourseCache = [];
+        static::$lmsHostHasActiveLessonsCache = [];
+    }
+
+    private function resolveLmsHostCourseUncached(): self
+    {
+        if ($this->catalogHasActiveLmsLessons()) {
+            return $this;
+        }
+
+        if (! $this->isMsOfficeCatalogPairMember()) {
+            return $this;
+        }
+
+        $host = static::query()
+            ->whereRaw('LOWER(TRIM(name)) IN (?, ?)', ['ms office', 'ms office advanced'])
+            ->when(
+                $this->training_partner_id === null,
+                fn ($q) => $q->whereNull('training_partner_id'),
+                fn ($q) => $q->where('training_partner_id', $this->training_partner_id)
+            )
+            ->whereHas('learningModules', function ($q) {
+                $q->where('is_active', true)
+                    ->whereHas('lessons', fn ($lq) => $lq->where('is_active', true));
+            })
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = ? THEN 0 ELSE 1 END", ['ms office advanced'])
+            ->orderBy('id')
+            ->first();
+
+        return $host ?? $this;
     }
 
     public function assessments(): HasMany
