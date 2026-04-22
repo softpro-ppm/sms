@@ -36,6 +36,16 @@ class CertificatesController extends Controller
         $perPage = (int) $request->get('per_page', 20);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
 
+        if ($request->filled('course_id') && $request->filled('batch_id')) {
+            $batchMatchesCourse = Batch::query()
+                ->whereKey((int) $request->batch_id)
+                ->where('course_id', (int) $request->course_id)
+                ->exists();
+            if (! $batchMatchesCourse) {
+                return redirect()->route('admin.certificates.index', $request->except('batch_id'));
+            }
+        }
+
         $query = $this->scopeCertificates(Certificate::with(['student', 'course', 'batch', 'assessmentResult']));
 
         // Filter by course
@@ -77,19 +87,36 @@ class CertificatesController extends Controller
         $certificates = $query->orderBy('issue_date', 'desc')
             ->paginate($perPage)
             ->appends($request->query());
-        
+
         $filterTpId = $this->getTrainingPartnerId();
+        $certificatesScope = $this->scopeCertificates(Certificate::query());
+
+        $courseIdsWithCertificates = (clone $certificatesScope)
+            ->whereNotNull('course_id')
+            ->distinct()
+            ->pluck('course_id');
+
         $courses = Course::query()
+            ->whereIn('id', $courseIdsWithCertificates)
             ->where('is_active', true)
             ->visibleToTrainingPartner($filterTpId)
             ->orderBy('name')
             ->get();
-        $tpId = $this->getTrainingPartnerId();
+
+        $batchIdsQuery = (clone $certificatesScope)->whereNotNull('batch_id');
+        if ($request->filled('course_id')) {
+            $batchIdsQuery->where('course_id', (int) $request->course_id);
+        }
+        $batchIdsWithCertificates = $batchIdsQuery->distinct()->pluck('batch_id');
+
         $batches = Batch::query()
-            ->visibleToTrainingPartner($tpId)
-            ->where('is_active', true)
+            ->whereIn('id', $batchIdsWithCertificates)
+            ->visibleToTrainingPartner($filterTpId)
             ->orderBy('batch_name')
             ->get();
+
+        $statusFilterIssued = (clone $certificatesScope)->where('is_issued', true)->exists();
+        $statusFilterPending = (clone $certificatesScope)->where('is_issued', false)->exists();
 
         // Get statistics (TP-scoped)
         $baseQuery = $this->scopeCertificates(Certificate::query());
@@ -103,7 +130,14 @@ class CertificatesController extends Controller
                 ->count(),
         ];
 
-        return view('admin.certificates.index', compact('certificates', 'courses', 'batches', 'stats'));
+        return view('admin.certificates.index', compact(
+            'certificates',
+            'courses',
+            'batches',
+            'stats',
+            'statusFilterIssued',
+            'statusFilterPending'
+        ));
     }
 
     public function show(Certificate $certificate)

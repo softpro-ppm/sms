@@ -105,6 +105,7 @@
             <h3 class="text-lg font-medium text-gray-900">Filters</h3>
         </div>
         <div class="p-6">
+            <p class="text-sm text-gray-500 mb-4">Course and batch lists only include values that have at least one certificate in your scope.</p>
             <form method="GET" action="{{ route('admin.certificates.index') }}" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
@@ -133,8 +134,12 @@
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select name="status" id="status" data-live-filter class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             <option value="">All Status</option>
-                            <option value="issued" {{ request('status') == 'issued' ? 'selected' : '' }}>Issued</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            @if($statusFilterIssued)
+                                <option value="issued" {{ request('status') == 'issued' ? 'selected' : '' }}>Issued</option>
+                            @endif
+                            @if($statusFilterPending)
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            @endif
                         </select>
                     </div>
                     <div>
@@ -316,7 +321,6 @@
 
 @section('scripts')
 <script>
-    // Auto-submit form when filters change
     document.getElementById('course_id').addEventListener('change', function() {
         this.form.submit();
     });
@@ -331,28 +335,6 @@
 
     document.getElementById('per_page').addEventListener('change', function() {
         this.form.submit();
-    });
-
-    // Load batches when course changes
-    document.getElementById('course_id').addEventListener('change', function() {
-        const courseId = this.value;
-        const batchSelect = document.getElementById('batch_id');
-        
-        if (courseId) {
-            fetch(`/admin/api/batches/by-course?course_id=${courseId}`)
-                .then(response => response.json())
-                .then(batches => {
-                    batchSelect.innerHTML = '<option value="">All Batches</option>';
-                    batches.forEach(batch => {
-                        const option = document.createElement('option');
-                        option.value = batch.id;
-                        option.textContent = batch.batch_name;
-                        batchSelect.appendChild(option);
-                    });
-                });
-        } else {
-            batchSelect.innerHTML = '<option value="">All Batches</option>';
-        }
     });
 </script>
 @endsection
