@@ -232,8 +232,7 @@
                                 </a>
                                 
                                 @if($student->status === 'pending')
-                                    @php $hasPhoto = $student->documents->where('document_type', 'photo')->isNotEmpty(); @endphp
-                                    @if($hasPhoto)
+                                    @if($student->has_photo)
                                         <form method="POST" action="{{ route('admin.students.approve', $student) }}" class="inline">
                                             @csrf
                                             @method('PATCH')

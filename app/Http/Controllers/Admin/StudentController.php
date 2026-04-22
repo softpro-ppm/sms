@@ -41,8 +41,12 @@ class StudentController extends Controller
         $search = trim((string) $request->get('search', ''));
 
         $studentsQuery = $this->scopeStudents(
-            Student::with(['user', 'enrollments.batch.course', 'documents'])
+            Student::with([
+                'user',
+                'enrollments' => fn ($q) => $q->where('status', 'active')->with('batch.course'),
+            ])
                 ->withCount(['enrollments' => fn ($q) => $q->where('status', 'active')])
+                ->withExists(['documents as has_photo' => fn ($q) => $q->where('document_type', 'photo')])
         );
 
         if ($search !== '') {
@@ -59,10 +63,18 @@ class StudentController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
+        $statsRow = $this->scopeStudents(Student::query()->toBase())
+            ->selectRaw(
+                'COUNT(*) as total_students, '
+                . "SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_students, "
+                . "SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_students"
+            )
+            ->first();
+
         $stats = [
-            'total_students' => $this->scopeStudents(Student::query())->count(),
-            'approved_students' => $this->scopeStudents(Student::where('status', 'approved'))->count(),
-            'pending_students' => $this->scopeStudents(Student::where('status', 'pending'))->count(),
+            'total_students' => (int) ($statsRow->total_students ?? 0),
+            'approved_students' => (int) ($statsRow->approved_students ?? 0),
+            'pending_students' => (int) ($statsRow->pending_students ?? 0),
             'total_enrollments' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->count(),
         ];
 
