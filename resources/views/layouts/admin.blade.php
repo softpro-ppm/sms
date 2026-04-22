@@ -16,7 +16,6 @@
     
     <!-- Global Table Styles -->
     <link href="{{ asset('css/global-table.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script>
         tailwind.config = {
             theme: {
@@ -105,8 +104,6 @@
     
     <!-- Global Table JavaScript -->
     <script src="{{ asset('js/global-table.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
-    
     <style>
         [x-cloak] { display: none !important; }
         @keyframes fadeIn {

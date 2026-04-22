@@ -200,23 +200,17 @@
         <p class="mt-1 text-xs text-gray-500">This will be used as your login password</p>
     </div>
 
-    <!-- Date of Birth (dd/mm/yyyy format for India - consistent across all devices) -->
+    <!-- Date of Birth (native browser date picker; submits Y-m-d) -->
     <div>
         <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-2">
             Date of Birth
         </label>
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                <i class="fas fa-calendar text-gray-400"></i>
-            </div>
-            <input id="date_of_birth" 
-                   name="date_of_birth" 
-                   type="text" 
-                   autocomplete="off"
-                   value="{{ old('date_of_birth') }}"
-                   placeholder="dd/mm/yyyy"
-                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('date_of_birth') border-red-500 @enderror">
-        </div>
+        <input id="date_of_birth"
+               name="date_of_birth"
+               type="date"
+               max="{{ date('Y-m-d') }}"
+               value="{{ old('date_of_birth') }}"
+               class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('date_of_birth') border-red-500 @enderror">
         @error('date_of_birth')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
         @enderror
@@ -333,19 +327,6 @@
 
 @section('scripts')
 <script>
-    // Date of Birth - dd/mm/yyyy format (India), consistent across all devices
-    document.addEventListener('DOMContentLoaded', function() {
-        flatpickr('#date_of_birth', {
-            dateFormat: 'Y-m-d',
-            altInput: true,
-            altFormat: 'd/m/Y',
-            altInputClass: 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white',
-            maxDate: 'today',
-            disableMobile: true,
-            allowInput: false
-        });
-    });
-
     // Capitalize first letter of each word - works for Full Name, Address, City, State
     function capitalizeWords(input) {
         if (!input) return;
