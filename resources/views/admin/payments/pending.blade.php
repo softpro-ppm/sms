@@ -214,11 +214,35 @@
                     </select>
                 </div>
             </form>
-            @if($pendingData->hasPages())
-            <div>
-                {{ $pendingData->links() }}
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.payments.pending.export-csv', request()->query()) }}"
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-download mr-2"></i>
+                    Download CSV
+                </a>
+                @if($pendingData->hasPages())
+                @php
+                    $lastPage = $pendingData->lastPage();
+                    $currentPage = $pendingData->currentPage();
+                    $startPage = max(1, min($currentPage - 1, $lastPage - 2));
+                    $endPage = min($lastPage, $startPage + 2);
+                @endphp
+                <div class="flex items-center gap-1">
+                    @for($page = $startPage; $page <= $endPage; $page++)
+                        <a href="{{ $pendingData->url($page) }}"
+                           class="px-3 py-1.5 text-sm rounded-md border {{ $pendingData->currentPage() == $page ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}">
+                            {{ $page }}
+                        </a>
+                    @endfor
+                    @if($pendingData->hasMorePages())
+                        <a href="{{ $pendingData->nextPageUrl() }}"
+                           class="px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                            Next
+                        </a>
+                    @endif
+                </div>
+                @endif
             </div>
-            @endif
         </div>
     </div>
 </div>

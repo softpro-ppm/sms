@@ -91,48 +91,51 @@
                     </select>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status" data-live-filter
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        <option value="">All</option>
-                        @if($activeTab === 'payments')
-                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        @elseif($activeTab === 'enrollments')
-                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="dropped" {{ request('status') === 'dropped' ? 'selected' : '' }}>Dropped</option>
-                        @elseif($activeTab === 'students')
-                            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        @else
-                            <option value="passed" {{ request('status') === 'passed' ? 'selected' : '' }}>Passed</option>
-                            <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Failed</option>
-                        @endif
-                    </select>
-                </div>
-                @if($activeTab === 'assessments')
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Assessment</label>
-                        <select name="assessment_id" data-live-filter
+            @php
+                $reportActionBtn = 'inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium shadow-sm transition-colors sm:px-4';
+            @endphp
+            <div class="space-y-4 border-t border-gray-100 pt-4">
+                <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+                    <div class="w-full sm:w-auto sm:min-w-[10rem]">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" data-live-filter
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             <option value="">All</option>
-                            @foreach($assessments as $assessment)
-                                <option value="{{ $assessment->id }}" {{ request('assessment_id') == $assessment->id ? 'selected' : '' }}>
-                                    {{ $assessment->title }}
-                                </option>
-                            @endforeach
+                            @if($activeTab === 'payments')
+                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            @elseif($activeTab === 'enrollments')
+                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="dropped" {{ request('status') === 'dropped' ? 'selected' : '' }}>Dropped</option>
+                            @elseif($activeTab === 'students')
+                                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            @else
+                                <option value="passed" {{ request('status') === 'passed' ? 'selected' : '' }}>Passed</option>
+                                <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Failed</option>
+                            @endif
                         </select>
                     </div>
-                @endif
-                <div class="flex items-end">
+                    @if($activeTab === 'assessments')
+                        <div class="w-full sm:w-auto sm:min-w-[12rem] sm:flex-1 sm:max-w-md">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assessment</label>
+                            <select name="assessment_id" data-live-filter
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All</option>
+                                @foreach($assessments as $assessment)
+                                    <option value="{{ $assessment->id }}" {{ request('assessment_id') == $assessment->id ? 'selected' : '' }}>
+                                        {{ $assessment->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <div class="flex items-center gap-2">
-                        <label for="per_page" class="text-sm text-gray-600">Rows</label>
+                        <label for="per_page" class="text-sm font-medium text-gray-700 whitespace-nowrap">Rows</label>
                         <select id="per_page" name="per_page" data-live-rows
-                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                class="h-10 min-w-[4.5rem] px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             @foreach([10,20,50,100] as $size)
                                 <option value="{{ $size }}" {{ (int) request('per_page', 10) === $size ? 'selected' : '' }}>
                                     {{ $size }}
@@ -141,32 +144,38 @@
                         </select>
                     </div>
                 </div>
-                <div class="flex items-end flex-wrap gap-2">
-                    <a href="{{ route('admin.reports.index', ['tab' => $activeTab]) }}"
-                       class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                        Clear
-                    </a>
-                    <a href="{{ route('admin.reports.export', array_merge(['report' => $activeTab, 'format' => 'csv'], request()->query())) }}"
-                       class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Export CSV
-                    </a>
-                    @if($activeTab === 'payments')
-                        <a href="{{ route('admin.reports.export.pending_balances_csv', request()->query()) }}"
-                           class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                           title="Active enrollments with fee balance (same as Pending Payments). Uses search, course, batch, enrollment date range.">
-                            <i class="fas fa-file-csv mr-1"></i>Pending balances CSV
+                <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500 sm:mr-1 sm:pt-0.5">Export</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('admin.reports.index', ['tab' => $activeTab]) }}"
+                           class="{{ $reportActionBtn }} bg-gray-600 text-white hover:bg-gray-700">
+                            Clear
                         </a>
-                    @endif
-                    @if($pdfAvailable)
-                        <a href="{{ route('admin.reports.export', array_merge(['report' => $activeTab, 'format' => 'pdf'], request()->query())) }}"
-                           class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                            Export PDF
+                        <a href="{{ route('admin.reports.export', array_merge(['report' => $activeTab, 'format' => 'csv'], request()->query())) }}"
+                           class="{{ $reportActionBtn }} bg-green-600 text-white hover:bg-green-700">
+                            <i class="fas fa-file-csv text-xs opacity-90" aria-hidden="true"></i>
+                            <span class="whitespace-nowrap">Export CSV</span>
                         </a>
-                    @else
-                        <span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm">
-                            PDF not configured
-                        </span>
-                    @endif
+                        @if($activeTab === 'payments')
+                            <a href="{{ route('admin.reports.export.pending_balances_csv', request()->query()) }}"
+                               class="{{ $reportActionBtn }} bg-orange-600 text-white hover:bg-orange-700"
+                               title="Active enrollments with fee balance (same as Pending Payments). Uses search, course, batch, enrollment date range.">
+                                <i class="fas fa-file-invoice-dollar text-xs opacity-90" aria-hidden="true"></i>
+                                <span class="whitespace-nowrap">Pending balances</span>
+                            </a>
+                        @endif
+                        @if($pdfAvailable)
+                            <a href="{{ route('admin.reports.export', array_merge(['report' => $activeTab, 'format' => 'pdf'], request()->query())) }}"
+                               class="{{ $reportActionBtn }} bg-purple-600 text-white hover:bg-purple-700">
+                                <i class="fas fa-file-pdf text-xs opacity-90" aria-hidden="true"></i>
+                                <span class="whitespace-nowrap">Export PDF</span>
+                            </a>
+                        @else
+                            <span class="{{ $reportActionBtn }} cursor-default bg-purple-50 text-purple-800 ring-1 ring-purple-200">
+                                PDF unavailable
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </form>
