@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Enrollment;
 use App\Support\AdminLayoutScopes;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (! app()->runningInConsole() && request()->is('admin/*')) {
+            Paginator::defaultView('vendor.pagination.admin-compact');
+            Paginator::defaultSimpleView('vendor.pagination.admin-compact');
+        }
+
         View::composer('layouts.admin', function ($view) {
             if (! auth()->check()) {
                 return;
