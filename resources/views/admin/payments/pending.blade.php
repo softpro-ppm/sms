@@ -17,11 +17,6 @@
                 Back to All Payments
             </a>
         </div>
-        @if($pendingData->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $pendingData->links() }}
-        </div>
-        @endif
     </div>
 
     <!-- Summary Cards -->
