@@ -150,6 +150,13 @@
                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         Export CSV
                     </a>
+                    @if($activeTab === 'payments')
+                        <a href="{{ route('admin.reports.export.pending_balances_csv', request()->query()) }}"
+                           class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                           title="Active enrollments with fee balance (same as Pending Payments). Uses search, course, batch, enrollment date range.">
+                            <i class="fas fa-file-csv mr-1"></i>Pending balances CSV
+                        </a>
+                    @endif
                     @if($pdfAvailable)
                         <a href="{{ route('admin.reports.export', array_merge(['report' => $activeTab, 'format' => 'pdf'], request()->query())) }}"
                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">

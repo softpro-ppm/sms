@@ -37,6 +37,8 @@ echo '--- git pull ---'
 git pull
 echo '--- composer install ---'
 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+echo '--- composer dump-autoload ---'
+composer dump-autoload --optimize --no-dev --no-interaction
 echo '--- artisan package:discover ---'
 php artisan package:discover --ansi
 echo '--- artisan migrate ---'

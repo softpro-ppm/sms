@@ -103,6 +103,63 @@ class ReportsController extends Controller
         return view('admin.reports.index', $viewData);
     }
 
+    /**
+     * CSV of active enrollments with fee balance (same basis as Payments → Pending Payments).
+     * Honors Reports filters: search, date range (enrollment date), course, batch. Ignores payment row status.
+     */
+    public function exportPendingBalancesCsv(Request $request)
+    {
+        $filename = 'report_pending_balances_' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($request) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Sl. No',
+                'Name',
+                'Phone',
+                'Email',
+                'Course',
+                'Batch',
+                'Enrollment No',
+                'Total',
+                'Paid',
+                'Balance',
+                'Progress %',
+            ]);
+
+            $sl = 0;
+            $this->pendingBalancesQuery($request)->chunk(500, function ($rows) use ($handle, &$sl) {
+                foreach ($rows as $enrollment) {
+                    $sl++;
+                    $total = (float) ($enrollment->total_fee ?? 0);
+                    $paid = (float) ($enrollment->paid_amount ?? 0);
+                    $balance = (float) ($enrollment->outstanding_amount ?? 0);
+                    $progress = $total > 0 ? round(($paid / $total) * 100, 1) : 0.0;
+
+                    fputcsv($handle, [
+                        $sl,
+                        $enrollment->student?->full_name,
+                        $enrollment->student?->whatsapp_number,
+                        $enrollment->student?->email,
+                        $enrollment->batch?->course?->name,
+                        $enrollment->batch?->batch_name,
+                        $enrollment->enrollment_number,
+                        $total,
+                        $paid,
+                        $balance,
+                        $progress,
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        };
+
+        return Response::streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
     public function export(Request $request, string $report, string $format)
     {
         $format = strtolower($format);
@@ -228,6 +285,48 @@ class ReportsController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.reports.pdf', $data);
         return $pdf->download("report_{$report}_" . now()->format('Ymd_His') . '.pdf');
+    }
+
+    private function pendingBalancesQuery(Request $request): Builder
+    {
+        $query = $this->scopeEnrollments(
+            Enrollment::query()
+                ->with(['student', 'batch.course'])
+                ->where('status', 'active')
+                ->where('outstanding_amount', '>', 0)
+        );
+
+        $search = trim((string) $request->get('search', ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('enrollment_number', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($studentQuery) use ($search) {
+                        $studentQuery->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('whatsapp_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('batch', function ($batchQuery) use ($search) {
+                        $batchQuery->where('batch_name', 'like', "%{$search}%")
+                            ->orWhereHas('course', function ($courseQuery) use ($search) {
+                                $courseQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
+        if ($request->filled('course_id')) {
+            $query->whereHas('batch', function ($batchQuery) use ($request) {
+                $batchQuery->where('course_id', $request->course_id);
+            });
+        }
+
+        if ($request->filled('batch_id')) {
+            $query->where('batch_id', $request->batch_id);
+        }
+
+        $this->applyDateRange($query, 'enrollment_date', $request);
+
+        return $query->orderByDesc('outstanding_amount');
     }
 
     private function paymentQuery(Request $request): Builder

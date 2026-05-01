@@ -243,6 +243,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     // Reports (Admin only)
     Route::middleware('role:admin')->group(function () {
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export/pending-balances-csv', [ReportsController::class, 'exportPendingBalancesCsv'])
+            ->name('reports.export.pending_balances_csv');
         Route::get('/reports/export/{report}/{format}', [ReportsController::class, 'export'])->name('reports.export');
     });
 
