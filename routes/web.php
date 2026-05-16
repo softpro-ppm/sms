@@ -51,9 +51,10 @@ Route::get('/data-deletion', function () {
     return view('public.data-deletion');
 })->name('data-deletion');
 
-// WhatsApp Cloud API webhooks (no auth; verify token on GET)
+// WhatsApp Cloud API webhooks (no auth; verify token on GET; POST HMAC when WHATSAPP_APP_SECRET is set)
 Route::get('/webhook/whatsapp', [WhatsAppWebhookController::class, 'verify']);
-Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle']);
+Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle'])
+    ->middleware('whatsapp.signature');
 
 // Authentication routes - login same as home (split login view)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -78,7 +79,12 @@ Route::get('/register/partner/success', [PartnerRegistrationController::class, '
 
 // Public Student Verification - Search page at /verify
 Route::get('/verify', [StudentVerificationController::class, 'index'])->name('verify.index');
-Route::post('/verify', [StudentVerificationController::class, 'search'])->name('verify.search');
+
+Route::middleware('throttle:verify-search')->group(function () {
+    Route::post('/verify', [StudentVerificationController::class, 'search'])->name('verify.search');
+    Route::post('/public/student-verification/search', [StudentVerificationController::class, 'search'])->name('public.student-verification.search');
+});
+
 Route::get('/verify/result/{student}', [StudentVerificationController::class, 'showResult'])->name('verify.result');
 
 // Public Verify by Enrollment Number (QR code target)
@@ -87,7 +93,6 @@ Route::get('/verify/{enrollment_no}/photo', [StudentVerificationController::clas
 
 // Backward compatibility - old URLs
 Route::redirect('/public/student-verification', '/verify', 301);
-Route::post('/public/student-verification/search', [StudentVerificationController::class, 'search'])->name('public.student-verification.search');
 
 // Admin routes (TP staff + Super Admin for operational pages; catalogue routes exclude Super Admin — use TP admin).
 Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force'])->prefix('admin')->name('admin.')->group(function () {

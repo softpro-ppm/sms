@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Models\Enrollment;
 use App\Support\AdminLayoutScopes;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('verify-search', function (Request $request) {
+            $perMinute = (int) env('VERIFY_SEARCH_RATE_LIMIT_PER_MINUTE', 20);
+
+            return Limit::perMinute(max(1, $perMinute))->by($request->ip());
+        });
+
         if (! app()->runningInConsole() && request()->is('admin/*')) {
             Paginator::defaultView('vendor.pagination.admin-compact');
             Paginator::defaultSimpleView('vendor.pagination.admin-compact');
@@ -56,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
                         ];
                     });
 
-                $notificationCount = (clone $paymentBase)->count();
+                $notificationCount = AdminLayoutScopes::pendingPaymentsCountCached($user);
             } elseif ($user->is_reception) {
                 $studentBase = AdminLayoutScopes::pendingStudentsQuery($user);
                 $notifications = (clone $studentBase)
@@ -79,7 +88,7 @@ class AppServiceProvider extends ServiceProvider
                         ];
                     });
 
-                $notificationCount = (clone $studentBase)->count();
+                $notificationCount = AdminLayoutScopes::pendingStudentsCountCached($user);
             }
 
             $view->with([

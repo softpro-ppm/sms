@@ -10,12 +10,12 @@ use App\Models\Certificate;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Enrollment;
-use App\Models\User;
-use App\Services\AmsSyncService;
+use App\Jobs\SyncPaymentToAmsJob;
 use App\Services\LegacyAutoCertificationService;
 use App\Services\PaymentAllocationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -298,120 +298,26 @@ class PaymentController extends Controller
     public function approve(Payment $payment)
     {
         $this->ensurePaymentBelongsToPartner($payment);
-        if (!auth()->user()->is_admin) {
+        if (! auth()->user()->is_admin) {
             return redirect()->back()
                 ->with('error', 'Only admin can approve payments.');
         }
 
-        $payment->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now()
-        ]);
+        $allocationService = new PaymentAllocationService;
+        $approved = $this->approveSinglePendingPayment($payment, $allocationService);
 
-        // Allocate payment to fee types and update enrollment
-        if ($payment->enrollment_id) {
-            $allocationService = new PaymentAllocationService();
-            
-            // Create payment allocations
-            $allocationService->allocatePayment($payment);
-            
-            // Update enrollment totals
-            $enrollment = $payment->enrollment;
-            $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalFee = (float) $enrollment->total_fee;
-            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
-
-            $enrollment->update([
-                'paid_amount' => $totalPaid,
-                'outstanding_amount' => $totalOutstanding,
-                'is_eligible_for_assessment' => $totalOutstanding <= 0,
-            ]);
-
-            // Update payment_type: if fully paid, mark all payments as 'full'
-            if ($totalOutstanding <= 0) {
-                Payment::where('enrollment_id', $enrollment->id)
-                    ->where('status', 'approved')
-                    ->update(['payment_type' => 'full']);
-            }
+        if ($approved === null) {
+            return redirect()->back()
+                ->with('info', 'This payment was already approved.');
         }
 
-        // Send payment approved email and WhatsApp (decoupled - WhatsApp sent even if email fails)
-        $payment->load(['student', 'enrollment.batch.course']);
-        try {
-            Mail::to($payment->student->email)->send(new PaymentApprovedMail($payment));
-        } catch (\Exception $e) {
-            \Log::error('Payment email failed: ' . $e->getMessage());
-        }
-        if ($payment->enrollment_id) {
-            $enrollment = $payment->enrollment;
-            $enrollment->refresh();
-            if ($enrollment->outstanding_amount <= 0) {
-                $enrollment->loadMissing(['batch', 'student', 'legacyLinkCourse']);
-                if ($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch) {
-                    app(LegacyAutoCertificationService::class)->issueIfEligible($enrollment->fresh(['batch', 'student', 'legacyLinkCourse']));
-                }
-                $enrollment->refresh();
-                $hasCert = Certificate::query()
-                    ->where('enrollment_id', $enrollment->id)
-                    ->where('is_issued', true)
-                    ->exists();
-                $isLegacyBatch = $enrollment->is_legacy && $enrollment->batch?->is_legacy_batch;
-                if (! $isLegacyBatch || ! $hasCert) {
-                    try {
-                        $enrollment->load(['batch.course', 'student']);
-                        Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
-                    } catch (\Exception $e) {
-                        \Log::error('Fully paid email failed: ' . $e->getMessage());
-                    }
-                    try {
-                        app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
-                    } catch (\Exception $e) {
-                        \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
-                    }
-                }
-            }
-        }
-        try {
-            app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
-        } catch (\Exception $e) {
-            \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
-        }
+        $approved->load(['student', 'enrollment.batch.course']);
+        $this->sendPaymentApprovedNotifications($approved);
 
-        // Sync income to AMS (Option A: sync only on approve)
-        try {
-            $payment->forceFill([
-                'ams_sync_status' => 'pending',
-                'ams_last_attempt_at' => now(),
-                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-            ])->save();
-
-            $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
-            if (! empty($result['ok'])) {
-                $payment->forceFill([
-                    'ams_sync_status' => 'synced',
-                    'ams_synced_at' => now(),
-                    'ams_last_error' => null,
-                    'ams_transaction_id' => $result['transaction_id'] ?? null,
-                ])->save();
-            } else {
-                $payment->forceFill([
-                    'ams_sync_status' => 'failed',
-                    'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
-                ])->save();
-            }
-        } catch (\Throwable $e) {
-            $payment->forceFill([
-                'ams_sync_status' => 'failed',
-                'ams_last_attempt_at' => now(),
-                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-                'ams_last_error' => $e->getMessage(),
-            ])->save();
-            \Log::error('AMS sync failed: ' . $e->getMessage());
-        }
+        SyncPaymentToAmsJob::dispatch($approved->id);
 
         return redirect()->route('admin.payments.index')
-            ->with('success', 'Payment approved successfully! Receipt #' . $payment->payment_receipt_number);
+            ->with('success', 'Payment approved successfully! Receipt #' . $approved->payment_receipt_number);
     }
 
     public function reject(Payment $payment)
@@ -452,85 +358,39 @@ class PaymentController extends Controller
         )->get();
 
         $approvedCount = 0;
-        $allocationService = new PaymentAllocationService();
-        
+        $allocationService = new PaymentAllocationService;
+
         $fullyPaidEnrollmentIds = [];
 
         foreach ($payments as $payment) {
-            $payment->update([
-                'status' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now()
-            ]);
+            $approvedPayment = $this->approveSinglePendingPayment($payment, $allocationService);
 
-            // Allocate payment to fee types and update enrollment
-            if ($payment->enrollment_id) {
-                // Create payment allocations
-                $allocationService->allocatePayment($payment);
-                
-                // Update enrollment totals
-                $enrollment = $payment->enrollment;
-                $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-                $totalFee = (float) $enrollment->total_fee;
-                $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
-
-                $enrollment->update([
-                    'paid_amount' => $totalPaid,
-                    'outstanding_amount' => $totalOutstanding,
-                    'is_eligible_for_assessment' => $totalOutstanding <= 0,
-                ]);
-
-                if ($totalOutstanding <= 0) {
-                    $fullyPaidEnrollmentIds[$enrollment->id] = $enrollment;
-                }
+            if ($approvedPayment === null) {
+                continue;
             }
 
-            // Send payment approved email and WhatsApp (decoupled)
-            $payment->load(['student', 'enrollment.batch.course']);
+            $approvedCount++;
+
+            $approvedPayment->load(['student', 'enrollment.batch.course']);
             try {
-                Mail::to($payment->student->email)->send(new PaymentApprovedMail($payment));
+                Mail::to($approvedPayment->student->email)->send(new PaymentApprovedMail($approvedPayment));
             } catch (\Exception $e) {
                 \Log::error('Bulk payment email failed: ' . $e->getMessage());
             }
             try {
-                app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
+                app(WhatsAppNotificationService::class)->sendPaymentApproved($approvedPayment);
             } catch (\Exception $e) {
                 \Log::error('Bulk payment WhatsApp failed: ' . $e->getMessage());
             }
 
-            // Sync income to AMS (Option A: sync only on approve)
-            try {
-                $payment->forceFill([
-                    'ams_sync_status' => 'pending',
-                    'ams_last_attempt_at' => now(),
-                    'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-                ])->save();
+            SyncPaymentToAmsJob::dispatch($approvedPayment->id);
 
-                $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
-                if (! empty($result['ok'])) {
-                    $payment->forceFill([
-                        'ams_sync_status' => 'synced',
-                        'ams_synced_at' => now(),
-                        'ams_last_error' => null,
-                        'ams_transaction_id' => $result['transaction_id'] ?? null,
-                    ])->save();
-                } else {
-                    $payment->forceFill([
-                        'ams_sync_status' => 'failed',
-                        'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
-                    ])->save();
+            if ($approvedPayment->enrollment_id) {
+                $enrollment = Enrollment::find($approvedPayment->enrollment_id);
+                if ($enrollment && (float) ($enrollment->outstanding_amount ?? 0) <= 0) {
+                    $fullyPaidEnrollmentIds[$enrollment->id] = $enrollment;
                 }
-            } catch (\Throwable $e) {
-                $payment->forceFill([
-                    'ams_sync_status' => 'failed',
-                    'ams_last_attempt_at' => now(),
-                    'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-                    'ams_last_error' => $e->getMessage(),
-                ])->save();
-                \Log::error('AMS sync failed: ' . $e->getMessage());
             }
-
-            $approvedCount++;
         }
 
         // Send fully paid emails (one per enrollment that became fully paid)
@@ -587,38 +447,16 @@ class PaymentController extends Controller
         }
 
         try {
-            $payment->forceFill([
-                'ams_sync_status' => 'pending',
-                'ams_last_attempt_at' => now(),
-                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-            ])->save();
+            SyncPaymentToAmsJob::dispatchSync($payment->id, true);
 
-            $result = app(AmsSyncService::class)->syncPaymentWithResult($payment);
-            if (! empty($result['ok'])) {
-                $payment->forceFill([
-                    'ams_sync_status' => 'synced',
-                    'ams_synced_at' => now(),
-                    'ams_last_error' => null,
-                    'ams_transaction_id' => $result['transaction_id'] ?? null,
-                ])->save();
+            $payment->refresh();
 
+            if ($payment->ams_sync_status === 'synced') {
                 return redirect()->back()->with('success', 'AMS sync successful for receipt #'.$payment->payment_receipt_number.'.');
             }
 
-            $payment->forceFill([
-                'ams_sync_status' => 'failed',
-                'ams_last_error' => (string) ($result['error'] ?? 'unknown_error'),
-            ])->save();
-
-            return redirect()->back()->with('error', 'AMS sync failed: '.$payment->ams_last_error);
+            return redirect()->back()->with('error', 'AMS sync failed: '.($payment->ams_last_error ?? 'unknown'));
         } catch (\Throwable $e) {
-            $payment->forceFill([
-                'ams_sync_status' => 'failed',
-                'ams_last_attempt_at' => now(),
-                'ams_attempt_count' => (int) ($payment->ams_attempt_count ?? 0) + 1,
-                'ams_last_error' => $e->getMessage(),
-            ])->save();
-
             return redirect()->back()->with('error', 'AMS sync error: '.$e->getMessage());
         }
     }
@@ -695,6 +533,109 @@ class PaymentController extends Controller
             ->get();
         
         return response()->json($enrollments);
+    }
+
+    /**
+     * Approve a single pending payment with row lock (idempotent: already-approved returns null).
+     */
+    private function approveSinglePendingPayment(Payment $payment, PaymentAllocationService $allocationService): ?Payment
+    {
+        $approvedModel = null;
+
+        DB::transaction(function () use ($payment, $allocationService, &$approvedModel): void {
+            $locked = Payment::query()
+                ->whereKey($payment->id)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $locked) {
+                return;
+            }
+
+            $locked->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            if ($locked->enrollment_id) {
+                Enrollment::query()->whereKey($locked->enrollment_id)->lockForUpdate()->first();
+
+                $allocationService->allocatePayment($locked->fresh());
+
+                $enrollment = Enrollment::query()->find($locked->enrollment_id);
+                if ($enrollment) {
+                    $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
+                    $totalFee = (float) $enrollment->total_fee;
+                    $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+
+                    $enrollment->update([
+                        'paid_amount' => $totalPaid,
+                        'outstanding_amount' => $totalOutstanding,
+                        'is_eligible_for_assessment' => $totalOutstanding <= 0,
+                    ]);
+
+                    if ($totalOutstanding <= 0) {
+                        Payment::where('enrollment_id', $enrollment->id)
+                            ->where('status', 'approved')
+                            ->update(['payment_type' => 'full']);
+                    }
+                }
+            }
+
+            $approvedModel = $locked->fresh(['student', 'enrollment.batch.course']);
+        });
+
+        return $approvedModel;
+    }
+
+    /**
+     * Payment-approved messaging plus legacy fully-paid flows when balance clears.
+     */
+    private function sendPaymentApprovedNotifications(Payment $payment): void
+    {
+        try {
+            Mail::to($payment->student->email)->send(new PaymentApprovedMail($payment));
+        } catch (\Exception $e) {
+            \Log::error('Payment email failed: ' . $e->getMessage());
+        }
+
+        if ($payment->enrollment_id) {
+            $enrollment = $payment->enrollment;
+            $enrollment->refresh();
+            if ((float) ($enrollment->outstanding_amount ?? 0) <= 0) {
+                $enrollment->loadMissing(['batch', 'student', 'legacyLinkCourse']);
+                if ($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch) {
+                    app(LegacyAutoCertificationService::class)->issueIfEligible($enrollment->fresh(['batch', 'student', 'legacyLinkCourse']));
+                }
+                $enrollment->refresh();
+                $hasCert = Certificate::query()
+                    ->where('enrollment_id', $enrollment->id)
+                    ->where('is_issued', true)
+                    ->exists();
+                $isLegacyBatch = $enrollment->is_legacy && $enrollment->batch?->is_legacy_batch;
+                if (! $isLegacyBatch || ! $hasCert) {
+                    try {
+                        $enrollment->load(['batch.course', 'student']);
+                        Mail::to($payment->student->email)->send(new FullyPaidMail($enrollment));
+                    } catch (\Exception $e) {
+                        \Log::error('Fully paid email failed: ' . $e->getMessage());
+                    }
+                    try {
+                        app(WhatsAppNotificationService::class)->sendFullyPaid($enrollment);
+                    } catch (\Exception $e) {
+                        \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        try {
+            app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
+        } catch (\Exception $e) {
+            \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
+        }
     }
 
     /**

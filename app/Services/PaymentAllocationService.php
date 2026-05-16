@@ -18,6 +18,12 @@ class PaymentAllocationService
             return [];
         }
 
+        // Idempotent approval: allocations are created once per payment (unique payment_id + fee_type).
+        $existing = PaymentAllocation::where('payment_id', $payment->id)->orderBy('id')->get();
+        if ($existing->isNotEmpty()) {
+            return $existing->all();
+        }
+
         $enrollment = $payment->enrollment;
         $paymentAmount = $payment->amount;
         $allocations = [];

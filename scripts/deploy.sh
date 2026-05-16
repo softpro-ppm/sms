@@ -45,6 +45,12 @@ echo '--- artisan migrate ---'
 php artisan migrate --force
 echo '--- artisan optimize:clear ---'
 php artisan optimize:clear
+echo '--- artisan config:cache ---'
+php artisan config:cache
+echo '--- artisan route:cache ---'
+php artisan route:cache
+echo '--- artisan view:cache ---'
+php artisan view:cache
 echo '--- storage link (ignore if exists) ---'
 php artisan storage:link 2>/dev/null || true
 echo '--- remote deploy OK ---'

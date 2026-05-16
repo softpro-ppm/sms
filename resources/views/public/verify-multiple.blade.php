@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('images/logo/Logo_png.png') }}" type="image/png">
-    <title>Multiple Matches - Student Verification</title>
+    <title>Multiple Matches — Student Verification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -12,7 +12,6 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
     <div class="bg-softpro text-white py-6">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-center gap-4 mb-4">
@@ -38,7 +37,7 @@
                 <i class="fas fa-users mr-2"></i>
                 Multiple records found
             </h3>
-            <p class="text-amber-700 text-sm mt-1">More than one student matches your search. Please select your record using the unique details below.</p>
+            <p class="text-amber-700 text-sm mt-1">Choose the row that matches you using name and enrollment number.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -47,8 +46,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Aadhar</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Enrollment(s)</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Enrollment number(s)</th>
                             <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Action</th>
                         </tr>
                     </thead>
@@ -57,13 +55,6 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4">
                                 <span class="font-medium text-gray-900">{{ $student->full_name }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">
-                                @if($student->aadhar_number)
-                                    **** **** {{ substr($student->aadhar_number, -4) }}
-                                @else
-                                    —
-                                @endif
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1">
@@ -78,10 +69,10 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <a href="{{ route('verify.result', $student) }}" 
+                                <a href="{{ route('verify.result', $student) }}"
                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                     <i class="fas fa-eye mr-2"></i>
-                                    View Details
+                                    View details
                                 </a>
                             </td>
                         </tr>
@@ -93,7 +84,7 @@
 
         <p class="mt-4 text-sm text-gray-500 text-center">
             <i class="fas fa-info-circle mr-1"></i>
-            Use Aadhar number or Enrollment number for a unique search result.
+            Narrow your search using your enrollment number if unsure.
         </p>
     </div>
 

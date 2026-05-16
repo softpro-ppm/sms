@@ -26,8 +26,8 @@ class ViewComposerServiceProvider extends ServiceProvider
         View::composer('layouts.admin', function ($view) {
             $user = Auth::user();
             $view->with([
-                'pendingStudents' => AdminLayoutScopes::pendingStudentsQuery($user)->count(),
-                'pendingPayments' => AdminLayoutScopes::pendingPaymentsQuery($user)->count(),
+                'pendingStudents' => AdminLayoutScopes::pendingStudentsCountCached($user),
+                'pendingPayments' => AdminLayoutScopes::pendingPaymentsCountCached($user),
             ]);
         });
     }

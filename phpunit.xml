@@ -30,5 +30,10 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- AMS (queued sync job runs under QUEUE_CONNECTION=sync in tests) -->
+        <env name="AMS_API_KEY" value="phpunit-test-key"/>
+        <env name="AMS_API_URL" value="https://example.test/api/income/from-sms"/>
+        <!-- Lower burst count for throttle tests (see VerificationSearchThrottleTest) -->
+        <env name="VERIFY_SEARCH_RATE_LIMIT_PER_MINUTE" value="10"/>
     </php>
 </phpunit>
