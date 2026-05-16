@@ -7,6 +7,10 @@
 /storage/pail
 /storage/app/public/student-documents
 /vendor
+
+# Database dumps and ad-hoc SQL exports — never commit (may contain PII/secrets).
+/database/*.sql
+
 .env
 .env.backup
 .env.production
