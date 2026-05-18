@@ -16,7 +16,6 @@ use App\Services\PaymentAllocationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -84,27 +83,24 @@ class PaymentController extends Controller
 
     public function pending(Request $request)
     {
-        $pendingCollection = $this->buildPendingPaymentsCollection($request);
-
         $perPage = (int) $request->get('per_page', 10);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $paginatedPendingData = new LengthAwarePaginator(
-            $pendingCollection->slice(($currentPage - 1) * $perPage, $perPage)->values(),
-            $pendingCollection->count(),
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        $pendingQuery = $this->pendingPaymentsQuery($request);
+        $pendingData = $pendingQuery
+            ->orderByDesc('outstanding_amount')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        $statsQuery = $this->pendingPaymentsQuery($request);
 
         $stats = [
-            'pending_students' => $pendingCollection->count(),
-            'total_pending_amount' => $pendingCollection->sum('pending_amount'),
-            'average_pending' => $pendingCollection->count() > 0 ? $pendingCollection->avg('pending_amount') : 0,
+            'pending_students' => (clone $statsQuery)->count(),
+            'total_pending_amount' => (clone $statsQuery)->sum('outstanding_amount'),
+            'average_pending' => (clone $statsQuery)->avg('outstanding_amount') ?? 0,
         ];
 
         return view('admin.payments.pending', [
-            'pendingData' => $paginatedPendingData,
+            'pendingData' => $pendingData,
             'stats' => $stats,
         ]);
     }
@@ -112,9 +108,8 @@ class PaymentController extends Controller
     public function exportPendingCsv(Request $request)
     {
         $filename = 'pending_payments_' . now()->format('Ymd_His') . '.csv';
-        $pendingCollection = $this->buildPendingPaymentsCollection($request)->values();
 
-        return response()->streamDownload(function () use ($pendingCollection) {
+        return response()->streamDownload(function () use ($request) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
@@ -129,19 +124,25 @@ class PaymentController extends Controller
                 'Email',
             ]);
 
-            foreach ($pendingCollection as $index => $data) {
-                fputcsv($handle, [
-                    $index + 1,
-                    $data['student']?->full_name,
-                    $data['student']?->whatsapp_number,
-                    $data['batch']?->batch_name,
-                    $data['course_fee'],
-                    $data['approved_amount'],
-                    $data['pending_amount'],
-                    $data['course']?->name,
-                    $data['student']?->email,
-                ]);
-            }
+            $index = 0;
+            $this->pendingPaymentsQuery($request)
+                ->orderByDesc('outstanding_amount')
+                ->chunk(500, function ($rows) use ($handle, &$index) {
+                    foreach ($rows as $enrollment) {
+                        $index++;
+                        fputcsv($handle, [
+                            $index,
+                            $enrollment->student?->full_name,
+                            $enrollment->student?->whatsapp_number,
+                            $enrollment->batch?->batch_name,
+                            $enrollment->total_fee,
+                            $enrollment->paid_amount,
+                            $enrollment->outstanding_amount,
+                            $enrollment->batch?->course?->name,
+                            $enrollment->student?->email,
+                        ]);
+                    }
+                });
 
             fclose($handle);
         }, $filename, [
@@ -149,63 +150,36 @@ class PaymentController extends Controller
         ]);
     }
 
-    private function buildPendingPaymentsCollection(Request $request)
+    private function pendingPaymentsQuery(Request $request)
     {
-        $enrollments = $this->scopeEnrollments(
-            \App\Models\Enrollment::with(['student', 'batch.course', 'payments'])
+        $query = $this->scopeEnrollments(
+            Enrollment::query()
+                ->with(['student', 'batch.course'])
+                ->withCount([
+                    'payments as pending_payments_count' => fn ($paymentQuery) => $paymentQuery->where('status', 'pending'),
+                ])
+                ->withMax('payments', 'created_at')
                 ->where('status', 'active')
-        )->get()
-            ->filter(function ($enrollment) {
-                $outstanding = (float) ($enrollment->outstanding_amount ?? 0);
-                return $outstanding > 0;
-            });
-
-        $pendingData = [];
-
-        foreach ($enrollments as $enrollment) {
-            $courseFee = (float) ($enrollment->total_fee ?? 0);
-            $paidAmount = (float) ($enrollment->paid_amount ?? 0);
-            $pendingAmount = (float) ($enrollment->outstanding_amount ?? 0);
-            $pendingPayments = $enrollment->payments->where('status', 'pending');
-
-            if ($pendingAmount > 0) {
-                $pendingData[] = [
-                    'enrollment' => $enrollment,
-                    'student' => $enrollment->student,
-                    'course' => $enrollment->batch->course,
-                    'batch' => $enrollment->batch,
-                    'course_fee' => $courseFee,
-                    'approved_amount' => $paidAmount,
-                    'pending_amount' => $pendingAmount,
-                    'pending_payments' => $pendingPayments,
-                    'payment_progress' => $courseFee > 0 ? round(($paidAmount / $courseFee) * 100, 1) : 0,
-                    'last_payment_date' => $enrollment->payments->max('created_at'),
-                ];
-            }
-        }
-
-        usort($pendingData, function ($a, $b) {
-            return $b['pending_amount'] <=> $a['pending_amount'];
-        });
-
-        $pendingCollection = collect($pendingData);
+                ->where('outstanding_amount', '>', 0)
+        );
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
-            $pendingCollection = $pendingCollection->filter(function ($item) use ($search) {
-                $student = $item['student'];
-                $course = $item['course'];
-                $batch = $item['batch'];
-
-                return str_contains(strtolower($student->full_name ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($student->email ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($student->whatsapp_number ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($course->name ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($batch->batch_name ?? ''), strtolower($search));
-            })->values();
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($studentQuery) use ($search) {
+                    $studentQuery->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('whatsapp_number', 'like', "%{$search}%");
+                })->orWhereHas('batch', function ($batchQuery) use ($search) {
+                    $batchQuery->where('batch_name', 'like', "%{$search}%")
+                        ->orWhereHas('course', function ($courseQuery) use ($search) {
+                            $courseQuery->where('name', 'like', "%{$search}%");
+                        });
+                });
+            });
         }
 
-        return $pendingCollection;
+        return $query;
     }
 
     public function debug()

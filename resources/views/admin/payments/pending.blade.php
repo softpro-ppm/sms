@@ -95,7 +95,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($pendingData as $index => $data)
+                    @forelse($pendingData as $index => $enrollment)
                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ ($pendingData->currentPage() - 1) * $pendingData->perPage() + $index + 1 }}
@@ -105,69 +105,74 @@
                                 <div class="flex-shrink-0 h-10 w-10">
                                     <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                                         <span class="text-sm font-medium text-white">
-                                            {{ substr($data['student']->full_name, 0, 1) }}{{ substr($data['student']->full_name, strpos($data['student']->full_name, ' ') + 1, 1) ?: '' }}
+                                            {{ substr($enrollment->student->full_name, 0, 1) }}{{ substr($enrollment->student->full_name, strpos($enrollment->student->full_name, ' ') + 1, 1) ?: '' }}
                                         </span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ $data['student']->full_name }}
+                                        {{ $enrollment->student->full_name }}
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        {{ $data['student']->email }}
+                                        {{ $enrollment->student->email }}
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        {{ $data['student']->whatsapp_number }}
+                                        {{ $enrollment->student->whatsapp_number }}
                                     </div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                <div class="font-medium">{{ $data['course']->name }}</div>
-                                <div class="text-gray-500">{{ $data['batch']->batch_name }}</div>
-                                <div class="text-xs text-gray-400">Batch #{{ $data['batch']->id }}</div>
+                                <div class="font-medium">{{ $enrollment->batch->course->name }}</div>
+                                <div class="text-gray-500">{{ $enrollment->batch->batch_name }}</div>
+                                <div class="text-xs text-gray-400">Batch #{{ $enrollment->batch->id }}</div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                <div class="font-medium text-lg">₹{{ number_format($data['approved_amount']) }} / ₹{{ number_format($data['course_fee']) }}</div>
-                                <div class="text-xs text-red-600 font-medium">Pending: ₹{{ number_format($data['pending_amount']) }}</div>
-                                @if($data['pending_payments']->count() > 0)
-                                    <div class="text-xs text-orange-600">{{ $data['pending_payments']->count() }} payment(s) awaiting approval</div>
+                                <div class="font-medium text-lg">₹{{ number_format((float) $enrollment->paid_amount) }} / ₹{{ number_format((float) $enrollment->total_fee) }}</div>
+                                <div class="text-xs text-red-600 font-medium">Pending: ₹{{ number_format((float) $enrollment->outstanding_amount) }}</div>
+                                @if($enrollment->pending_payments_count > 0)
+                                    <div class="text-xs text-orange-600">{{ $enrollment->pending_payments_count }} payment(s) awaiting approval</div>
                                 @endif
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
+                            @php
+                                $courseFee = (float) $enrollment->total_fee;
+                                $paidAmount = (float) $enrollment->paid_amount;
+                                $paymentProgress = $courseFee > 0 ? round(($paidAmount / $courseFee) * 100, 1) : 0;
+                            @endphp
                             <div class="flex items-center">
                                 <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="bg-green-600 h-2 rounded-full" style="width: {{ $data['payment_progress'] }}%"></div>
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: {{ $paymentProgress }}%"></div>
                                 </div>
-                                <span class="text-sm text-gray-600">{{ $data['payment_progress'] }}%</span>
+                                <span class="text-sm text-gray-600">{{ $paymentProgress }}%</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            @if($data['last_payment_date'])
-                                <div>{{ $data['last_payment_date']->format('M d, Y') }}</div>
-                                <div class="text-xs text-gray-400">{{ $data['last_payment_date']->format('h:i A') }}</div>
+                            @if($enrollment->payments_max_created_at)
+                                <div>{{ \Illuminate\Support\Carbon::parse($enrollment->payments_max_created_at)->format('M d, Y') }}</div>
+                                <div class="text-xs text-gray-400">{{ \Illuminate\Support\Carbon::parse($enrollment->payments_max_created_at)->format('h:i A') }}</div>
                             @else
                                 <span class="text-gray-400">No payments</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('admin.students.show', $data['student']) }}" 
+                                <a href="{{ route('admin.students.show', $enrollment->student) }}" 
                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
                                    title="View Student">
                                     <i class="fas fa-user"></i>
                                 </a>
-                                <a href="{{ route('admin.payments.create', ['student_id' => $data['student']->id, 'enrollment_id' => $data['enrollment']->id]) }}" 
+                                <a href="{{ route('admin.payments.create', ['student_id' => $enrollment->student->id, 'enrollment_id' => $enrollment->id]) }}" 
                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
                                    title="Add Payment">
                                     <i class="fas fa-plus"></i>
                                 </a>
-                                @if($data['pending_payments']->count() > 0)
-                                    <a href="{{ route('admin.payments.index') }}?student={{ $data['student']->id }}" 
+                                @if($enrollment->pending_payments_count > 0)
+                                    <a href="{{ route('admin.payments.index') }}?student={{ $enrollment->student->id }}" 
                                        class="text-orange-600 hover:text-orange-900 transition-colors duration-200"
                                        title="View Pending Payments">
                                         <i class="fas fa-clock"></i>
