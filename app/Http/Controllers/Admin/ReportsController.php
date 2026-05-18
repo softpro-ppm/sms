@@ -51,49 +51,28 @@ class ReportsController extends Controller
 
         if ($tab === 'enrollments') {
             $query = $this->enrollmentQuery($request);
-            $viewData['stats'] = [
-                'total_count' => (clone $query)->count(),
-                'active_count' => (clone $query)->where('status', 'active')->count(),
-                'dropped_count' => (clone $query)->where('status', 'dropped')->count(),
-                'total_fees' => (clone $query)->sum('total_fee'),
-                'total_outstanding' => (clone $query)->sum('outstanding_amount'),
-            ];
+            $viewData['stats'] = $this->enrollmentStats($query);
             $viewData['enrollments'] = $query
                 ->orderBy('enrollment_date', 'desc')
                 ->paginate($perPage)
                 ->appends($request->query());
         } elseif ($tab === 'students') {
             $query = $this->studentQuery($request);
-            $viewData['stats'] = [
-                'total_count' => (clone $query)->count(),
-                'approved_count' => (clone $query)->where('status', 'approved')->count(),
-                'pending_count' => (clone $query)->where('status', 'pending')->count(),
-                'rejected_count' => (clone $query)->where('status', 'rejected')->count(),
-            ];
+            $viewData['stats'] = $this->studentStats($query);
             $viewData['students'] = $query
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage)
                 ->appends($request->query());
         } elseif ($tab === 'assessments') {
             $query = $this->assessmentResultQuery($request);
-            $viewData['stats'] = [
-                'total_results' => (clone $query)->count(),
-                'passed_results' => (clone $query)->where('is_passed', true)->count(),
-                'failed_results' => (clone $query)->where('is_passed', false)->count(),
-                'average_score' => (clone $query)->avg('percentage') ?? 0,
-            ];
+            $viewData['stats'] = $this->assessmentStats($query);
             $viewData['results'] = $query
                 ->orderBy('completed_at', 'desc')
                 ->paginate($perPage)
                 ->appends($request->query());
         } else {
             $query = $this->paymentQuery($request);
-            $viewData['stats'] = [
-                'total_count' => (clone $query)->count(),
-                'pending_count' => (clone $query)->where('status', 'pending')->count(),
-                'approved_amount' => (clone $query)->where('status', 'approved')->sum('amount'),
-                'total_amount' => (clone $query)->sum('amount'),
-            ];
+            $viewData['stats'] = $this->paymentStats($query);
             $viewData['payments'] = $query
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage)
@@ -438,8 +417,9 @@ class ReportsController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('student', function ($studentQuery) use ($search) {
-                    $studentQuery->where('name', 'like', "%{$search}%")
-                        ->orWhere('enrollment_number', 'like', "%{$search}%");
+                    $studentQuery->where('full_name', 'like', "%{$search}%");
+                })->orWhereHas('enrollment', function ($enrollmentQuery) use ($search) {
+                    $enrollmentQuery->where('enrollment_number', 'like', "%{$search}%");
                 })->orWhereHas('assessment', function ($assessmentQuery) use ($search) {
                     $assessmentQuery->where('title', 'like', "%{$search}%");
                 });
@@ -485,5 +465,75 @@ class ReportsController extends Controller
     {
         $perPage = (int) $request->get('per_page', $default);
         return in_array($perPage, [10, 20, 50, 100], true) ? $perPage : $default;
+    }
+
+    private function paymentStats(Builder $query): array
+    {
+        $stats = (clone $query)
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count")
+            ->selectRaw("SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as approved_amount")
+            ->selectRaw('SUM(amount) as total_amount')
+            ->first();
+
+        return [
+            'total_count' => (int) ($stats->total_count ?? 0),
+            'pending_count' => (int) ($stats->pending_count ?? 0),
+            'approved_amount' => (float) ($stats->approved_amount ?? 0),
+            'total_amount' => (float) ($stats->total_amount ?? 0),
+        ];
+    }
+
+    private function enrollmentStats(Builder $query): array
+    {
+        $stats = (clone $query)
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw("SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count")
+            ->selectRaw("SUM(CASE WHEN status = 'dropped' THEN 1 ELSE 0 END) as dropped_count")
+            ->selectRaw('SUM(total_fee) as total_fees')
+            ->selectRaw('SUM(outstanding_amount) as total_outstanding')
+            ->first();
+
+        return [
+            'total_count' => (int) ($stats->total_count ?? 0),
+            'active_count' => (int) ($stats->active_count ?? 0),
+            'dropped_count' => (int) ($stats->dropped_count ?? 0),
+            'total_fees' => (float) ($stats->total_fees ?? 0),
+            'total_outstanding' => (float) ($stats->total_outstanding ?? 0),
+        ];
+    }
+
+    private function studentStats(Builder $query): array
+    {
+        $stats = (clone $query)
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw("SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_count")
+            ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count")
+            ->selectRaw("SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_count")
+            ->first();
+
+        return [
+            'total_count' => (int) ($stats->total_count ?? 0),
+            'approved_count' => (int) ($stats->approved_count ?? 0),
+            'pending_count' => (int) ($stats->pending_count ?? 0),
+            'rejected_count' => (int) ($stats->rejected_count ?? 0),
+        ];
+    }
+
+    private function assessmentStats(Builder $query): array
+    {
+        $stats = (clone $query)
+            ->selectRaw('COUNT(*) as total_results')
+            ->selectRaw("SUM(CASE WHEN is_passed = 1 THEN 1 ELSE 0 END) as passed_results")
+            ->selectRaw("SUM(CASE WHEN is_passed = 0 THEN 1 ELSE 0 END) as failed_results")
+            ->selectRaw('AVG(percentage) as average_score')
+            ->first();
+
+        return [
+            'total_results' => (int) ($stats->total_results ?? 0),
+            'passed_results' => (int) ($stats->passed_results ?? 0),
+            'failed_results' => (int) ($stats->failed_results ?? 0),
+            'average_score' => (float) ($stats->average_score ?? 0),
+        ];
     }
 }
