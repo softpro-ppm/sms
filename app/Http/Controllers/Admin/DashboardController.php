@@ -27,6 +27,7 @@ class DashboardController extends Controller
     {
         $tpId = $this->getTrainingPartnerId();
         $user = auth()->user();
+        $isReception = $user->is_reception;
 
         $stats = Cache::remember(
             $this->dashboardCacheKey($user, 'stats'),
@@ -79,7 +80,24 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('admin.dashboard', compact('stats', 'recentActivities', 'chartData', 'recentStudents', 'recentPayments', 'recentAssessments', 'onboarding'));
+        $receptionWorkspace = $isReception
+            ? Cache::remember(
+                $this->dashboardCacheKey($user, 'reception'),
+                self::DASHBOARD_CACHE_TTL_SECONDS,
+                fn () => $this->loadReceptionWorkspace()
+            )
+            : null;
+
+        return view('admin.dashboard', compact(
+            'stats',
+            'recentActivities',
+            'chartData',
+            'recentStudents',
+            'recentPayments',
+            'recentAssessments',
+            'onboarding',
+            'receptionWorkspace'
+        ));
     }
 
     private function loadDashboardStats(?int $tpId): array
@@ -255,6 +273,84 @@ class DashboardController extends Controller
             ->orderBy('enrollments_count', 'desc')
             ->limit(10)
             ->get();
+    }
+
+    private function loadReceptionWorkspace(): array
+    {
+        $todayStart = now()->startOfDay();
+        $todayEnd = now()->endOfDay();
+
+        $admissionsToday = $this->scopeStudents(
+            Student::whereBetween('created_at', [$todayStart, $todayEnd])
+        )->count();
+
+        $paymentsToday = $this->scopePayments(
+            Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+        )->count();
+
+        $pendingApprovals = $this->scopeStudents(
+            Student::where('status', 'pending')
+        )->count();
+
+        $missingDocumentsCount = $this->scopeStudents(
+            Student::where(function ($query) {
+                $query->whereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'photo'))
+                    ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'aadhar'))
+                    ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'qualification_certificate'));
+            })
+        )->count();
+
+        $recentAdmissions = $this->scopeStudents(
+            Student::select('id', 'full_name', 'status', 'created_at')
+                ->latest('created_at')
+                ->limit(5)
+        )->get();
+
+        $missingDocumentStudents = $this->scopeStudents(
+            Student::with('documents:id,student_id,document_type')
+                ->where(function ($query) {
+                    $query->whereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'photo'))
+                        ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'aadhar'))
+                        ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'qualification_certificate'));
+                })
+                ->latest('created_at')
+                ->limit(5)
+        )->get()->map(function (Student $student) {
+            $types = $student->documents->pluck('document_type')->all();
+            $missing = collect(['photo', 'aadhar', 'qualification_certificate'])
+                ->reject(fn ($type) => in_array($type, $types, true))
+                ->map(fn ($type) => match ($type) {
+                    'photo' => 'Photo',
+                    'aadhar' => 'Aadhar',
+                    'qualification_certificate' => 'Qualification',
+                    default => ucfirst($type),
+                })
+                ->values();
+
+            return [
+                'student' => $student,
+                'missing' => $missing,
+            ];
+        });
+
+        $recentPayments = $this->scopePayments(
+            Payment::select('id', 'student_id', 'amount', 'status', 'created_at')
+                ->with(['student:id,full_name'])
+                ->latest('created_at')
+                ->limit(5)
+        )->get();
+
+        return [
+            'stats' => [
+                'admissions_today' => $admissionsToday,
+                'missing_documents' => $missingDocumentsCount,
+                'pending_approvals' => $pendingApprovals,
+                'payments_today' => $paymentsToday,
+            ],
+            'recent_admissions' => $recentAdmissions,
+            'missing_document_students' => $missingDocumentStudents,
+            'recent_payments' => $recentPayments,
+        ];
     }
 
     private function dashboardCacheKey($user, string $suffix): string

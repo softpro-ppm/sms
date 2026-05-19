@@ -4,6 +4,228 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
+@if(auth()->user()->is_reception)
+<div class="space-y-8">
+    <section class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary-700 via-primary-800 to-slate-900 p-8 text-white shadow-2xl shadow-primary-900/20">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.14),_transparent_28%)]"></div>
+        <div class="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div class="max-w-3xl">
+                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-primary-100/80">Reception Workspace V3.0</p>
+                <h2 class="mt-2 text-3xl font-bold leading-tight md:text-4xl">Front-desk work should feel fast, focused, and clear.</h2>
+                <p class="mt-3 max-w-2xl text-base leading-7 text-primary-100/90">This dashboard is shaped around what reception actually does: register students, capture documents, record payments, and hand off approvals to admin.</p>
+                <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <a href="{{ route('admin.students.create') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-primary-800 shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-primary-50">
+                        <i class="fas fa-user-plus"></i>
+                        Register student
+                    </a>
+                    <a href="{{ route('admin.payments.create') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15">
+                        <i class="fas fa-credit-card"></i>
+                        Record payment
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 lg:w-[360px]">
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Admissions Today</p>
+                    <p class="mt-3 text-3xl font-bold">{{ $receptionWorkspace['stats']['admissions_today'] ?? 0 }}</p>
+                    <p class="mt-1 text-sm text-white/70">New student records created today</p>
+                </div>
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Missing Docs</p>
+                    <p class="mt-3 text-3xl font-bold">{{ $receptionWorkspace['stats']['missing_documents'] ?? 0 }}</p>
+                    <p class="mt-1 text-sm text-white/70">Students still missing core documents</p>
+                </div>
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Pending Approval</p>
+                    <p class="mt-3 text-3xl font-bold">{{ $receptionWorkspace['stats']['pending_approvals'] ?? 0 }}</p>
+                    <p class="mt-1 text-sm text-white/70">Students waiting for admin review</p>
+                </div>
+                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Payments Today</p>
+                    <p class="mt-3 text-3xl font-bold">{{ $receptionWorkspace['stats']['payments_today'] ?? 0 }}</p>
+                    <p class="mt-1 text-sm text-white/70">Entries captured at the front desk</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Action board</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900">Start from the most common front-desk tasks</h3>
+                </div>
+                <form action="{{ route('admin.students.index') }}" method="GET" class="flex w-full max-w-sm items-center gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" name="search" placeholder="Search student by name, email, or Aadhar" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pl-11 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800">
+                        Search
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-6 grid gap-4 md:grid-cols-2">
+                <a href="{{ route('admin.students.create') }}" class="group rounded-3xl border border-blue-200 bg-blue-50/70 p-5 transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">New registration</h4>
+                            <p class="mt-2 text-sm leading-6 text-gray-600">Capture student details, photo, and documents in one guided intake flow.</p>
+                            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 group-hover:text-blue-800">
+                                Open registration
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.payments.create') }}" class="group rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Record payment</h4>
+                            <p class="mt-2 text-sm leading-6 text-gray-600">Capture payment details quickly, then hand approval to centre admin.</p>
+                            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 group-hover:text-emerald-800">
+                                Open payment form
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.students.index') }}" class="group rounded-3xl border border-amber-200 bg-amber-50/70 p-5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-600 text-white shadow-md">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Missing documents</h4>
+                            <p class="mt-2 text-sm leading-6 text-gray-600">Use the student detail pages below to complete photos, Aadhar, and qualification proof.</p>
+                            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-amber-700 group-hover:text-amber-800">
+                                Open students
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.students.index') }}" class="group rounded-3xl border border-violet-200 bg-violet-50/70 p-5 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-md">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">Pending approvals</h4>
+                            <p class="mt-2 text-sm leading-6 text-gray-600">See who still needs admin approval and make sure their records are complete before handoff.</p>
+                            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700 group-hover:text-violet-800">
+                                Open student list
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Today’s admissions</p>
+                <h3 class="mt-1 text-2xl font-bold text-gray-900">Latest students at the front desk</h3>
+
+                <div class="mt-5 space-y-3">
+                    @forelse(($receptionWorkspace['recent_admissions'] ?? collect()) as $student)
+                        <div class="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ $student->full_name }}</p>
+                                <p class="text-sm text-gray-500">{{ $student->created_at->diffForHumans() }}</p>
+                            </div>
+                            <a href="{{ route('admin.students.show', $student) }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">Open</a>
+                        </div>
+                    @empty
+                        <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500">
+                            No new admissions yet today.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
+            <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Payments recorded</p>
+                <h3 class="mt-1 text-2xl font-bold text-gray-900">Recent front-desk money entries</h3>
+
+                <div class="mt-5 space-y-3">
+                    @forelse(($receptionWorkspace['recent_payments'] ?? collect()) as $payment)
+                        <div class="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ $payment->student?->full_name ?? 'Student' }}</p>
+                                <p class="text-sm text-gray-500">₹{{ number_format($payment->amount) }} · {{ $payment->created_at->diffForHumans() }}</p>
+                            </div>
+                            <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $payment->status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ($payment->status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') }}">
+                                {{ ucfirst($payment->status) }}
+                            </span>
+                        </div>
+                    @empty
+                        <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500">
+                            No payment entries yet today.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Document completion queue</p>
+                <h3 class="mt-1 text-2xl font-bold text-gray-900">Students who still need attention before handoff</h3>
+            </div>
+            <a href="{{ route('admin.students.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
+                Open full student list
+                <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+
+        <div class="mt-6 grid gap-4 lg:grid-cols-2">
+            @forelse(($receptionWorkspace['missing_document_students'] ?? collect()) as $item)
+                <div class="rounded-3xl border border-gray-200 bg-gray-50 p-5">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900">{{ $item['student']->full_name }}</h4>
+                            <p class="mt-1 text-sm text-gray-500">Created {{ $item['student']->created_at->diffForHumans() }}</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @foreach($item['missing'] as $missing)
+                                    <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{{ $missing }} missing</span>
+                                @endforeach
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.students.show', $item['student']) }}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800">
+                            <i class="fas fa-folder-open"></i>
+                            Open student
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50 p-8 text-center lg:col-span-2">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm">
+                        <i class="fas fa-check-double text-2xl"></i>
+                    </div>
+                    <h4 class="mt-4 text-lg font-semibold text-emerald-900">No document gaps right now</h4>
+                    <p class="mt-2 text-sm leading-6 text-emerald-800">Great shape. Reception has no students missing core documents at the moment.</p>
+                </div>
+            @endforelse
+        </div>
+    </section>
+</div>
+@else
 <div class="space-y-8">
     <!-- Welcome Section -->
     <div id="welcome-banner" class="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl p-8 text-white transition-all duration-500 ease-in-out">
@@ -349,6 +571,7 @@
     </div>
 
 </div>
+@endif
 @endsection
 
 @section('scripts')
