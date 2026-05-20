@@ -1,167 +1,123 @@
 @extends('layouts.admin')
 
-@section('title', 'Question Bank Management')
-@section('page-title', 'Question Bank Management')
+@section('title', 'Question Banks')
+@section('page-title', 'Question Banks')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Question Bank</h2>
-            <p class="text-gray-600 mt-1">Manage questions for assessments and tests</p>
-        </div>
-        <div class="mt-4 sm:mt-0 flex space-x-3">
-            <button onclick="showBulkUploadModal()" 
-                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg">
-                <i class="fas fa-upload mr-2"></i>
-                Bulk Upload
-            </button>
-            <a href="{{ route('admin.question-banks.export', request()->query()) }}"
-               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-medium rounded-lg hover:from-gray-800 hover:to-gray-900 transition-all duration-200 shadow-lg">
-                <i class="fas fa-file-export mr-2"></i>
-                Export CSV
-            </a>
-            <a href="{{ route('admin.question-banks.create') }}" 
-               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg">
-                <i class="fas fa-plus mr-2"></i>
-                Add Question
-            </a>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-question-circle text-blue-600"></i>
-                    </div>
+<div class="space-y-5">
+    <section class="rounded-[28px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">
+                    <i class="fas fa-layer-group text-[10px]"></i>
+                    Question Bank Queue
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Questions</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $statsTotal ?? $questions->total() }}</p>
-                </div>
+                <h2 class="mt-3 text-[2rem] font-semibold tracking-tight text-slate-900">Manage question coverage, subject mix, and difficulty balance.</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Review active questions, filter by course and subject, and keep the bank ready for new exams and uploads.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="showBulkUploadModal()"
+                        class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100">
+                    <i class="fas fa-upload text-xs"></i>
+                    Bulk upload
+                </button>
+                <a href="{{ route('admin.question-banks.export', request()->query()) }}"
+                   class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                    <i class="fas fa-file-export text-xs"></i>
+                    Export CSV
+                </a>
+                <a href="{{ route('admin.question-banks.create') }}"
+                   class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
+                    <i class="fas fa-plus text-xs"></i>
+                    Add question
+                </a>
             </div>
         </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-check-circle text-green-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Active Questions</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $statsActive ?? 0 }}</p>
-                </div>
+        <div class="grid gap-4 border-t border-slate-200 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Total questions</p>
+                <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ $statsTotal ?? $questions->total() }}</p>
+                <p class="mt-2 text-sm text-slate-600">Questions currently available.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Active questions</p>
+                <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ $statsActive ?? 0 }}</p>
+                <p class="mt-2 text-sm text-slate-600">Live and available for exams.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Courses</p>
+                <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ $courses->count() }}</p>
+                <p class="mt-2 text-sm text-slate-600">Course banks in this workspace.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Subjects</p>
+                <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ $subjects->count() }}</p>
+                <p class="mt-2 text-sm text-slate-600">Subjects represented in the bank.</p>
             </div>
         </div>
+    </section>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-book text-purple-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Courses</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $courses->count() }}</p>
-                </div>
+    <section class="rounded-[28px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="grid gap-4 px-6 py-5 xl:grid-cols-[260px,minmax(0,1fr)] xl:items-end">
+            <div>
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Filters</div>
+                <h3 class="mt-3 text-xl font-semibold tracking-tight text-slate-900">Course, subject, and difficulty</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-600">Narrow the bank by coverage area or search for a specific question quickly.</p>
             </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-tags text-orange-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Subjects</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $subjects->count() }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Filters</h3>
-        </div>
-        <div class="p-6">
-            <form method="GET" action="{{ route('admin.question-banks.index') }}" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="course_id" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                        <select name="course_id" id="course_id" data-live-filter class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                            <option value="">All Courses</option>
-                            @foreach($courses as $course)
-                                <option value="{{ $course->id }}" {{ request('course_id') == $course->id ? 'selected' : '' }}>
-                                    {{ $course->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                        <select name="subject" id="subject" data-live-filter class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                            <option value="">All Subjects</option>
-                            @foreach($subjects as $subject)
-                                <option value="{{ $subject }}" {{ request('subject') == $subject ? 'selected' : '' }}>
-                                    {{ $subject }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="difficulty_level" class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                        <select name="difficulty_level" id="difficulty_level" data-live-filter class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                            <option value="">All Levels</option>
-                            <option value="easy" {{ request('difficulty_level') == 'easy' ? 'selected' : '' }}>Easy</option>
-                            <option value="medium" {{ request('difficulty_level') == 'medium' ? 'selected' : '' }}>Medium</option>
-                            <option value="hard" {{ request('difficulty_level') == 'hard' ? 'selected' : '' }}>Hard</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <input type="text" name="search" id="search" 
-                               data-live-search
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
-                               placeholder="Search questions..." value="{{ request('search') }}">
-                    </div>
-                </div>
-                <div class="flex items-center justify-between flex-wrap gap-3">
+            <form method="GET" action="{{ route('admin.question-banks.index') }}" class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <input type="text" name="search" id="search"
+                       data-live-search
+                       class="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 xl:col-span-2"
+                       placeholder="Search questions..."
+                       value="{{ request('search') }}">
+                <select name="course_id" id="course_id" data-live-filter class="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100">
+                    <option value="">All courses</option>
+                    @foreach($courses as $course)
+                        <option value="{{ $course->id }}" {{ request('course_id') == $course->id ? 'selected' : '' }}>
+                            {{ $course->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="subject" id="subject" data-live-filter class="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100">
+                    <option value="">All subjects</option>
+                    @foreach($subjects as $subject)
+                        <option value="{{ $subject }}" {{ request('subject') == $subject ? 'selected' : '' }}>
+                            {{ $subject }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="difficulty_level" id="difficulty_level" data-live-filter class="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100">
+                    <option value="">All levels</option>
+                    <option value="easy" {{ request('difficulty_level') == 'easy' ? 'selected' : '' }}>Easy</option>
+                    <option value="medium" {{ request('difficulty_level') == 'medium' ? 'selected' : '' }}>Medium</option>
+                    <option value="hard" {{ request('difficulty_level') == 'hard' ? 'selected' : '' }}>Hard</option>
+                </select>
+                <div class="flex flex-wrap items-center gap-3 md:col-span-2 xl:col-span-5">
                     <div class="flex items-center gap-2">
-                        <label for="per_page" class="text-sm text-gray-600">Rows</label>
-                        <select id="per_page" name="per_page" data-live-rows
-                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <label for="per_page" class="text-sm text-slate-500">Rows</label>
+                        <select id="per_page" name="per_page" data-live-rows class="rounded-2xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100">
                             @foreach([10,20,50,100] as $size)
-                                <option value="{{ $size }}" {{ (int) request('per_page', 20) === $size ? 'selected' : '' }}>
-                                    {{ $size }}
-                                </option>
+                                <option value="{{ $size }}" {{ (int) request('per_page', 20) === $size ? 'selected' : '' }}>{{ $size }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <a href="{{ route('admin.question-banks.index') }}" 
-                       class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
-                        <i class="fas fa-times mr-2"></i>
+                    <a href="{{ route('admin.question-banks.index') }}"
+                       class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
+                        <i class="fas fa-times text-xs"></i>
                         Clear
                     </a>
                 </div>
             </form>
         </div>
-    </div>
+    </section>
 
-    <!-- Questions Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Questions</h3>
+    <section class="rounded-[28px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+            <div>
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Question records</div>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Review and act on the current question bank</h3>
+            </div>
+            <div class="text-sm text-slate-500">{{ $questions->total() }} total records</div>
         </div>
         <div class="overflow-hidden">
             @if($questions->count() > 0)
@@ -169,66 +125,69 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">S.No</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Course</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Subject</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Question</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Difficulty</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Status</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Created</th>
+                                <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($questions as $question)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-slate-900">
                                         {{ ($questions->currentPage() - 1) * $questions->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-900">
                                         {{ $question->course->name }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <td class="px-5 py-3.5 whitespace-nowrap">
+                                        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                                             {{ $question->subject }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                                        <div class="truncate">
+                                    <td class="px-5 py-3.5 text-sm text-slate-900 max-w-xs">
+                                        <div class="max-w-[280px] truncate">
                                             {{ Str::limit($question->question_text, 100) }}
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            {{ $question->difficulty_level == 'easy' ? 'bg-green-100 text-green-800' : 
-                                               ($question->difficulty_level == 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                    <td class="px-5 py-3.5 whitespace-nowrap">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium 
+                                            {{ $question->difficulty_level == 'easy' ? 'bg-emerald-50 text-emerald-700' : 
+                                               ($question->difficulty_level == 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700') }}">
                                             {{ ucfirst($question->difficulty_level) }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            {{ $question->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    <td class="px-5 py-3.5 whitespace-nowrap">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium 
+                                            {{ $question->is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
                                             {{ $question->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-500">
                                         {{ $question->created_at->format('M d, Y') }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
+                                    <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex items-center gap-2">
                                             <a href="{{ route('admin.question-banks.show', $question) }}" 
-                                               class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
+                                               class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition hover:border-blue-300 hover:bg-blue-100"
+                                               title="View question">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{{ route('admin.question-banks.edit', $question) }}" 
-                                               class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50">
+                                               class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                               title="Edit question">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('admin.question-banks.toggle-status', $question) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" 
-                                                        class="text-{{ $question->is_active ? 'yellow' : 'green' }}-600 hover:text-{{ $question->is_active ? 'yellow' : 'green' }}-900 p-1 rounded hover:bg-{{ $question->is_active ? 'yellow' : 'green' }}-50">
+                                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border {{ $question->is_active ? 'border-amber-200 bg-amber-50 text-amber-600 hover:border-amber-300 hover:bg-amber-100' : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-100' }} transition"
+                                                        title="{{ $question->is_active ? 'Deactivate question' : 'Activate question' }}">
                                                     <i class="fas fa-{{ $question->is_active ? 'pause' : 'play' }}"></i>
                                                 </button>
                                             </form>
@@ -237,7 +196,8 @@
                                                 @method('DELETE')
                                                 <button type="submit" 
                                                         onclick="return confirm('Are you sure you want to delete this question?')"
-                                                        class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50">
+                                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:border-rose-300 hover:bg-rose-100"
+                                                        title="Delete question">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -250,7 +210,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200">
+                <div class="px-5 py-4 border-t border-gray-200">
                     {{ $questions->links() }}
                 </div>
             @else
@@ -262,7 +222,7 @@
                     <p class="mt-1 text-sm text-gray-500">No questions match your current filters.</p>
                     <div class="mt-6">
                         <a href="{{ route('admin.question-banks.create') }}" 
-                           class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                             <i class="fas fa-plus mr-2"></i>
                             Add First Question
                         </a>

@@ -55,7 +55,7 @@ class StudentDashboardJourneyTest extends TestCase
         $response->assertSeeText('Payment due');
         $response->assertSeeText('Clear your pending fee to keep everything moving');
         $response->assertSeeText('View payments');
-        $response->assertSeeText('Your journey');
+        $response->assertSeeText('Course Progress');
         $response->assertSeeText('MS Office');
     }
 

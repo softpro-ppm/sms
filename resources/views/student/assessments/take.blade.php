@@ -5,13 +5,13 @@
 @section('subheading', $assessment->title)
 
 @section('content')
-<div class="max-w-4xl mx-auto select-none" style="-webkit-user-select: none; user-select: none;">
+<div class="max-w-5xl mx-auto select-none space-y-5" style="-webkit-user-select: none; user-select: none;">
     <!-- Sticky Timer Bar -->
-    <div id="timerBar" class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm mb-6 rounded-t-lg overflow-hidden">
-        <div class="px-6 py-4">
+    <div id="timerBar" class="sticky top-0 z-40 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div class="px-5 py-4 sm:px-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-6">
-                    <div id="timerDisplay" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-800 font-mono text-lg font-semibold">
+                    <div id="timerDisplay" class="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-base font-semibold text-blue-800">
                         <i class="fas fa-clock"></i>
                         <span id="timer">--:--</span>
                     </div>
@@ -20,11 +20,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button type="button" id="paletteToggle" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                    <button type="button" id="paletteToggle" class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                         <i class="fas fa-th-large mr-2"></i>
                         Question Palette
                     </button>
-                    <button type="button" id="reviewBtn" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <button type="button" id="reviewBtn" class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
                         <i class="fas fa-clipboard-check mr-2"></i>
                         Review & Submit
                     </button>
@@ -39,12 +39,12 @@
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Question Palette (collapsible) -->
-        <div id="questionPalette" class="border-b border-gray-200 bg-gray-50 p-4 hidden">
+        <div id="questionPalette" class="border-b border-gray-200 bg-gray-50/80 p-4 hidden">
             <p class="text-sm font-medium text-gray-700 mb-3">Jump to question (green = answered, blue = current)</p>
             <div id="paletteGrid" class="flex flex-wrap gap-2">
                 @foreach($questions as $index => $question)
                 <button type="button" 
-                        class="palette-btn w-10 h-10 rounded-lg font-medium text-sm transition-all border-2 border-gray-300 bg-white text-gray-700 hover:border-primary-500 hover:bg-primary-50"
+                        class="palette-btn flex h-10 w-10 items-center justify-center rounded-xl border-2 border-gray-300 bg-white text-sm font-medium text-gray-700 transition-all hover:border-primary-500 hover:bg-primary-50"
                         data-question="{{ $index }}"
                         title="Question {{ $index + 1 }}">
                     {{ $index + 1 }}
@@ -57,16 +57,16 @@
             @csrf
             <input type="hidden" name="time_taken_seconds" id="timeTakenSeconds" value="">
             
-            <div class="p-6">
+            <div class="p-5 sm:p-6">
                 <!-- Question Cards (one visible at a time) -->
                 @foreach($questions as $index => $question)
-                <div class="question-card border border-gray-200 rounded-lg p-6 {{ $index === 0 ? '' : 'hidden' }}" data-question="{{ $index }}">
+                <div class="question-card rounded-2xl border border-gray-200 bg-gray-50/40 p-5 sm:p-6 {{ $index === 0 ? '' : 'hidden' }}" data-question="{{ $index }}">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-sm font-medium text-gray-500">Question {{ $index + 1 }} of {{ $questions->count() }}</span>
                         <span class="text-xs text-gray-400">Marks: 4</span>
                     </div>
                     <div class="mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">{{ $question->question_text }}</h3>
+                        <h3 class="text-lg font-semibold leading-7 text-gray-950">{{ $question->question_text }}</h3>
                     </div>
                     
                     <div class="space-y-3">
@@ -80,13 +80,13 @@
                         @endphp
                         @foreach($options as $label => $option)
                             @if($option)
-                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50">
+                                <label class="flex items-center rounded-xl border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50">
                                     <input type="radio" 
                                            name="answers[{{ $question->id }}]" 
                                            value="{{ $label }}"
                                            class="answer-input h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                                            data-question="{{ $index }}">
-                                    <span class="ml-3 text-gray-900">{{ $label }}) {{ $option }}</span>
+                                    <span class="ml-3 text-sm text-gray-900">{{ $label }}) {{ $option }}</span>
                                 </label>
                             @endif
                         @endforeach
@@ -96,12 +96,12 @@
             </div>
             
             <!-- Navigation Buttons -->
-            <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <button type="button" id="prevBtn" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+            <div class="flex items-center justify-between px-5 py-4 sm:px-6 bg-gray-50 border-t border-gray-200">
+                <button type="button" id="prevBtn" class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     <i class="fas fa-arrow-left mr-2"></i>
                     Previous
                 </button>
-                <button type="button" id="nextBtn" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <button type="button" id="nextBtn" class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">
                     Next
                     <i class="fas fa-arrow-right ml-2"></i>
                 </button>
@@ -114,17 +114,17 @@
 <div id="reviewModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex min-h-screen items-center justify-center p-4">
         <div class="fixed inset-0 bg-black/50" id="reviewModalBackdrop"></div>
-        <div class="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div class="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
             <div class="p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold text-gray-900">Review Your Answers</h2>
+                <h2 class="text-xl font-semibold text-gray-950">Review Your Answers</h2>
                 <p class="text-sm text-gray-600 mt-1">Verify your answers before submitting. Click a question to go back and edit.</p>
             </div>
             <div class="p-6 overflow-y-auto max-h-96">
                 <div id="reviewList" class="space-y-3">
                     @foreach($questions as $index => $question)
-                    <div class="review-item flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" data-question="{{ $index }}">
+                    <div class="review-item flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 cursor-pointer transition hover:bg-gray-50" data-question="{{ $index }}">
                         <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-700">{{ $index + 1 }}</span>
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-700">{{ $index + 1 }}</span>
                             <div>
                                 <p class="text-sm font-medium text-gray-900 truncate max-w-xs">{{ Str::limit($question->question_text, 50) }}</p>
                                 <p class="text-xs text-gray-500 mt-0.5"><span class="answer-status">Not answered</span></p>
@@ -136,10 +136,10 @@
                 </div>
             </div>
             <div class="p-6 border-t border-gray-200 flex justify-between items-center">
-                <button type="button" id="reviewCloseBtn" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <button type="button" id="reviewCloseBtn" class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
                     Back to Exam
                 </button>
-                <button type="button" id="confirmSubmitBtn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                <button type="button" id="confirmSubmitBtn" class="rounded-xl bg-green-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-green-700">
                     <i class="fas fa-check mr-2"></i>
                     Confirm & Submit
                 </button>
@@ -245,9 +245,9 @@
         timerProgress.style.width = progress + '%';
         
         if (timeLeft <= 300) {
-            timerDisplay.className = 'flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 text-red-800 font-mono text-lg font-semibold animate-pulse';
+            timerDisplay.className = 'flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-base font-semibold text-red-800 animate-pulse';
         } else if (timeLeft <= 600) {
-            timerDisplay.className = 'flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-100 text-amber-800 font-mono text-lg font-semibold';
+            timerDisplay.className = 'flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-base font-semibold text-amber-800';
         }
         
         if (timeLeft <= 0) {

@@ -4,17 +4,18 @@
 @section('page-title', 'Exams')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-5">
     @if(isset($examStatusEnrollments) && $examStatusEnrollments->count() > 0)
-        <div class="rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-50 to-white shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 bg-white/80">
-                <h3 class="text-lg font-semibold text-gray-900">Exam eligibility</h3>
-                <p class="text-sm text-gray-600 mt-1">You can start or retake an exam only when every item below is satisfied for that enrollment.</p>
+        <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-6 py-5">
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Eligibility</div>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Exam eligibility</h3>
+                <p class="mt-1 text-sm text-slate-600">You can start or retake an exam only when every item below is satisfied for that enrollment.</p>
             </div>
             <div class="p-6 space-y-4">
                 @foreach($examStatusEnrollments as $examEnr)
                     @php $ch = $examEnr->exam_eligibility_checklist; @endphp
-                    <div class="rounded-xl border {{ $ch['can_take'] ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-white' }} p-5">
+                    <div class="rounded-2xl border {{ $ch['can_take'] ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white' }} p-5">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                             <div>
                                 <h4 class="font-semibold text-gray-900">{{ $examEnr->display_course_name }}</h4>
@@ -50,22 +51,25 @@
                     </div>
                 @endforeach
             </div>
-        </div>
+        </section>
     @endif
 
     <!-- Available Re-assessments -->
     @if($reassessments->count() > 0)
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
+        <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-6 py-5">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">Available Re-assessments</h3>
-                    <span class="text-sm text-gray-500">{{ $reassessments->count() }} failed assessments</span>
+                    <div>
+                        <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Re-assessments</div>
+                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Available re-assessments</h3>
+                    </div>
+                    <span class="text-sm text-slate-500">{{ $reassessments->count() }} failed assessments</span>
                 </div>
             </div>
             <div class="p-6">
                 <div class="space-y-4">
                     @foreach($reassessments as $reassessment)
-                        <div class="flex items-center justify-between p-4 border border-orange-200 rounded-lg bg-orange-50">
+                        <div class="flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 p-4">
                             <div class="flex-1">
                                 <h4 class="text-sm font-medium text-gray-900">{{ $reassessment['assessment']->title }}</h4>
                                 <p class="text-sm text-gray-500">{{ $reassessment['display_course_name'] }}</p>
@@ -78,7 +82,7 @@
                             </div>
                             <div class="text-right">
                                 <a href="{{ route('student.assessments.take', $reassessment['assessment']->id) }}" 
-                                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700">
+                                   class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                                     <i class="fas fa-redo mr-2"></i>
                                     Retake Exam
                                 </a>
@@ -87,48 +91,50 @@
                     @endforeach
                 </div>
             </div>
-        </div>
+        </section>
     @endif
 
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Exam Results</h2>
-                <p class="text-gray-600 mt-1">View all your assessment results and performance.</p>
+    <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">
+                    <i class="fas fa-clipboard-check text-[10px]"></i>
+                    Exams
+                </div>
+                <h2 class="mt-3 text-[2rem] font-semibold tracking-tight text-slate-900">Review your exam results and current exam status.</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Check readiness, revisit passed and failed attempts, and open detailed result sheets for completed assessments.</p>
             </div>
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500">Total: {{ $assessmentResults->total() }} assessments</span>
-            </div>
+            <div class="text-sm text-slate-500">{{ $assessmentResults->total() }} assessments</div>
         </div>
-    </div>
+    </section>
 
     <!-- Exam Results List -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         @if($assessmentResults->count() > 0)
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Exam
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Course
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Score
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Grade
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Status
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Date
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                                 Actions
                             </th>
                         </tr>
@@ -136,11 +142,11 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($assessmentResults as $result)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-                                                <i class="fas fa-clipboard-check text-white"></i>
+                                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
+                                                <i class="fas fa-clipboard-check"></i>
                                             </div>
                                         </div>
                                         <div class="ml-4">
@@ -153,7 +159,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
                                         {{ $result->enrollment->display_course_name }}
                                     </div>
@@ -161,7 +167,7 @@
                                         {{ $result->enrollment->batch->batch_name }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ $result->correct_answers }}/{{ $result->total_questions }}
                                     </div>
@@ -169,29 +175,29 @@
                                         {{ number_format($result->percentage, 1) }}%
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        {{ $result->grade === 'A+' ? 'bg-green-100 text-green-800' : 
-                                           ($result->grade === 'A' ? 'bg-blue-100 text-blue-800' : 
-                                           ($result->grade === 'B' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')) }}">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium 
+                                        {{ $result->grade === 'A+' ? 'bg-emerald-50 text-emerald-700' : 
+                                           ($result->grade === 'A' ? 'bg-blue-50 text-blue-700' : 
+                                           ($result->grade === 'B' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700')) }}">
                                         {{ $result->grade }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        {{ $result->is_passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium 
+                                        {{ $result->is_passed ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">
                                         <i class="fas fa-{{ $result->is_passed ? 'check-circle' : 'times-circle' }} mr-1"></i>
                                         {{ $result->is_passed ? 'Passed' : 'Failed' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-5 py-3.5 whitespace-nowrap text-sm text-gray-900">
                                     {{ $result->completed_at ? $result->completed_at->format('M d, Y') : 'N/A' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium">
                                     <a href="{{ route('student.assessments.show', $result) }}" 
-                                       class="text-primary-600 hover:text-primary-900">
-                                        <i class="fas fa-eye mr-1"></i>
-                                        View Details
+                                       class="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
                                     </a>
                                 </td>
                             </tr>
@@ -202,7 +208,7 @@
 
             <!-- Pagination -->
             @if($assessmentResults->hasPages())
-                <div class="px-6 py-4 border-t border-gray-200">
+                <div class="border-t border-slate-200 px-5 py-4">
                     {{ $assessmentResults->links() }}
                 </div>
             @endif
@@ -215,21 +221,24 @@
                 <p class="mt-2 text-gray-500">You haven't completed any assessments yet.</p>
                 <div class="mt-6">
                     <a href="{{ route('student.dashboard') }}" 
-                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                       class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Dashboard
                     </a>
                 </div>
             </div>
         @endif
-    </div>
+    </section>
 
     <!-- Performance Summary -->
     @if($assessmentResults->count() > 0)
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Performance Summary</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-blue-50 rounded-lg p-4">
+        <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-6 py-5">
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Summary</div>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Performance summary</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-4">
+                <div class="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
@@ -243,7 +252,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-green-50 rounded-lg p-4">
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <i class="fas fa-check-circle text-green-600 text-2xl"></i>
@@ -257,7 +266,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-red-50 rounded-lg p-4">
+                <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <i class="fas fa-times-circle text-red-600 text-2xl"></i>
@@ -271,7 +280,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-purple-50 rounded-lg p-4">
+                <div class="rounded-2xl border border-violet-200 bg-violet-50 p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <i class="fas fa-trophy text-purple-600 text-2xl"></i>
@@ -285,7 +294,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     @endif
 </div>
 @endsection

@@ -9,32 +9,32 @@
 @endphp
 <div class="max-w-3xl mx-auto space-y-6 pb-8">
     @if(! empty($resumeLesson))
-        <div class="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+        <div class="flex flex-col gap-3 rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div class="text-sm text-primary-950">
                 <span class="font-semibold">Continue where you left off:</span>
                 <span class="text-primary-900">{{ $resumeLesson->title }}</span>
             </div>
             <a href="{{ route('student.learn.lesson', [$enrollment, $resumeLesson]) }}"
-               class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 shrink-0">
+               class="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700">
                 <i class="fas fa-play mr-2 text-xs"></i> Resume lesson
             </a>
         </div>
     @endif
 
     {{-- Progress + exam readiness --}}
-    <div class="rounded-2xl bg-gradient-to-br from-slate-900 via-primary-900 to-primary-800 text-white shadow-xl overflow-hidden">
-        <div class="p-6 sm:p-8">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div class="p-6 sm:p-7">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                    <p class="text-primary-200 text-sm font-medium uppercase tracking-wide">Your progress</p>
-                    <h2 class="text-2xl sm:text-3xl font-bold mt-1">{{ $course->name }}</h2>
-                    <p class="text-primary-100/90 text-sm mt-2">Enrollment <span class="font-mono">{{ $enrollment->enrollment_number }}</span>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-600">Course progress</p>
+                    <h2 class="mt-2 text-2xl font-semibold text-gray-950 sm:text-3xl">{{ $course->name }}</h2>
+                    <p class="mt-2 text-sm text-gray-600">Enrollment <span class="font-mono text-gray-900">{{ $enrollment->enrollment_number }}</span>
                         @if($enrollment->batch?->batch_name)
                             · <span>{{ $enrollment->batch->batch_name }}</span>
                         @endif
                     </p>
                 </div>
-                <a href="{{ route('student.enrollments') }}" class="shrink-0 inline-flex items-center text-sm font-medium text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition">
+                <a href="{{ route('student.enrollments') }}" class="inline-flex shrink-0 items-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                     <i class="fas fa-arrow-left mr-2"></i> My courses
                 </a>
             </div>
@@ -42,29 +42,29 @@
             @if($progress)
                 <div class="mt-8">
                     <div class="flex justify-between text-sm mb-2">
-                        <span class="text-primary-100">Course completion</span>
-                        <span class="font-semibold tabular-nums">{{ $progress['completed'] }} / {{ $progress['total'] }} lessons · {{ number_format($pct, 0) }}%</span>
+                        <span class="text-gray-600">Course completion</span>
+                        <span class="font-semibold text-gray-900 tabular-nums">{{ $progress['completed'] }} / {{ $progress['total'] }} lessons · {{ number_format($pct, 0) }}%</span>
                     </div>
-                    <div class="h-3 rounded-full bg-black/25 overflow-hidden ring-1 ring-white/10">
-                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-500 ease-out"
+                    <div class="h-3 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out"
                              style="width: {{ min(100, $pct) }}%"></div>
                     </div>
                 </div>
             @else
-                <p class="mt-6 text-sm text-primary-100/80">This course has no numbered online lessons in the catalogue yet.</p>
+                <p class="mt-6 text-sm text-gray-500">This course has no numbered online lessons in the catalogue yet.</p>
             @endif
 
-            <div class="mt-8 pt-6 border-t border-white/15">
-                <p class="text-sm font-semibold text-primary-100 mb-3">Unlock final exam</p>
+            <div class="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                <p class="text-sm font-semibold text-gray-950 mb-3">Unlock final exam</p>
                 <ul class="grid sm:grid-cols-2 gap-2 text-sm">
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'dark', 'ok' => $checklist['institute_eligible'], 'label' => 'Institute marked you exam-eligible'])
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'dark', 'ok' => $checklist['fee_fully_paid'], 'label' => 'Course fee fully paid'])
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'dark', 'ok' => $checklist['batch_ended'], 'label' => 'Batch end date reached'])
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'dark', 'ok' => $checklist['within_exam_window'], 'label' => 'Within exam window (1 yr after batch end)'])
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'dark', 'ok' => $checklist['online_lessons_complete'], 'label' => $checklist['lms_progress'] ? 'All online lessons completed' : 'Online lessons (none for this course)'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['institute_eligible'], 'label' => 'Institute marked you exam-eligible'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['fee_fully_paid'], 'label' => 'Course fee fully paid'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['batch_ended'], 'label' => 'Batch end date reached'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['within_exam_window'], 'label' => 'Within exam window (1 yr after batch end)'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['online_lessons_complete'], 'label' => $checklist['lms_progress'] ? 'All online lessons completed' : 'Online lessons (none for this course)'])
                 </ul>
                 @if($checklist['can_take'])
-                    <p class="mt-4 text-emerald-300 text-sm font-medium flex items-center gap-2">
+                    <p class="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-700">
                         <i class="fas fa-check-circle"></i> You can take the exam from the Exams section.
                     </p>
                 @endif

@@ -13,6 +13,7 @@ use App\Models\AssessmentResult;
 use App\Models\Assessment;
 use App\Models\QuestionBank;
 use App\Models\Certificate;
+use App\Models\WhatsAppConversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,14 @@ class DashboardController extends Controller
             )
             : null;
 
+        $adminWorkspace = ! $isReception
+            ? Cache::remember(
+                $this->dashboardCacheKey($user, 'admin-workspace'),
+                self::DASHBOARD_CACHE_TTL_SECONDS,
+                fn () => $this->loadAdminWorkspace()
+            )
+            : null;
+
         return view('admin.dashboard', compact(
             'stats',
             'recentActivities',
@@ -96,7 +105,8 @@ class DashboardController extends Controller
             'recentPayments',
             'recentAssessments',
             'onboarding',
-            'receptionWorkspace'
+            'receptionWorkspace',
+            'adminWorkspace'
         ));
     }
 
@@ -350,6 +360,141 @@ class DashboardController extends Controller
             'recent_admissions' => $recentAdmissions,
             'missing_document_students' => $missingDocumentStudents,
             'recent_payments' => $recentPayments,
+        ];
+    }
+
+    private function loadAdminWorkspace(): array
+    {
+        $tpId = $this->getTrainingPartnerId();
+        $today = now()->startOfDay();
+        $examWindowStart = now()->subYear()->startOfDay();
+
+        $pendingStudents = $this->scopeStudents(
+            Student::select('id', 'full_name', 'email', 'created_at', 'status')
+                ->where('status', 'pending')
+                ->latest('created_at')
+                ->limit(5)
+        )->get();
+
+        $pendingPayments = $this->scopePayments(
+            Payment::select('id', 'student_id', 'amount', 'created_at', 'status')
+                ->with('student:id,full_name')
+                ->where('status', 'pending')
+                ->latest('created_at')
+                ->limit(5)
+        )->get();
+
+        $readyForEnrollmentCount = $this->scopeStudents(
+            Student::where('status', 'approved')
+                ->whereDoesntHave('enrollments', fn ($query) => $query->where('status', 'active'))
+        )->count();
+
+        $assessmentReadyQuery = $this->scopeEnrollments(
+            Enrollment::query()
+                ->where('status', 'active')
+                ->where('is_eligible_for_assessment', true)
+                ->where('outstanding_amount', '<=', 0)
+                ->where('is_legacy', false)
+                ->whereHas('batch', function ($query) use ($today, $examWindowStart) {
+                    $query->whereDate('end_date', '<=', $today)
+                        ->whereDate('end_date', '>=', $examWindowStart);
+                })
+                ->whereDoesntHave('assessmentResults', fn ($query) => $query->where('is_passed', true))
+        );
+
+        $assessmentReadyCount = (clone $assessmentReadyQuery)->count();
+        $assessmentReady = (clone $assessmentReadyQuery)
+            ->with(['student:id,full_name', 'batch:id,batch_name,course_id,end_date', 'batch.course:id,name'])
+            ->latest('updated_at')
+            ->limit(5)
+            ->get();
+
+        $pendingCertificatesCount = $this->scopeCertificates(
+            Certificate::where('is_issued', false)
+        )->count();
+
+        $pendingCertificates = $this->scopeCertificates(
+            Certificate::select('id', 'student_id', 'course_id', 'batch_id', 'issue_date', 'is_issued', 'created_at')
+                ->with(['student:id,full_name', 'course:id,name', 'batch:id,batch_name'])
+                ->where('is_issued', false)
+                ->latest('created_at')
+                ->limit(5)
+        )->get();
+
+        $enrollmentCountFilter = $tpId !== null
+            ? fn ($query) => $query->where('status', 'active')->whereHas('student', fn ($sq) => $sq->where('training_partner_id', $tpId))
+            : fn ($query) => $query->where('status', 'active');
+
+        $batchHealth = Batch::query()
+            ->visibleToTrainingPartner($tpId)
+            ->with('course:id,name')
+            ->withCount(['enrollments' => $enrollmentCountFilter])
+            ->where('is_active', true)
+            ->orderByRaw("
+                CASE
+                    WHEN DATE(start_date) > ? THEN 0
+                    WHEN DATE(start_date) <= ? AND DATE(end_date) >= ? THEN 1
+                    ELSE 2
+                END
+            ", [$today->toDateString(), $today->toDateString(), $today->toDateString()])
+            ->orderBy('start_date')
+            ->limit(6)
+            ->get()
+            ->map(function (Batch $batch) use ($today) {
+                $maxStudents = max(1, (int) ($batch->max_students ?? 0));
+                $fillRate = $batch->max_students
+                    ? (int) round(($batch->enrollments_count / $maxStudents) * 100)
+                    : null;
+
+                $status = 'Ended';
+                if ($batch->start_date && $batch->start_date->startOfDay()->gt($today)) {
+                    $status = 'Upcoming';
+                } elseif ($batch->end_date && $batch->end_date->endOfDay()->gte($today)) {
+                    $status = 'Running';
+                }
+
+                return [
+                    'batch' => $batch,
+                    'fill_rate' => $fillRate,
+                    'status' => $status,
+                ];
+            });
+
+        $lowFillCount = $batchHealth
+            ->filter(fn ($item) => $item['status'] !== 'Ended' && $item['fill_rate'] !== null && $item['fill_rate'] < 50)
+            ->count();
+
+        $whatsAppBase = $tpId !== null
+            ? WhatsAppConversation::query()->forTrainingPartner($tpId)
+            : WhatsAppConversation::query();
+
+        $unreadWhatsAppCount = (clone $whatsAppBase)
+            ->where('unread_count', '>', 0)
+            ->count();
+
+        $whatsAppConversations = (clone $whatsAppBase)
+            ->with(['student:id,full_name', 'lastMessage'])
+            ->where('unread_count', '>', 0)
+            ->orderByDesc('last_message_at')
+            ->limit(5)
+            ->get();
+
+        return [
+            'queue_counts' => [
+                'pending_students' => $this->scopeStudents(Student::where('status', 'pending'))->count(),
+                'pending_payments' => $this->scopePayments(Payment::where('status', 'pending'))->count(),
+                'ready_for_enrollment' => $readyForEnrollmentCount,
+                'assessment_ready' => $assessmentReadyCount,
+                'pending_certificates' => $pendingCertificatesCount,
+                'unread_whatsapp' => $unreadWhatsAppCount,
+                'low_fill_batches' => $lowFillCount,
+            ],
+            'pending_students' => $pendingStudents,
+            'pending_payments' => $pendingPayments,
+            'assessment_ready' => $assessmentReady,
+            'pending_certificates' => $pendingCertificates,
+            'batch_health' => $batchHealth,
+            'whatsapp_conversations' => $whatsAppConversations,
         ];
     }
 

@@ -1,106 +1,117 @@
 @extends('layouts.admin')
 
 @section('title', 'Payments Management')
+@section('page-title', 'Payments')
 
 @section('content')
-<div class="p-6">
-    <!-- Header Section -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Payments Management</h1>
-                <p class="text-gray-600 mt-2">Manage student payments, approvals, and receipts</p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <a href="{{ route('admin.payments.create') }}" 
-                   class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg flex items-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    Record Payment
-                </a>
+<div class="space-y-6">
+    <section class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-600">
+                        <i class="fas fa-credit-card text-[10px] text-primary-600"></i>
+                        Payments Queue
+                    </div>
+                    <h2 class="mt-3 text-xl font-semibold leading-tight text-slate-900 md:text-2xl">Manage recorded payments, approval status, and receipts.</h2>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Review payment records, approve pending entries, and track collected and outstanding amounts in one place.</p>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ route('admin.payments.pending') }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                        <i class="fas fa-clock"></i>
+                        Pending queue
+                    </a>
+                    <a href="{{ route('admin.payments.create') }}" 
+                       class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
+                        <i class="fas fa-plus"></i>
+                        Record payment
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
     @if(auth()->user()->is_reception)
-    <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+    <div class="mx-6 mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
         <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
         <strong>Reception:</strong> You can record payments and view details. <strong>Approving or rejecting</strong> pending payments is done by a <strong>centre admin</strong> only.
     </div>
     @endif
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Payments -->
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
+        <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-end justify-between gap-3">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Payments</p>
-                    <p class="text-3xl font-bold text-blue-600">{{ $stats['total_payments'] }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Total Payments</p>
+                    <p class="mt-3 text-2xl font-semibold text-slate-900">{{ number_format($stats['total_payments']) }}</p>
+                    <p class="mt-1 text-sm text-slate-600">Recorded payment entries</p>
                 </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-credit-card text-white text-xl"></i>
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                    <i class="fas fa-credit-card"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Pending Payments -->
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-end justify-between gap-3">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Pending Approval</p>
-                    <p class="text-3xl font-bold text-orange-600">{{ $stats['pending_payments'] }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">Pending Approval</p>
+                    <p class="mt-3 text-2xl font-semibold text-slate-900">{{ number_format($stats['pending_payments']) }}</p>
+                    <p class="mt-1 text-sm text-slate-600">Waiting for admin review</p>
                 </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-white text-xl"></i>
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                    <i class="fas fa-clock"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Remaining Amount -->
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-end justify-between gap-3">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Remaining Amount</p>
-                    <p class="text-3xl font-bold text-red-600">₹{{ number_format($stats['total_remaining_amount']) }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">Remaining Amount</p>
+                    <p class="mt-3 text-2xl font-semibold text-slate-900">₹{{ number_format($stats['total_remaining_amount']) }}</p>
+                    <p class="mt-1 text-sm text-slate-600">Outstanding balance still due</p>
                 </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Total Amount -->
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-end justify-between gap-3">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Amount</p>
-                    <p class="text-3xl font-bold text-purple-600">₹{{ number_format($stats['total_amount_approved']) }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700">Approved Amount</p>
+                    <p class="mt-3 text-2xl font-semibold text-slate-900">₹{{ number_format($stats['total_amount_approved']) }}</p>
+                    <p class="mt-1 text-sm text-slate-600">Approved payment value</p>
                 </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-rupee-sign text-white text-xl"></i>
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                    <i class="fas fa-rupee-sign"></i>
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+    </section>
 
     <!-- Pending Amount Card - Only show if there are pending payments -->
     @if($stats['total_amount_pending'] > 0)
-    <div class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-6 mb-8">
+    <div class="rounded-[20px] border border-orange-200 bg-orange-50 p-5">
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                <div class="mr-4 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-orange-800">Pending Amount</h3>
-                    <p class="text-2xl font-bold text-orange-900">₹{{ number_format($stats['total_amount_pending']) }}</p>
+                    <h3 class="text-base font-semibold text-orange-800">Pending Amount</h3>
+                    <p class="text-2xl font-semibold text-orange-900">₹{{ number_format($stats['total_amount_pending']) }}</p>
                     <p class="text-sm text-orange-700">Awaiting admin approval</p>
                 </div>
             </div>
             @if($stats['pending_payments'] > 0 && auth()->user()->is_admin)
                 <div class="flex items-center space-x-4">
                     <button id="selectAllPending" 
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
+                            class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
                         <i class="fas fa-check-square mr-2"></i>
                         Select All Pending
                     </button>
@@ -111,7 +122,7 @@
                         </div>
                         <button type="submit" 
                                 id="bulkApproveBtn"
-                                class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center"
+                                class="inline-flex items-center rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-orange-700"
                                 disabled>
                             <i class="fas fa-check-double mr-2"></i>
                             <span id="bulkApproveText">Approve Selected (<span id="selectedCount">0</span>)</span>
@@ -124,7 +135,7 @@
     @endif
 
 <!-- Search and Filters -->
-<div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+<div class="rounded-[20px] border border-gray-200 bg-white p-4 shadow-sm">
     <form method="GET" action="{{ route('admin.payments.index') }}" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
             <div class="relative">
@@ -133,10 +144,10 @@
                        data-live-search
                        value="{{ request('search') }}"
                        placeholder="Search student, receipt, course..."
-                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80">
-                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                       class="w-80 rounded-xl border border-gray-300 px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <i class="fas fa-search absolute left-3.5 top-3 text-gray-400"></i>
             </div>
-            <select name="status" data-live-filter class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <select name="status" data-live-filter class="rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">All Status</option>
                 <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                 <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
@@ -147,7 +158,7 @@
             <div class="flex items-center gap-2">
                 <label for="per_page" class="text-sm text-gray-600">Rows</label>
                 <select id="per_page" name="per_page" data-live-rows
-                        class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        class="rounded-xl border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     @foreach([10,20,50,100] as $size)
                         <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>
                             {{ $size }}
@@ -156,7 +167,7 @@
                 </select>
             </div>
             <a href="{{ route('admin.payments.index') }}"
-               class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
+               class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-800">
                 <i class="fas fa-times mr-1"></i>
                 Clear
             </a>
@@ -165,9 +176,9 @@
 </div>
 
 <!-- Enhanced Payments Table -->
-<div class="bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">All Payments</h3>
+<div class="rounded-[20px] border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-200">
+        <h3 class="text-base font-semibold text-gray-900">All Payments</h3>
         <div class="text-sm text-gray-500 mt-1">
             Showing {{ $payments->firstItem() ?? 0 }} to {{ $payments->lastItem() ?? 0 }} of {{ $payments->total() }} results
         </div>
@@ -177,30 +188,30 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             #
                         </th>
                         @if(auth()->user()->is_admin)
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         </th>
                         @endif
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Student Info
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Course & Batch
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Amount & Type
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Status
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Date & Time
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-[0.16em]">
                             Actions
                         </th>
                     </tr>
@@ -212,11 +223,11 @@
                         data-student-email="{{ $payment->student ? strtolower($payment->student->email) : 'n/a' }}"
                         data-receipt-number="{{ strtolower($payment->payment_receipt_number) }}"
                         data-payment-status="{{ $payment->status }}">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-5 py-3.5 whitespace-nowrap text-sm text-gray-500">
                             {{ ($payments->currentPage() - 1) * $payments->perPage() + $index + 1 }}
                         </td>
                         @if(auth()->user()->is_admin)
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             @if($payment->status === 'pending')
                                 <input type="checkbox" 
                                        class="payment-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
@@ -225,38 +236,38 @@
                             @endif
                         </td>
                         @endif
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
                                 <div class="font-medium">{{ $payment->student ? $payment->student->full_name : 'N/A' }}</div>
-                                <div class="text-gray-500">{{ $payment->student ? $payment->student->email : 'N/A' }}</div>
-                                <div class="text-xs text-gray-400">{{ $payment->student ? $payment->student->whatsapp_number : 'N/A' }}</div>
+                                <div class="mt-0.5 text-gray-500">{{ $payment->student ? $payment->student->email : 'N/A' }}</div>
+                                <div class="mt-0.5 text-xs text-gray-400">{{ $payment->student ? $payment->student->whatsapp_number : 'N/A' }}</div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
                                 @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->course)
                                     <div class="font-medium">{{ $payment->enrollment->batch->course->name }}</div>
-                                    <div class="text-gray-500">{{ $payment->enrollment->batch->batch_name }}</div>
-                                    <div class="text-xs text-gray-400">Batch #{{ $payment->enrollment->batch->id }}</div>
+                                    <div class="mt-0.5 text-gray-500">{{ $payment->enrollment->batch->batch_name }}</div>
+                                    <div class="mt-0.5 text-xs text-gray-400">Batch #{{ $payment->enrollment->batch->id }}</div>
                                 @else
                                     <div class="font-medium text-gray-400">No Course Assigned</div>
-                                    <div class="text-gray-500">Registration Fee</div>
-                                    <div class="text-xs text-gray-400">Standalone Payment</div>
+                                    <div class="mt-0.5 text-gray-500">Registration Fee</div>
+                                    <div class="mt-0.5 text-xs text-gray-400">Standalone Payment</div>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                <div class="font-medium text-lg">₹{{ number_format($payment->amount) }}</div>
-                                <div class="text-xs text-gray-500 capitalize">{{ str_replace('_', ' ', $payment->payment_type) }}</div>
+                                <div class="font-medium text-base">₹{{ number_format($payment->amount) }}</div>
+                                <div class="mt-0.5 text-xs text-gray-500 capitalize">{{ str_replace('_', ' ', $payment->payment_type) }}</div>
                                 @if($payment->remarks)
                                     <div class="text-xs text-gray-400 mt-1">{{ Str::limit($payment->remarks, 30) }}</div>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             @if($payment->status === 'approved')
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
                                     <i class="fas fa-check-circle mr-1"></i>
                                     Approved
                                 </span>
@@ -288,18 +299,18 @@
                                     <div class="text-xs text-gray-500 mt-1">by {{ $payment->approvedBy->name }}</div>
                                 @endif
                             @elseif($payment->status === 'pending')
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-800">
                                     <i class="fas fa-clock mr-1"></i>
                                     Pending
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
                                     <i class="fas fa-times-circle mr-1"></i>
                                     Rejected
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
                                 <div>{{ $payment->created_at->format('M d, Y') }}</div>
                                 <div class="text-xs text-gray-500">{{ $payment->created_at->format('h:i A') }}</div>
@@ -310,10 +321,10 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
+                        <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center gap-1.5">
                                 <a href="{{ route('admin.payments.show', $payment) }}" 
-                                   class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
                                    title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -323,7 +334,7 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" 
-                                                class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
                                                 title="Approve Payment"
                                                 onclick="return confirm('Are you sure you want to approve this payment?')">
                                             <i class="fas fa-check"></i>
@@ -334,7 +345,7 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" 
-                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100"
                                                 title="Reject Payment"
                                                 onclick="return confirm('Are you sure you want to reject this payment?')">
                                             <i class="fas fa-times"></i>
@@ -344,13 +355,13 @@
                                 
                                 @if($payment->status === 'approved')
                                     <a href="{{ route('admin.payments.receipt.pdf', $payment) }}" 
-                                       class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                       class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
                                        title="Download PDF">
                                         <i class="fas fa-file-pdf"></i>
                                     </a>
                                     <a href="{{ route('admin.payments.receipt', $payment) }}" 
                                        target="_blank"
-                                       class="text-purple-600 hover:text-purple-900 transition-colors duration-200"
+                                       class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition hover:bg-violet-100"
                                        title="View Receipt">
                                         <i class="fas fa-file-invoice"></i>
                                     </a>
@@ -358,7 +369,7 @@
                                         <form method="POST" action="{{ route('admin.payments.ams.retry', $payment) }}" class="inline">
                                             @csrf
                                             <button type="submit"
-                                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 transition hover:bg-amber-100"
                                                     title="Retry AMS sync"
                                                     onclick="return confirm('Retry AMS sync for receipt #{{ $payment->payment_receipt_number }}?')">
                                                 <i class="fas fa-rotate-right"></i>
@@ -372,7 +383,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100"
                                                 title="Delete Payment"
                                                 onclick="return confirm('Are you sure you want to delete this payment? This action cannot be undone.')">
                                             <i class="fas fa-trash"></i>
@@ -398,7 +409,7 @@
         </div>
 
     <!-- Enhanced Pagination -->
-    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+    <div class="px-5 py-4 border-t border-gray-200 bg-gray-50">
         @if($payments->hasPages())
             <div class="flex items-center justify-between">
                 <div class="text-sm text-gray-700">

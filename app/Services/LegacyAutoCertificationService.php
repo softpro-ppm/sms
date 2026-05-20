@@ -109,6 +109,11 @@ class LegacyAutoCertificationService
             } catch (\Exception $e) {
                 Log::error('Legacy certificate WhatsApp failed: ' . $e->getMessage());
             }
+            try {
+                app(StudentPushNotificationService::class)->sendCertificateIssued($certificate);
+            } catch (\Exception $e) {
+                Log::error('Legacy certificate PWA push failed: ' . $e->getMessage());
+            }
         } catch (\Exception $e) {
             Log::error('Legacy certificate email failed: ' . $e->getMessage());
         }
@@ -120,6 +125,11 @@ class LegacyAutoCertificationService
                 app(WhatsAppNotificationService::class)->sendAssessmentResult($result);
             } catch (\Exception $e) {
                 Log::error('Legacy assessment result WhatsApp failed: ' . $e->getMessage());
+            }
+            try {
+                app(StudentPushNotificationService::class)->sendAssessmentResult($result);
+            } catch (\Exception $e) {
+                Log::error('Legacy assessment result PWA push failed: ' . $e->getMessage());
             }
         } catch (\Exception $e) {
             Log::error('Legacy assessment result email failed: ' . $e->getMessage());

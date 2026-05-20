@@ -13,6 +13,7 @@ use App\Models\Enrollment;
 use App\Jobs\SyncPaymentToAmsJob;
 use App\Services\LegacyAutoCertificationService;
 use App\Services\PaymentAllocationService;
+use App\Services\StudentPushNotificationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -601,6 +602,11 @@ class PaymentController extends Controller
                     } catch (\Exception $e) {
                         \Log::error('Fully paid WhatsApp failed: ' . $e->getMessage());
                     }
+                    try {
+                        app(StudentPushNotificationService::class)->sendFullyPaid($enrollment);
+                    } catch (\Exception $e) {
+                        \Log::error('Fully paid PWA push failed: ' . $e->getMessage());
+                    }
                 }
             }
         }
@@ -609,6 +615,11 @@ class PaymentController extends Controller
             app(WhatsAppNotificationService::class)->sendPaymentApproved($payment);
         } catch (\Exception $e) {
             \Log::error('Payment approved WhatsApp failed: ' . $e->getMessage());
+        }
+        try {
+            app(StudentPushNotificationService::class)->sendPaymentApproved($payment);
+        } catch (\Exception $e) {
+            \Log::error('Payment approved PWA push failed: ' . $e->getMessage());
         }
     }
 

@@ -21,9 +21,9 @@ class ReceptionDashboardWorkspaceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
         $response->assertOk();
-        $response->assertSeeText('Reception Workspace V3.0');
-        $response->assertSeeText('Front-desk work should feel fast, focused, and clear.');
-        $response->assertSeeText('Document completion queue');
+        $response->assertSeeText('Reception Dashboard');
+        $response->assertSeeText('Manage student intake and payment entries.');
+        $response->assertSeeText('Document Completion Queue');
         $response->assertSeeText('Register student');
     }
 
@@ -38,8 +38,9 @@ class ReceptionDashboardWorkspaceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
         $response->assertOk();
-        $response->assertSeeText('Welcome back,');
-        $response->assertSeeText('Quick Actions');
+        $response->assertSeeText('Admin Dashboard');
+        $response->assertSeeText('Manage approvals, enrollments, and daily operations.');
+        $response->assertSeeText('Action Queues');
         $response->assertDontSeeText('Reception Workspace V3.0');
     }
 }

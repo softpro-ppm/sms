@@ -110,6 +110,14 @@
                             <span>Payments</span>
                         </a>
                     </li>
+
+                    <li>
+                        <a href="{{ route('student.notifications') }}"
+                           class="sidebar-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('student.notifications*') ? 'active' : '' }}">
+                            <i class="fas fa-bell w-5 h-5 mr-3"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
                     
                     <li>
                         <a href="{{ route('student.assessments') }}"
@@ -210,7 +218,7 @@
             
             <!-- Page Content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-                <div class="container mx-auto px-6 py-8">
+                <div class="max-w-[1600px] mx-auto px-4 py-6 sm:px-6 lg:px-8">
                     @yield('content')
                 </div>
             </main>
@@ -240,6 +248,47 @@
          class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden opacity-0 pointer-events-none"
          :class="sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
          @click="sidebarOpen = false"></div>
+
+    <div id="student-pwa-prompts" class="fixed bottom-4 right-4 z-40 flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-3">
+        <div id="student-install-prompt" class="hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-950">Install Student App</p>
+                    <p class="mt-1 text-sm leading-5 text-gray-600">Install the student portal for quick access from your phone or desktop.</p>
+                </div>
+                <button type="button" data-pwa-dismiss="install" class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button type="button" id="student-install-btn" class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700">
+                    <i class="fas fa-download mr-2 text-xs"></i>
+                    Install app
+                </button>
+            </div>
+            <p id="student-ios-install-tip" class="mt-3 hidden text-xs leading-5 text-gray-500">
+                On iPhone or iPad, tap <strong>Share</strong> and choose <strong>Add to Home Screen</strong>.
+            </p>
+        </div>
+
+        <div id="student-push-prompt" class="hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-950">Enable Student Notifications</p>
+                    <p class="mt-1 text-sm leading-5 text-gray-600">Get fee reminders, payment updates, exam alerts, and certificate notifications.</p>
+                </div>
+                <button type="button" data-pwa-dismiss="push" class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button type="button" id="student-enable-push-btn" class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700">
+                    <i class="fas fa-bell mr-2 text-xs"></i>
+                    Enable notifications
+                </button>
+            </div>
+        </div>
+    </div>
     
     <!-- Global Notifications -->
     <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
@@ -315,7 +364,132 @@
             @if(session('info') && trim(session('info')))
                 showNotification({!! json_encode(session('info')) !!}, 'info', 7000);
             @endif
+
+            initStudentPwa();
         });
+
+        async function initStudentPwa() {
+            const installCard = document.getElementById('student-install-prompt');
+            const pushCard = document.getElementById('student-push-prompt');
+            const installButton = document.getElementById('student-install-btn');
+            const pushButton = document.getElementById('student-enable-push-btn');
+            const iosInstallTip = document.getElementById('student-ios-install-tip');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            let deferredInstallPrompt = null;
+            let pushConfig = null;
+
+            const dismissKeys = {
+                install: 'student-pwa-install-dismissed',
+                push: 'student-pwa-push-dismissed',
+            };
+
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
+            document.querySelectorAll('[data-pwa-dismiss]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const key = button.getAttribute('data-pwa-dismiss');
+                    localStorage.setItem(dismissKeys[key], '1');
+                    if (key === 'install') installCard.classList.add('hidden');
+                    if (key === 'push') pushCard.classList.add('hidden');
+                });
+            });
+
+            window.addEventListener('beforeinstallprompt', (event) => {
+                event.preventDefault();
+                deferredInstallPrompt = event;
+
+                if (! isStandalone && ! localStorage.getItem(dismissKeys.install)) {
+                    installCard.classList.remove('hidden');
+                }
+            });
+
+            if (isIos && ! isStandalone && ! localStorage.getItem(dismissKeys.install)) {
+                iosInstallTip.classList.remove('hidden');
+                installCard.classList.remove('hidden');
+                installButton.classList.add('hidden');
+            }
+
+            installButton?.addEventListener('click', async () => {
+                if (! deferredInstallPrompt) return;
+
+                deferredInstallPrompt.prompt();
+                const choice = await deferredInstallPrompt.userChoice;
+                if (choice.outcome === 'accepted') {
+                    localStorage.setItem(dismissKeys.install, '1');
+                    installCard.classList.add('hidden');
+                }
+                deferredInstallPrompt = null;
+            });
+
+            try {
+                const response = await fetch('{{ route('student.pwa.config') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                pushConfig = await response.json();
+            } catch (error) {
+                pushConfig = null;
+            }
+
+            if (
+                pushConfig?.pushEnabled &&
+                'Notification' in window &&
+                'serviceWorker' in navigator &&
+                ! localStorage.getItem(dismissKeys.push) &&
+                Notification.permission !== 'granted'
+            ) {
+                pushCard.classList.remove('hidden');
+            }
+
+            pushButton?.addEventListener('click', async () => {
+                if (! pushConfig?.pushEnabled) {
+                    showNotification('Push notifications are not configured yet.', 'warning');
+                    return;
+                }
+
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    showNotification('Notification permission was not granted.', 'warning');
+                    return;
+                }
+
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    let subscription = await registration.pushManager.getSubscription();
+
+                    if (! subscription) {
+                        subscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(pushConfig.publicKey),
+                        });
+                    }
+
+                    await fetch('{{ route('student.pwa.subscriptions.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify(subscription.toJSON()),
+                    });
+
+                    localStorage.setItem(dismissKeys.push, '1');
+                    pushCard.classList.add('hidden');
+                    showNotification('Student notifications enabled successfully.', 'success');
+                } catch (error) {
+                    showNotification('Failed to enable student notifications.', 'error');
+                }
+            });
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+        }
     </script>
     
     @yield('scripts')

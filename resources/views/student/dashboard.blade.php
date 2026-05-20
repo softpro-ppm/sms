@@ -26,32 +26,31 @@
 @endphp
 
 @section('content')
-<div class="space-y-8">
-    <section class="relative overflow-hidden rounded-[28px] bg-gradient-to-br {{ $journey['theme'] }} text-white shadow-2xl shadow-primary-900/20">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.22),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.18),_transparent_24%)]"></div>
-        <div class="relative grid gap-8 px-6 py-8 lg:grid-cols-[1.5fr_0.9fr] lg:px-8 lg:py-9">
+<div class="space-y-6">
+    <section class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+        <div class="grid gap-6 border-b border-slate-200 bg-slate-50 px-6 py-6 lg:grid-cols-[1.5fr_0.9fr] lg:px-7 lg:py-7">
             <div class="space-y-5">
-                <span class="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm">
-                    <i class="fas fa-sparkles text-xs"></i>
+                <span class="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                    <i class="fas fa-sparkles text-[10px] text-primary-600"></i>
                     {{ $journey['badge'] }}
                 </span>
 
                 <div class="space-y-3">
-                    <p class="text-sm uppercase tracking-[0.24em] text-white/70">Student Journey V3.0</p>
-                    <h2 class="max-w-3xl text-3xl font-bold leading-tight md:text-4xl">{{ $journey['title'] }}</h2>
-                    <p class="max-w-2xl text-base leading-7 text-white/85 md:text-lg">{{ $journey['description'] }}</p>
-                    <p class="max-w-2xl text-sm leading-6 text-white/70">{{ $journey['meta'] }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Student Dashboard</p>
+                    <h2 class="max-w-3xl text-2xl font-semibold leading-tight text-slate-900 md:text-[28px]">{{ $journey['title'] }}</h2>
+                    <p class="max-w-2xl text-sm leading-6 text-slate-600 md:text-[15px]">{{ $journey['description'] }}</p>
+                    <p class="max-w-2xl text-sm leading-6 text-slate-500">{{ $journey['meta'] }}</p>
                 </div>
 
                 <div class="flex flex-col gap-3 sm:flex-row">
                     <a href="{{ $journey['action']['url'] }}"
-                       class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-primary-800 shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-primary-50">
+                       class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                         <i class="fas {{ $journey['action']['icon'] }}"></i>
                         {{ $journey['action']['label'] }}
                     </a>
                     @if($journey['secondary_action'])
                         <a href="{{ $journey['secondary_action']['url'] }}"
-                           class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15">
+                           class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
                             <i class="fas {{ $journey['secondary_action']['icon'] }}"></i>
                             {{ $journey['secondary_action']['label'] }}
                         </a>
@@ -60,35 +59,35 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 self-start">
-                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Active Courses</p>
-                    <p class="mt-3 text-3xl font-bold">{{ $stats['active_enrollments'] }}</p>
-                    <p class="mt-1 text-sm text-white/70">Live batches in your portal</p>
+                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Active Courses</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">{{ $stats['active_enrollments'] }}</p>
+                    <p class="mt-1 text-sm text-slate-500">Live batches in your portal</p>
                 </div>
-                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Outstanding</p>
-                    <p class="mt-3 text-3xl font-bold">₹{{ number_format($stats['outstanding_amount']) }}</p>
-                    <p class="mt-1 text-sm text-white/70">{{ $stats['pending_payments'] }} pending payment items</p>
+                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Outstanding</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">₹{{ number_format($stats['outstanding_amount']) }}</p>
+                    <p class="mt-1 text-sm text-slate-500">{{ $stats['pending_payments'] }} pending payment items</p>
                 </div>
-                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Exam Ready</p>
-                    <p class="mt-3 text-3xl font-bold">{{ $stats['available_assessments'] }}</p>
-                    <p class="mt-1 text-sm text-white/70">{{ $stats['pending_assessments'] }} still in progress</p>
+                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Exam Ready</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">{{ $stats['available_assessments'] }}</p>
+                    <p class="mt-1 text-sm text-slate-500">{{ $stats['pending_assessments'] }} still in progress</p>
                 </div>
-                <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                    <p class="text-xs uppercase tracking-[0.2em] text-white/70">Certificates</p>
-                    <p class="mt-3 text-3xl font-bold">{{ $stats['certificates_earned'] }}</p>
-                    <p class="mt-1 text-sm text-white/70">{{ $stats['pending_certificates'] }} awaiting issue</p>
+                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Certificates</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">{{ $stats['certificates_earned'] }}</p>
+                    <p class="mt-1 text-sm text-slate-500">{{ $stats['pending_certificates'] }} awaiting issue</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
+    <section class="rounded-[20px] border border-gray-200 bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Your journey</p>
-                <h3 class="mt-1 text-2xl font-bold text-gray-900">See exactly where you are in the course lifecycle</h3>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">Course Progress</p>
+                <h3 class="mt-1 text-xl font-semibold text-gray-900">Your current stage in the course lifecycle</h3>
             </div>
             <p class="max-w-xl text-sm leading-6 text-gray-500">Every step below is powered by the same enrollment, payment, learning, exam, and certificate rules already active in your account.</p>
         </div>
@@ -119,8 +118,8 @@
         <div class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Course action board</p>
-                    <h3 class="mt-1 text-2xl font-bold text-gray-900">Work course by course, not menu by menu</h3>
+                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Course Actions</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900">Active courses and next actions</h3>
                 </div>
                 <a href="{{ route('student.enrollments') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
                     View all courses
@@ -210,8 +209,8 @@
 
         <div class="space-y-6">
             <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">At a glance</p>
-                <h3 class="mt-1 text-2xl font-bold text-gray-900">Your current student summary</h3>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Summary</p>
+                <h3 class="mt-1 text-2xl font-bold text-gray-900">Current student status</h3>
 
                 <div class="mt-5 space-y-4">
                     <div class="rounded-2xl bg-amber-50 p-4">
@@ -258,8 +257,8 @@
             <section class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Recent payments</p>
-                        <h3 class="mt-1 text-xl font-bold text-gray-900">Latest money movement</h3>
+                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Recent Payments</p>
+                    <h3 class="mt-1 text-xl font-bold text-gray-900">Latest payment activity</h3>
                     </div>
                     <a href="{{ route('student.payments') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">All payments</a>
                 </div>
@@ -289,8 +288,8 @@
         <div class="rounded-[24px] border border-gray-200 bg-white p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Assessment progress</p>
-                    <h3 class="mt-1 text-xl font-bold text-gray-900">Results and upcoming exams</h3>
+                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Assessments</p>
+                    <h3 class="mt-1 text-xl font-bold text-gray-900">Exam results and upcoming assessments</h3>
                 </div>
                 <a href="{{ route('student.assessments') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">Assessment centre</a>
             </div>
@@ -339,7 +338,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Certificates</p>
-                    <h3 class="mt-1 text-xl font-bold text-gray-900">Issued and in-progress milestones</h3>
+                    <h3 class="mt-1 text-xl font-bold text-gray-900">Issued certificates and pending milestones</h3>
                 </div>
                 <a href="{{ route('student.certificates') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">All certificates</a>
             </div>

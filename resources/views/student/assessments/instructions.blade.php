@@ -1,179 +1,151 @@
 @extends('layouts.student')
 
 @section('title', 'Exam Instructions')
-@section('heading', 'Exam Instructions')
-@section('subheading', $assessment->title)
+@section('page-title', 'Exam Instructions')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-        <!-- Exam Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $assessment->title }}</h1>
-            <p class="text-lg text-gray-600">{{ $assessment->description }}</p>
-        </div>
-
-        <!-- Exam Details -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-blue-50 p-6 rounded-lg text-center">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-clock text-blue-600 text-xl"></i>
+<div class="max-w-4xl mx-auto space-y-6">
+    <section class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div class="px-6 py-6 sm:px-8 sm:py-7 border-b border-gray-100">
+            <span class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">
+                <i class="fas fa-clipboard-list text-[11px]"></i>
+                Assessment
+            </span>
+            <div class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div class="max-w-2xl">
+                    <h2 class="text-2xl font-semibold text-gray-950">{{ $assessment->title }}</h2>
+                    @if($assessment->description)
+                        <p class="mt-2 text-sm leading-6 text-gray-600">{{ $assessment->description }}</p>
+                    @endif
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Time Limit</h3>
-                <p class="text-2xl font-bold text-blue-600">{{ $assessment->time_limit_minutes }} minutes</p>
-            </div>
-            
-            <div class="bg-green-50 p-6 rounded-lg text-center">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-question-circle text-green-600 text-xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Total Questions</h3>
-                <p class="text-2xl font-bold text-green-600">{{ $assessment->total_questions ?? 25 }}</p>
-            </div>
-            
-            <div class="bg-yellow-50 p-6 rounded-lg text-center">
-                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-percentage text-yellow-600 text-xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Passing Score</h3>
-                <p class="text-2xl font-bold text-yellow-600">{{ $assessment->passing_percentage }}%</p>
-            </div>
-        </div>
-
-        <!-- Instructions -->
-        <div class="bg-gray-50 rounded-lg p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">
-                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                Important Instructions
-            </h2>
-            
-            <div class="space-y-4">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">1</span>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Time limit</p>
+                        <p class="mt-2 text-2xl font-semibold text-gray-950">{{ $assessment->time_limit_minutes }}</p>
+                        <p class="text-sm text-gray-500">minutes</p>
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Time Management</h3>
-                        <p class="text-gray-600">You have exactly <strong>{{ $assessment->time_limit_minutes }} minutes</strong> to complete this assessment. The timer will start as soon as you click "Start Exam".</p>
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Questions</p>
+                        <p class="mt-2 text-2xl font-semibold text-gray-950">{{ $assessment->total_questions ?? 25 }}</p>
+                        <p class="text-sm text-gray-500">multiple choice</p>
                     </div>
-                </div>
-                
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">2</span>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Question Format</h3>
-                        <p class="text-gray-600">This assessment contains <strong>{{ $assessment->total_questions ?? 25 }} multiple-choice questions</strong>. Each question has 4 options (A, B, C, D). Each correct answer carries <strong>{{ $assessment->total_questions ? round(100 / $assessment->total_questions, 1) : 4 }} marks</strong> (Total 100).</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">3</span>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Answering Questions</h3>
-                        <p class="text-gray-600">Select the most appropriate answer for each question. You can change your answers before submitting.</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">4</span>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Submission</h3>
-                        <p class="text-gray-600">Click "Submit Exam" when you have completed all questions. The assessment will be automatically submitted when time expires.</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">5</span>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Technical Requirements</h3>
-                        <p class="text-gray-600">Ensure you have a stable internet connection. Do not refresh the page or navigate away during the assessment.</p>
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Pass mark</p>
+                        <p class="mt-2 text-2xl font-semibold text-gray-950">{{ $assessment->passing_percentage }}%</p>
+                        <p class="text-sm text-gray-500">required</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Rules and Regulations -->
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <h2 class="text-xl font-bold text-red-900 mb-4">
-                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                Rules & Regulations
-            </h2>
-            
-            <ul class="space-y-2 text-red-800">
-                <li class="flex items-center">
-                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
-                    <span>Do not use any external resources, books, or notes</span>
-                </li>
-                <li class="flex items-center">
-                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
-                    <span>Do not communicate with others during the assessment</span>
-                </li>
-                <li class="flex items-center">
-                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
-                    <span>Do not take screenshots or record the assessment</span>
-                </li>
-                <li class="flex items-center">
-                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
-                    <span>Ensure you are in a quiet environment without distractions</span>
-                </li>
-            </ul>
-        </div>
+        <div class="px-6 py-6 sm:px-8 sm:py-7 space-y-6">
+            <div class="grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
+                <div class="rounded-2xl border border-gray-200 bg-white">
+                    <div class="border-b border-gray-100 px-5 py-4">
+                        <h3 class="text-base font-semibold text-gray-950">Before you start</h3>
+                    </div>
+                    <div class="px-5 py-5 space-y-5">
+                        @php
+                            $steps = [
+                                [
+                                    'title' => 'Time management',
+                                    'body' => 'The timer starts as soon as you begin. Once time ends, the assessment is submitted automatically.',
+                                ],
+                                [
+                                    'title' => 'Question format',
+                                    'body' => 'All questions are multiple choice. Choose the best answer for each question and review before you submit.',
+                                ],
+                                [
+                                    'title' => 'Answer changes',
+                                    'body' => 'You can move between questions and update your answers any time before the final submission.',
+                                ],
+                                [
+                                    'title' => 'Technical caution',
+                                    'body' => 'Keep a stable internet connection and avoid refreshing or closing the tab during the assessment.',
+                                ],
+                            ];
+                        @endphp
 
-        <!-- Start Exam Button -->
-        <div class="text-center">
-            <div class="mb-4">
-                <label class="flex items-center justify-center text-gray-700">
-                    <input type="checkbox" id="agreeTerms" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mr-2">
-                    <span class="text-sm">I have read and understood all the instructions and agree to follow the rules</span>
+                        @foreach($steps as $index => $step)
+                            <div class="flex gap-4">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
+                                    {{ $index + 1 }}
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900">{{ $step['title'] }}</h4>
+                                    <p class="mt-1 text-sm leading-6 text-gray-600">{{ $step['body'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-amber-200 bg-amber-50/60">
+                    <div class="border-b border-amber-100 px-5 py-4">
+                        <h3 class="text-base font-semibold text-amber-950">Rules</h3>
+                    </div>
+                    <div class="px-5 py-5">
+                        <ul class="space-y-3 text-sm leading-6 text-amber-900">
+                            <li class="flex gap-3">
+                                <i class="fas fa-ban mt-1 text-xs text-amber-700"></i>
+                                <span>Do not use outside notes, books, or other resources while taking the assessment.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="fas fa-ban mt-1 text-xs text-amber-700"></i>
+                                <span>Do not refresh, close, or switch away from the assessment window unless necessary.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="fas fa-ban mt-1 text-xs text-amber-700"></i>
+                                <span>Do not communicate with others or share questions during the assessment.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="fas fa-ban mt-1 text-xs text-amber-700"></i>
+                                <span>Keep your certificate and result eligibility safe by completing the assessment honestly.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5 sm:px-6">
+                <label class="flex items-start gap-3 text-sm leading-6 text-gray-700">
+                    <input type="checkbox" id="agreeTerms" class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <span>I have read the instructions and I am ready to begin this assessment.</span>
                 </label>
+
+                <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-gray-500">Once you start, the timer begins immediately and cannot be paused.</p>
+                    <button id="startExamBtn"
+                            disabled
+                            class="inline-flex items-center justify-center rounded-xl bg-gray-300 px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
+                            onclick="startExam()">
+                        <i class="fas fa-play mr-2 text-xs"></i>
+                        Start assessment
+                    </button>
+                </div>
             </div>
-            
-            <button id="startExamBtn" 
-                    disabled
-                    class="bg-gray-400 text-white px-8 py-4 rounded-lg text-lg font-semibold cursor-not-allowed transition-all duration-300"
-                    onclick="startExam()">
-                <i class="fas fa-play mr-2"></i>
-                Start Exam
-            </button>
-            
-            <p class="text-sm text-gray-500 mt-3">
-                Once you start, the timer will begin and cannot be paused
-            </p>
         </div>
-    </div>
+    </section>
 </div>
 
 <script>
-// Enable/disable start button based on checkbox
 document.getElementById('agreeTerms').addEventListener('change', function() {
     const startBtn = document.getElementById('startExamBtn');
     if (this.checked) {
         startBtn.disabled = false;
-        startBtn.className = 'bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl';
+        startBtn.className = 'inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-700';
     } else {
         startBtn.disabled = true;
-        startBtn.className = 'bg-gray-400 text-white px-8 py-4 rounded-lg text-lg font-semibold cursor-not-allowed transition-all duration-300';
+        startBtn.className = 'inline-flex items-center justify-center rounded-xl bg-gray-300 px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed';
     }
 });
 
 function startExam() {
     if (document.getElementById('agreeTerms').checked) {
-        // Show confirmation dialog
         if (confirm('Are you ready to start the assessment? Once you begin, the timer will start and cannot be paused.')) {
             window.location.href = "{{ route('student.assessments.start', $assessment) }}";
         }
     }
 }
-
-// No need to prevent page refresh on instructions page
-// The beforeunload warning is only needed during the actual assessment
 </script>
 @endsection

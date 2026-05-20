@@ -73,6 +73,16 @@ class Student extends Model
         return $this->hasMany(Notification::class);
     }
 
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(StudentPushSubscription::class);
+    }
+
+    public function pushNotificationLogs(): HasMany
+    {
+        return $this->hasMany(StudentPushNotificationLog::class);
+    }
+
     public function whatsAppConversations(): HasMany
     {
         return $this->hasMany(WhatsAppConversation::class, 'student_id');

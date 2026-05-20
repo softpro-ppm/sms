@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Services\CertificateIssuanceService;
 use App\Services\CertificatePdfService;
 use App\Services\CertificateTemplateService;
+use App\Services\StudentPushNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -971,6 +972,11 @@ class StudentController extends Controller
                         } catch (\Exception $e) {
                             \Log::error('Certificate WhatsApp failed: '.$e->getMessage());
                         }
+                        try {
+                            app(StudentPushNotificationService::class)->sendCertificateIssued($certificate);
+                        } catch (\Exception $e) {
+                            \Log::error('Certificate PWA push failed: '.$e->getMessage());
+                        }
                     } catch (\Exception $e) {
                         \Log::error('Certificate email failed: '.$e->getMessage());
                     }
@@ -988,6 +994,11 @@ class StudentController extends Controller
                 app(\App\Services\WhatsAppNotificationService::class)->sendAssessmentResult($result);
             } catch (\Exception $e) {
                 \Log::error('Assessment result WhatsApp failed: '.$e->getMessage());
+            }
+            try {
+                app(StudentPushNotificationService::class)->sendAssessmentResult($result);
+            } catch (\Exception $e) {
+                \Log::error('Assessment result PWA push failed: '.$e->getMessage());
             }
         } catch (\Exception $e) {
             \Log::error('Assessment result email failed: '.$e->getMessage());

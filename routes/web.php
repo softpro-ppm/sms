@@ -33,6 +33,7 @@ use App\Http\Controllers\Public\StudentVerificationController;
 use App\Http\Controllers\Student\StudentController as StudentPortalController;
 use App\Http\Controllers\Student\StudentCourseLearningController;
 use App\Http\Controllers\Student\ForcePasswordController as StudentForcePasswordController;
+use App\Http\Controllers\Student\StudentPwaController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -349,4 +350,9 @@ Route::middleware(['auth', 'role:student', 'password.force'])->prefix('student')
     Route::get('/payments/{payment}/receipt', [StudentPortalController::class, 'downloadReceipt'])->name('payments.receipt');
     Route::get('/id-card', [StudentPortalController::class, 'idCard'])->name('id-card');
     Route::get('/id-card/download', [StudentPortalController::class, 'downloadIdCard'])->name('id-card.download');
+    Route::get('/notifications', [StudentPwaController::class, 'preferences'])->name('notifications');
+    Route::post('/notifications', [StudentPwaController::class, 'updatePreferences'])->name('notifications.update');
+    Route::get('/pwa/config', [StudentPwaController::class, 'config'])->name('pwa.config');
+    Route::post('/pwa/subscriptions', [StudentPwaController::class, 'storeSubscription'])->name('pwa.subscriptions.store');
+    Route::delete('/pwa/subscriptions', [StudentPwaController::class, 'destroySubscription'])->name('pwa.subscriptions.destroy');
 });

@@ -10,6 +10,7 @@ use App\Models\Enrollment;
 use App\Models\Student;
 use App\Mail\EnrollmentConfirmationMail;
 use App\Services\EnrollmentNumberService;
+use App\Services\StudentPushNotificationService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -493,6 +494,11 @@ class BatchController extends Controller
                 app(WhatsAppNotificationService::class)->sendEnrollmentConfirmation($enrollment);
             } catch (\Exception $e) {
                 \Log::error('Enrollment WhatsApp failed: ' . $e->getMessage());
+            }
+            try {
+                app(StudentPushNotificationService::class)->sendEnrollmentConfirmation($enrollment);
+            } catch (\Exception $e) {
+                \Log::error('Enrollment PWA push failed: ' . $e->getMessage());
             }
 
             $enrolled++;

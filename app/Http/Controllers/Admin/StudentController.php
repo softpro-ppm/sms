@@ -18,6 +18,7 @@ use App\Mail\StudentRegistrationMail;
 use App\Services\EnrollmentNumberService;
 use App\Services\LegacyAutoCertificationService;
 use App\Services\LegacyEnrollmentService;
+use App\Services\StudentPushNotificationService;
 use App\Services\DocumentUploadService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
@@ -39,6 +40,8 @@ class StudentController extends Controller
         $perPage = (int) $request->get('per_page', 10);
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
         $search = trim((string) $request->get('search', ''));
+        $status = trim((string) $request->get('status', ''));
+        $queue = trim((string) $request->get('queue', ''));
 
         $studentsQuery = $this->scopeStudents(
             Student::with([
@@ -48,6 +51,24 @@ class StudentController extends Controller
                 ->withCount(['enrollments' => fn ($q) => $q->where('status', 'active')])
                 ->withExists(['documents as has_photo' => fn ($q) => $q->where('document_type', 'photo')])
         );
+
+        if (in_array($status, ['approved', 'pending', 'rejected'], true)) {
+            $studentsQuery->where('status', $status);
+        }
+
+        if ($queue !== '') {
+            match ($queue) {
+                'pending_approval' => $studentsQuery->where('status', 'pending'),
+                'ready_for_enrollment' => $studentsQuery
+                    ->where('status', 'approved')
+                    ->whereDoesntHave('enrollments', fn ($q) => $q->where('status', 'active')),
+                'missing_photo' => $studentsQuery
+                    ->where('status', 'pending')
+                    ->whereDoesntHave('documents', fn ($q) => $q->where('document_type', 'photo')),
+                'active_students' => $studentsQuery->where('status', 'approved'),
+                default => null,
+            };
+        }
 
         if ($search !== '') {
             $studentsQuery->where(function ($query) use ($search) {
@@ -76,9 +97,17 @@ class StudentController extends Controller
             'approved_students' => (int) ($statsRow->approved_students ?? 0),
             'pending_students' => (int) ($statsRow->pending_students ?? 0),
             'total_enrollments' => $this->scopeEnrollments(Enrollment::where('status', 'active'))->count(),
+            'ready_for_enrollment' => $this->scopeStudents(
+                Student::where('status', 'approved')
+                    ->whereDoesntHave('enrollments', fn ($q) => $q->where('status', 'active'))
+            )->count(),
+            'missing_photo' => $this->scopeStudents(
+                Student::where('status', 'pending')
+                    ->whereDoesntHave('documents', fn ($q) => $q->where('document_type', 'photo'))
+            )->count(),
         ];
 
-        return view('admin.students.index', compact('students', 'stats'));
+        return view('admin.students.index', compact('students', 'stats', 'status', 'queue'));
     }
 
     /** Ensure TP admin can only access students from their center. */
@@ -302,6 +331,11 @@ class StudentController extends Controller
             app(WhatsAppNotificationService::class)->sendEnrollmentConfirmation($enrollment);
         } catch (\Exception $e) {
             \Log::error('Enrollment WhatsApp failed: ' . $e->getMessage());
+        }
+        try {
+            app(StudentPushNotificationService::class)->sendEnrollmentConfirmation($enrollment);
+        } catch (\Exception $e) {
+            \Log::error('Enrollment PWA push failed: ' . $e->getMessage());
         }
 
         $msg = "Student enrolled in {$batch->batch_name} successfully! Enrollment Number: {$enrollmentNumber}. Total fees: ₹{$totalFees}";

@@ -1,347 +1,287 @@
 @extends('layouts.admin')
 
-@section('title', 'Students Management')
-@section('page-title', 'Students Management')
+@section('title', 'Student Queue')
+@section('page-title', 'Student Queue')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Students</h2>
-            <p class="text-gray-600 mt-1">Manage student registrations and enrollments</p>
+<div class="space-y-8">
+    <section class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5 text-slate-900">
+            <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700">
+                        <i class="fas fa-user-check text-[10px]"></i>
+                        Student Queue
+                    </div>
+                    <h2 class="mt-3 text-xl font-semibold leading-tight md:text-2xl">Review registrations, missing records, and enrollment readiness.</h2>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Approve students, fix missing documents, and move approved students into batches without switching between multiple screens.</p>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <a href="{{ route('admin.students.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
+                        <i class="fas fa-user-plus"></i>
+                        Register student
+                    </a>
+                    <a href="{{ route('admin.batches.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
+                        <i class="fas fa-layer-group"></i>
+                        Batch operations
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="mt-4 sm:mt-0">
-            <a href="{{ route('admin.students.create') }}" 
-               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg">
-                <i class="fas fa-plus mr-2"></i>
-                Add New Student
+
+        <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
+            <a href="{{ route('admin.students.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:bg-slate-50">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">All Students</p>
+                <div class="mt-3 flex items-end justify-between gap-3">
+                    <div>
+                        <p class="text-2xl font-semibold text-slate-900">{{ number_format($stats['total_students']) }}</p>
+                        <p class="mt-1 text-sm text-slate-600">Registered student records</p>
+                    </div>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:bg-slate-50">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Pending Approval</p>
+                <div class="mt-3 flex items-end justify-between gap-3">
+                    <div>
+                        <p class="text-2xl font-semibold text-slate-900">{{ number_format($stats['pending_students']) }}</p>
+                        <p class="mt-1 text-sm text-slate-600">Waiting for admin review</p>
+                    </div>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:bg-slate-50">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Ready for Enrollment</p>
+                <div class="mt-3 flex items-end justify-between gap-3">
+                    <div>
+                        <p class="text-2xl font-semibold text-slate-900">{{ number_format($stats['ready_for_enrollment']) }}</p>
+                        <p class="mt-1 text-sm text-slate-600">Approved with no active batch</p>
+                    </div>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ route('admin.students.index', ['queue' => 'missing_photo']) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:bg-slate-50">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Missing Photo</p>
+                <div class="mt-3 flex items-end justify-between gap-3">
+                    <div>
+                        <p class="text-2xl font-semibold text-slate-900">{{ number_format($stats['missing_photo']) }}</p>
+                        <p class="mt-1 text-sm text-slate-600">Cannot approve until uploaded</p>
+                    </div>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
             </a>
         </div>
-    </div>
+    </section>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Total Students</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ $stats['total_students'] }}</p>
-                </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-users text-white text-xl"></i>
-                </div>
-            </div>
+    <section class="rounded-[20px] border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="border-b border-gray-100 pb-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">Filters</p>
+            <h3 class="mt-1 text-base font-semibold text-gray-900">Admissions and approvals</h3>
+            <p class="mt-1 text-sm text-gray-600">Search by student, queue, or approval status.</p>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Approved Students</p>
-                    <p class="text-3xl font-bold text-green-600">{{ $stats['approved_students'] }}</p>
-                </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-white text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Pending Approval</p>
-                    <p class="text-3xl font-bold text-orange-600">{{ $stats['pending_students'] }}</p>
-                </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-white text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Total Enrollments</p>
-                    <p class="text-3xl font-bold text-purple-600">{{ $stats['total_enrollments'] }}</p>
-                </div>
-                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-graduation-cap text-white text-xl"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Students Table -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 class="text-lg font-semibold text-gray-900">All Students</h3>
-            <form method="GET" class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <form method="GET" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_180px_180px_110px_auto]">
                 <div class="relative">
                     <input type="text"
                            name="search"
                            data-live-search
                            value="{{ request('search') }}"
-                           placeholder="Search name, email, aadhar..."
-                           class="pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-64">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                           placeholder="Search name, email, Aadhaar, WhatsApp"
+                           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 </div>
-                <div class="flex items-center gap-2">
-                    <label for="per_page" class="text-sm text-gray-600">Rows</label>
-                    <select id="per_page" name="per_page"
-                            data-live-rows
-                            class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        @foreach([10,20,50,100] as $size)
-                            <option value="{{ $size }}" {{ (int) request('per_page', 10) === $size ? 'selected' : '' }}>
-                                {{ $size }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </form>
+
+                <select name="queue" data-live-filter class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    <option value="">All queues</option>
+                    <option value="pending_approval" {{ $queue === 'pending_approval' ? 'selected' : '' }}>Pending approval</option>
+                    <option value="ready_for_enrollment" {{ $queue === 'ready_for_enrollment' ? 'selected' : '' }}>Ready for enrollment</option>
+                    <option value="missing_photo" {{ $queue === 'missing_photo' ? 'selected' : '' }}>Missing photo</option>
+                    <option value="active_students" {{ $queue === 'active_students' ? 'selected' : '' }}>Approved students</option>
+                </select>
+
+                <select name="status" data-live-filter class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    <option value="">All statuses</option>
+                    <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved</option>
+                    <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                </select>
+
+                <select id="per_page" name="per_page" data-live-rows class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    @foreach([10,20,50,100] as $size)
+                        <option value="{{ $size }}" {{ (int) request('per_page', 10) === $size ? 'selected' : '' }}>{{ $size }} rows</option>
+                    @endforeach
+                </select>
+
+                <a href="{{ route('admin.students.index') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                    Reset
+                </a>
+        </form>
+    </section>
+
+    <section class="rounded-[20px] border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div class="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">Student Records</p>
+                <h3 class="mt-1 text-base font-semibold text-gray-900">Review and act on current student records</h3>
+            </div>
+            <div class="text-sm text-gray-500">
+                Showing {{ $students->firstItem() ?? 0 }}-{{ $students->lastItem() ?? 0 }} of {{ $students->total() }}
+            </div>
         </div>
-        
+
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-slate-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            #
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Student Details
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Contact Info
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Enrollments
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Registration Date
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Student</th>
+                        <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Status</th>
+                        <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Enrollments</th>
+                        <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Registration</th>
+                        <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($students as $index => $student)
-                    <tr class="hover:bg-gray-50 transition-colors duration-200">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ ($students->currentPage() - 1) * $students->perPage() + $index + 1 }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                                    <span class="text-white font-semibold text-lg">{{ substr($student->full_name, 0, 1) }}</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ $student->full_name }}</div>
-                                    <div class="text-sm text-gray-500">Aadhar: {{ $student->aadhar_number }}</div>
-                                    @if($student->date_of_birth)
-                                        <div class="text-xs text-gray-400 mt-1">
-                                            <i class="fas fa-birthday-cake mr-1"></i>{{ $student->date_of_birth->format('M d, Y') }}
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    @forelse($students as $student)
+                        <tr class="align-top transition hover:bg-slate-50">
+                            <td class="px-5 py-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-sm font-semibold text-blue-700">
+                                        {{ strtoupper(substr($student->full_name, 0, 1)) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900">{{ $student->full_name }}</p>
+                                        <p class="mt-0.5 text-sm text-gray-600">{{ $student->email ?: 'No email recorded' }}</p>
+                                        <p class="mt-0.5 text-sm text-gray-500">{{ $student->whatsapp_number ?: 'No WhatsApp recorded' }}</p>
+                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">Aadhar: {{ $student->aadhar_number ?: 'Not added' }}</span>
+                                            <span class="rounded-full {{ $student->has_photo ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }} px-2.5 py-0.5 text-xs font-medium">
+                                                {{ $student->has_photo ? 'Photo uploaded' : 'Photo missing' }}
+                                            </span>
                                         </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="space-y-1.5">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $student->status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ($student->status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') }}">
+                                        @if($student->status === 'approved')
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                        @elseif($student->status === 'pending')
+                                            <i class="fas fa-clock mr-1"></i>
+                                        @else
+                                            <i class="fas fa-times-circle mr-1"></i>
+                                        @endif
+                                        {{ ucfirst($student->status) }}
+                                    </span>
+                                    <p class="text-xs {{ $student->user && $student->user->is_active ? 'text-emerald-700' : 'text-slate-500' }}">
+                                        <i class="fas {{ $student->user && $student->user->is_active ? 'fa-user-check' : 'fa-user-times' }} mr-1"></i>
+                                        {{ $student->user && $student->user->is_active ? 'Account active' : 'Account inactive' }}
+                                    </p>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="space-y-1.5">
+                                    <p class="text-lg font-semibold leading-none text-violet-700">{{ $student->enrollments_count }}</p>
+                                    <p class="text-[11px] uppercase tracking-[0.16em] text-slate-500">Active enrollments</p>
+                                    @if($student->enrollments_count > 0)
+                                        <div class="space-y-0.5 text-sm text-gray-600">
+                                            @foreach($student->enrollments->take(2) as $enrollment)
+                                                <p>{{ $enrollment->batch->batch_name }} · {{ $enrollment->batch->course->name }}</p>
+                                            @endforeach
+                                            @if($student->enrollments_count > 2)
+                                                <p class="text-xs text-slate-500">+{{ $student->enrollments_count - 2 }} more</p>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <p class="text-sm text-amber-700">No active batch yet</p>
                                     @endif
                                 </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                <div class="flex items-center mb-1">
-                                    <i class="fas fa-envelope text-gray-400 mr-2"></i>
-                                    <span>{{ $student->email }}</span>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="space-y-0.5 text-sm text-gray-600">
+                                    <p class="font-medium text-gray-900">{{ $student->created_at->format('M d, Y') }}</p>
+                                    <p>{{ $student->created_at->diffForHumans() }}</p>
+                                    @if($student->approved_at)
+                                        <p class="text-emerald-700">Approved {{ $student->approved_at->format('M d, Y') }}</p>
+                                    @endif
                                 </div>
-                                <div class="flex items-center">
-                                    <i class="fab fa-whatsapp text-green-500 mr-2"></i>
-                                    <span>{{ $student->whatsapp_number }}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="space-y-1">
-                                @if($student->status === 'approved')
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        <i class="fas fa-check-circle mr-1"></i>
-                                        Approved
-                                    </span>
-                                @elseif($student->status === 'pending')
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        Pending
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        <i class="fas fa-times-circle mr-1"></i>
-                                        Rejected
-                                    </span>
-                                @endif
-                                
-                                @if($student->user && $student->user->is_active)
-                                    <div class="text-xs text-green-600 font-medium">
-                                        <i class="fas fa-user-check mr-1"></i>Account Active
-                                    </div>
-                                @else
-                                    <div class="text-xs text-gray-500">
-                                        <i class="fas fa-user-times mr-1"></i>Account Inactive
-                                    </div>
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                <div class="text-lg font-semibold text-purple-600">{{ $student->enrollments_count }}</div>
-                                <div class="text-xs text-gray-500">Active Enrollments</div>
-                                @if($student->enrollments_count > 0)
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        @foreach($student->enrollments->take(2) as $enrollment)
-                                            <div>{{ $enrollment->batch->batch_name }} ({{ $enrollment->batch->course->name }})</div>
-                                        @endforeach
-                                        @if($student->enrollments_count > 2)
-                                            <div>+{{ $student->enrollments_count - 2 }} more</div>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <a href="{{ route('admin.students.show', $student) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-medium text-primary-700 transition hover:border-primary-300 hover:bg-primary-50">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        Open
+                                    </a>
+                                    <a href="{{ route('admin.students.edit', $student) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                                        <i class="fas fa-edit text-xs"></i>
+                                        Edit
+                                    </a>
+
+                                    @if($student->status === 'pending')
+                                        @if($student->has_photo)
+                                            <form method="POST" action="{{ route('admin.students.approve', $student) }}" class="inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 font-medium text-white transition hover:bg-emerald-700">
+                                                    <i class="fas fa-check text-xs"></i>
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('admin.students.show', $student) }}#documents" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-2.5 py-1.5 font-medium text-amber-800 transition hover:bg-amber-200">
+                                                <i class="fas fa-camera text-xs"></i>
+                                                Upload photo
+                                            </a>
                                         @endif
-                                    </div>
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                <div>{{ $student->created_at->format('M d, Y') }}</div>
-                                <div class="text-xs text-gray-500">{{ $student->created_at->diffForHumans() }}</div>
-                                @if($student->approved_at)
-                                    <div class="text-xs text-green-600 mt-1">
-                                        <i class="fas fa-check mr-1"></i>Approved {{ $student->approved_at->format('M d') }}
-                                    </div>
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <a href="{{ route('admin.students.show', $student) }}" 
-                                   class="text-primary-600 hover:text-primary-900 transition-colors duration-200"
-                                   title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.students.edit', $student) }}" 
-                                   class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                                   title="Edit Student">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                
-                                @if($student->status === 'pending')
-                                    @if($student->has_photo)
-                                        <form method="POST" action="{{ route('admin.students.approve', $student) }}" class="inline">
+
+                                        <form method="POST" action="{{ route('admin.students.reject', $student) }}" class="inline">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" 
-                                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                                    title="Approve Student">
-                                                <i class="fas fa-check"></i>
+                                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-rose-100 px-2.5 py-1.5 font-medium text-rose-800 transition hover:bg-rose-200">
+                                                <i class="fas fa-times text-xs"></i>
+                                                Reject
                                             </button>
                                         </form>
-                                    @else
-                                        <a href="{{ route('admin.students.show', $student) }}#documents" 
-                                           class="text-amber-600 hover:text-amber-700 inline-block"
-                                           title="Upload photo first to approve">
-                                            <i class="fas fa-camera"></i>
-                                        </a>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.students.reject', $student) }}" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" 
-                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                title="Reject Student">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                                
-                                <form method="POST" action="{{ route('admin.students.destroy', $student) }}" 
-                                      class="inline" 
-                                      onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" 
-                                            class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                            title="Delete Student">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
+                                </div>
+                            </td>
+                        </tr>
                     @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
-                            <div class="text-gray-500">
-                                <i class="fas fa-users text-4xl mb-4"></i>
-                                <p class="text-lg font-medium">No students found</p>
-                                <p class="text-sm">Get started by adding your first student.</p>
-                                <a href="{{ route('admin.students.create') }}" 
-                                   class="inline-flex items-center px-4 py-2 mt-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors duration-200">
-                                    <i class="fas fa-plus mr-2"></i>
-                                    Add Student
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="text-gray-500">
+                                    <i class="fas fa-users text-4xl mb-4"></i>
+                                    <p class="text-lg font-medium">No students found</p>
+                                    <p class="text-sm">Try another filter or add a new student record.</p>
+                                    <a href="{{ route('admin.students.create') }}" class="mt-4 inline-flex items-center rounded-2xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-700">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        Register student
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        <!-- Pagination -->
         @if($students->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $students->links() }}
-        </div>
+            <div class="border-t border-gray-200 px-6 py-4">
+                {{ $students->links() }}
+            </div>
         @endif
-    </div>
+    </section>
 </div>
-
-@if(session('success'))
-<div x-data="{ show: true }" 
-     x-show="show" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 transform scale-90"
-     x-transition:enter-end="opacity-100 transform scale-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100 transform scale-100"
-     x-transition:leave-end="opacity-0 transform scale-90"
-     x-init="setTimeout(() => show = false, 5000)"
-     class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
-    <div class="flex items-center">
-        <i class="fas fa-check-circle mr-2"></i>
-        {{ session('success') }}
-        <button @click="show = false" class="ml-4 text-white hover:text-gray-200">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-</div>
-@endif
-
-@if(session('error'))
-<div x-data="{ show: true }" 
-     x-show="show" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 transform scale-90"
-     x-transition:enter-end="opacity-100 transform scale-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100 transform scale-100"
-     x-transition:leave-end="opacity-0 transform scale-90"
-     x-init="setTimeout(() => show = false, 5000)"
-     class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
-    <div class="flex items-center">
-        <i class="fas fa-exclamation-circle mr-2"></i>
-        {{ session('error') }}
-        <button @click="show = false" class="ml-4 text-white hover:text-gray-200">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-</div>
-@endif
 @endsection
