@@ -7,6 +7,8 @@
 /storage/pail
 /storage/app/public/student-documents
 /vendor
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
 
 # Database dumps and ad-hoc SQL exports — never commit (may contain PII/secrets).
 /database/*.sql

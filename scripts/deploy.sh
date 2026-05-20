@@ -30,15 +30,19 @@ git push
 echo ""
 echo "=== 5. Pulling on server & clearing config ==="
 # Remote: set -e so a failed step aborts (avoids 'Deploy complete' when the site is half-updated).
-# Do NOT delete bootstrap/cache manifests before package:discover — if SSH dies mid-way, Laravel 500s until discover runs.
+# Laravel package manifests inside bootstrap/cache are generated files. If they were built
+# from a dev install, production can fail trying to boot dev-only providers (for example Pail).
+# We clear only those generated manifests right before rebuilding autoload/discovery.
 $SSH "set -e
 cd $REMOTE_PATH || exit 1
 echo '--- git pull ---'
 git pull
 echo '--- composer install ---'
 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+echo '--- clear generated bootstrap cache manifests ---'
+rm -f bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/events.php
 echo '--- composer dump-autoload ---'
-composer dump-autoload --optimize --no-dev --no-interaction
+composer dump-autoload --optimize --no-dev --no-interaction --no-scripts
 echo '--- artisan package:discover ---'
 php artisan package:discover --ansi
 echo '--- artisan migrate ---'
