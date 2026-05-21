@@ -94,17 +94,9 @@ class StudentCreditService
 
             // Recalculate enrollment totals including credit
             $allocationService = new PaymentAllocationService();
-            $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalFee = (float) $enrollment->total_fee;
-            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+            $enrollment = $allocationService->recalculateEnrollmentTotals($enrollment);
 
-            $enrollment->update([
-                'paid_amount' => $totalPaid,
-                'outstanding_amount' => $totalOutstanding,
-                'is_eligible_for_assessment' => $totalOutstanding <= 0,
-            ]);
-
-            if ($totalOutstanding <= 0) {
+            if ((float) $enrollment->outstanding_amount <= 0) {
                 DB::afterCommit(function () use ($enrollment) {
                     app(LegacyAutoCertificationService::class)->issueIfEligible(
                         $enrollment->fresh()->loadMissing(['batch', 'student', 'legacyLinkCourse'])

@@ -115,7 +115,7 @@ class ExportController extends Controller
                     $payment->student->user->email,
                     $payment->amount,
                     $payment->payment_type,
-                    $payment->payment_method,
+                    $payment->payment_method_label,
                     $payment->status,
                     $payment->payment_number,
                     $payment->enrollment->batch->course->name,
@@ -273,7 +273,7 @@ class ExportController extends Controller
                     $payment->payment_type,
                     $payment->amount,
                     $payment->status,
-                    $payment->payment_method
+                    $payment->payment_method_label
                 ]);
             }
             fclose($file);

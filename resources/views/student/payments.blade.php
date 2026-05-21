@@ -61,7 +61,7 @@
                                                 Payment #{{ $payment->payment_number }}
                                             </div>
                                             <div class="text-sm text-gray-500">
-                                                {{ $payment->payment_method }}
+                                                {{ $payment->payment_method_label }}
                                             </div>
                                         </div>
                                     </div>

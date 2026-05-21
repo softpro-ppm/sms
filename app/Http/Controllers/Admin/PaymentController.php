@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\FullyPaidMail;
 use App\Mail\PaymentApprovedMail;
 use App\Models\Certificate;
+use App\Models\EnrollmentDiscount;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Enrollment;
@@ -226,6 +227,7 @@ class PaymentController extends Controller
             'enrollment_id' => 'required|exists:enrollments,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_type' => 'nullable|string',
+            'payment_method' => 'required|in:cash_upi,cash,upi,online',
             'remarks' => 'nullable|string|max:500'
         ]);
 
@@ -262,6 +264,7 @@ class PaymentController extends Controller
             'payment_receipt_number' => $receiptNumber,
             'amount' => $request->amount,
             'payment_type' => 'partial', // Will be updated to 'full' on approval if fully paid
+            'payment_method' => $request->payment_method,
             'status' => 'pending', // Always pending - needs admin approval
             'remarks' => $request->remarks,
         ]);
@@ -404,9 +407,68 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         $this->ensurePaymentBelongsToPartner($payment);
-        $payment->load(['student', 'enrollment.batch.course', 'approvedBy']);
+        $payment->load(['student', 'enrollment.batch.course', 'enrollment.discounts.appliedBy', 'approvedBy']);
         
         return view('admin.payments.show', compact('payment'));
+    }
+
+    public function storeDiscount(Request $request, Payment $payment)
+    {
+        $this->ensurePaymentBelongsToPartner($payment);
+
+        if (! auth()->user()->is_admin) {
+            return redirect()->back()->with('error', 'Only admin can apply special discounts.');
+        }
+
+        $enrollment = $payment->enrollment;
+        if (! $enrollment || ! $enrollment->exists) {
+            return redirect()->back()->with('error', 'This payment has no active enrollment for discount handling.');
+        }
+
+        $validated = $request->validate([
+            'discount_amount' => 'required|numeric|min:0.01',
+            'discount_reason' => 'required|string|max:255',
+        ]);
+
+        $allocationService = new PaymentAllocationService();
+        $outstandingByFee = $allocationService->getOutstandingAmounts($enrollment);
+        $courseOutstanding = (float) ($outstandingByFee['course_fee'] ?? 0);
+        $discountAmount = round((float) $validated['discount_amount'], 2);
+
+        if ($courseOutstanding <= 0) {
+            return redirect()->back()->with('error', 'No course fee balance is available for discount.');
+        }
+
+        if ($discountAmount > $courseOutstanding) {
+            return redirect()->back()->with('error', 'Discount cannot exceed the remaining course fee balance of ₹' . number_format($courseOutstanding, 2) . '.');
+        }
+
+        DB::transaction(function () use ($enrollment, $validated, $discountAmount, $allocationService): void {
+            Enrollment::query()->whereKey($enrollment->id)->lockForUpdate()->first();
+
+            EnrollmentDiscount::create([
+                'enrollment_id' => $enrollment->id,
+                'fee_type' => 'course_fee',
+                'amount' => $discountAmount,
+                'reason' => $validated['discount_reason'],
+                'applied_by' => auth()->id(),
+                'applied_at' => now(),
+            ]);
+
+            $freshEnrollment = Enrollment::query()->find($enrollment->id);
+            if ($freshEnrollment) {
+                $freshEnrollment = $allocationService->recalculateEnrollmentTotals($freshEnrollment);
+
+                if ((float) $freshEnrollment->outstanding_amount <= 0) {
+                    Payment::where('enrollment_id', $freshEnrollment->id)
+                        ->where('status', 'approved')
+                        ->update(['payment_type' => 'full']);
+                }
+            }
+        });
+
+        return redirect()->route('admin.payments.show', $payment)
+            ->with('success', 'Special discount applied successfully.');
     }
 
     public function retryAmsSync(Payment $payment)
@@ -450,14 +512,7 @@ class PaymentController extends Controller
 
         if ($wasApproved && $enrollment) {
             $allocationService = new \App\Services\PaymentAllocationService();
-            $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-            $totalFee = (float) $enrollment->total_fee;
-            $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
-            $enrollment->update([
-                'paid_amount' => $totalPaid,
-                'outstanding_amount' => $totalOutstanding,
-                'is_eligible_for_assessment' => $totalOutstanding <= 0,
-            ]);
+            $enrollment = $allocationService->recalculateEnrollmentTotals($enrollment);
         }
 
         return redirect()->route('admin.payments.index')
@@ -470,7 +525,7 @@ class PaymentController extends Controller
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
-        $pdf->setPaper('a4', 'portrait'); // A4 vertical: 210mm x 297mm
+        $pdf->setPaper('a5', 'landscape');
 
         return $pdf->stream('receipt_' . $payment->payment_receipt_number . '.pdf');
     }
@@ -481,7 +536,7 @@ class PaymentController extends Controller
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
-        $pdf->setPaper('a4', 'portrait'); // A4 vertical: 210mm x 297mm
+        $pdf->setPaper('a5', 'landscape');
         
         return $pdf->download('receipt_' . $payment->payment_receipt_number . '.pdf');
     }
@@ -541,17 +596,9 @@ class PaymentController extends Controller
 
                 $enrollment = Enrollment::query()->find($locked->enrollment_id);
                 if ($enrollment) {
-                    $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
-                    $totalFee = (float) $enrollment->total_fee;
-                    $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+                    $enrollment = $allocationService->recalculateEnrollmentTotals($enrollment);
 
-                    $enrollment->update([
-                        'paid_amount' => $totalPaid,
-                        'outstanding_amount' => $totalOutstanding,
-                        'is_eligible_for_assessment' => $totalOutstanding <= 0,
-                    ]);
-
-                    if ($totalOutstanding <= 0) {
+                    if ((float) $enrollment->outstanding_amount <= 0) {
                         Payment::where('enrollment_id', $enrollment->id)
                             ->where('status', 'approved')
                             ->update(['payment_type' => 'full']);
@@ -629,22 +676,9 @@ class PaymentController extends Controller
      */
     private function calculateTotalRemainingAmount()
     {
-        $enrollments = $this->scopeEnrollments(
-            Enrollment::with(['payments'])->where('status', 'active')
-        )->get();
-
-        $totalFees = 0;
-        $totalPaid = 0;
-        
-        foreach ($enrollments as $enrollment) {
-            $courseFee = $enrollment->total_fee ?? 0;
-            $approvedPayments = $enrollment->payments->where('status', 'approved')->sum('amount');
-            
-            $totalFees += $courseFee;
-            $totalPaid += $approvedPayments;
-        }
-        
-        return $totalFees - $totalPaid;
+        return (float) $this->scopeEnrollments(
+            Enrollment::query()->where('status', 'active')
+        )->sum('outstanding_amount');
     }
 
     /**

@@ -98,6 +98,11 @@
                             <span class="text-gray-600 font-medium">Payment Type</span>
                             <span class="text-gray-900 font-semibold">{{ ucfirst(str_replace('_', ' ', $payment->payment_type)) }}</span>
                         </div>
+
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Payment Method</span>
+                            <span class="text-gray-900 font-semibold">{{ $payment->payment_method_label }}</span>
+                        </div>
                         
                         <div class="flex justify-between items-center py-2 border-b border-gray-200">
                             <span class="text-gray-600 font-medium">Status</span>
@@ -284,13 +289,13 @@
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                        <div class="text-2xl font-bold text-gray-900">₹{{ number_format($payment->enrollment->batch->course->course_fee) }}</div>
-                        <div class="text-sm text-gray-600">Course Fee</div>
+                        <div class="text-2xl font-bold text-gray-900">₹{{ number_format((float) $payment->enrollment->total_fee, 2) }}</div>
+                        <div class="text-sm text-gray-600">Total Fee</div>
                     </div>
                     
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
                         <div class="text-2xl font-bold text-gray-900">₹{{ number_format($payment->enrollment->paid_amount) }}</div>
-                        <div class="text-sm text-gray-600">Total Paid</div>
+                        <div class="text-sm text-gray-600">Covered Amount</div>
                     </div>
                     
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -300,6 +305,80 @@
                         <div class="text-sm text-gray-600">Outstanding</div>
                     </div>
                 </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-blue-900">Special Discount</p>
+                                <p class="mt-1 text-sm text-blue-700">Applied to course fee only.</p>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-900">₹{{ number_format((float) $payment->enrollment->discount_amount, 2) }}</div>
+                        </div>
+                    </div>
+
+                    @if(auth()->user()->is_admin)
+                        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                            <h3 class="text-sm font-semibold text-amber-900">Add Special Discount</h3>
+                            <p class="mt-1 text-sm text-amber-800">This reduces the remaining course fee balance without changing the student’s cash payment history.</p>
+                            <form method="POST" action="{{ route('admin.payments.discounts.store', $payment) }}" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[160px_1fr_auto]">
+                                @csrf
+                                <div>
+                                    <label for="discount_amount" class="mb-1 block text-xs font-medium text-amber-900">Discount Amount</label>
+                                    <input type="number" step="0.01" min="0.01" name="discount_amount" id="discount_amount" value="{{ old('discount_amount') }}" class="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200" required>
+                                    @error('discount_amount')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="discount_reason" class="mb-1 block text-xs font-medium text-amber-900">Reason</label>
+                                    <input type="text" name="discount_reason" id="discount_reason" value="{{ old('discount_reason') }}" class="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200" placeholder="Special approval reason" required>
+                                    @error('discount_reason')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="submit" class="inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-700">
+                                        <i class="fas fa-tag mr-2"></i>
+                                        Apply
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+
+                @if($payment->enrollment->discounts->isNotEmpty())
+                    <div class="mt-6 rounded-lg border border-slate-200 bg-white">
+                        <div class="border-b border-slate-200 px-4 py-3">
+                            <h3 class="text-sm font-semibold text-slate-900">Discount History</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left font-semibold text-slate-500">Date</th>
+                                        <th class="px-4 py-2 text-left font-semibold text-slate-500">Fee Type</th>
+                                        <th class="px-4 py-2 text-left font-semibold text-slate-500">Reason</th>
+                                        <th class="px-4 py-2 text-left font-semibold text-slate-500">Applied By</th>
+                                        <th class="px-4 py-2 text-right font-semibold text-slate-500">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($payment->enrollment->discounts->sortByDesc('applied_at') as $discount)
+                                        <tr>
+                                            <td class="px-4 py-2 text-slate-700">{{ optional($discount->applied_at)->format('M d, Y h:i A') ?? '—' }}</td>
+                                            <td class="px-4 py-2 text-slate-700">{{ $discount->fee_type_display }}</td>
+                                            <td class="px-4 py-2 text-slate-700">{{ $discount->reason ?: '—' }}</td>
+                                            <td class="px-4 py-2 text-slate-700">{{ $discount->appliedBy?->name ?? 'System' }}</td>
+                                            <td class="px-4 py-2 text-right font-semibold text-slate-900">₹{{ number_format((float) $discount->amount, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 

@@ -14,6 +14,7 @@ class Payment extends Model
         'payment_receipt_number',
         'amount',
         'payment_type',
+        'payment_method',
         'status',
         'remarks',
         'approved_by',
@@ -68,5 +69,16 @@ class Payment extends Model
     public function getIsRejectedAttribute(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return match ($this->payment_method) {
+            'cash' => 'Cash',
+            'upi' => 'UPI',
+            'online' => 'Online',
+            'cash_upi', null, '' => 'Cash/UPI',
+            default => ucwords(str_replace('_', '/', (string) $this->payment_method)),
+        };
     }
 }

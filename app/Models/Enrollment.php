@@ -18,6 +18,7 @@ class Enrollment extends Model
         'status',
         'total_fee',
         'paid_amount',
+        'discount_amount',
         'outstanding_amount',
         'is_eligible_for_assessment',
         'registration_fee',
@@ -35,6 +36,7 @@ class Enrollment extends Model
         'enrollment_date' => 'date',
         'total_fee' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'outstanding_amount' => 'decimal:2',
         'is_eligible_for_assessment' => 'boolean',
         'registration_fee' => 'decimal:2',
@@ -69,6 +71,11 @@ class Enrollment extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(EnrollmentDiscount::class);
     }
 
     public function assessmentResults(): HasMany
@@ -231,6 +238,11 @@ class Enrollment extends Model
     public function getIsFullyPaidAttribute(): bool
     {
         return $this->outstanding_amount <= 0;
+    }
+
+    public function getNetPayableAmountAttribute(): float
+    {
+        return max(0, round((float) $this->total_fee - (float) $this->discount_amount, 2));
     }
 
     public function getCanTakeAssessmentAttribute(): bool

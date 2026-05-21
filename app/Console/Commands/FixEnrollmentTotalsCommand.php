@@ -96,6 +96,7 @@ class FixEnrollmentTotalsCommand extends Command
             }
 
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
+            $totalDiscount = $allocationService->getTotalDiscount($enrollment);
             $totalFee = (float) $enrollment->total_fee;
             $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
 
@@ -107,6 +108,7 @@ class FixEnrollmentTotalsCommand extends Command
                 if ($applyFix || $reallocate) {
                     $enrollment->update([
                         'paid_amount' => $totalPaid,
+                        'discount_amount' => $totalDiscount,
                         'outstanding_amount' => $totalOutstanding,
                         'is_eligible_for_assessment' => $totalOutstanding <= 0,
                     ]);
@@ -147,11 +149,13 @@ class FixEnrollmentTotalsCommand extends Command
             $allocationService->allocatePayment($payment);
             $enrollment = $payment->enrollment;
             $totalOutstanding = $allocationService->getTotalOutstanding($enrollment);
+            $totalDiscount = $allocationService->getTotalDiscount($enrollment);
             $totalFee = (float) $enrollment->total_fee;
             $totalPaid = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
 
             $enrollment->update([
                 'paid_amount' => $totalPaid,
+                'discount_amount' => $totalDiscount,
                 'outstanding_amount' => $totalOutstanding,
                 'is_eligible_for_assessment' => $totalOutstanding <= 0,
             ]);

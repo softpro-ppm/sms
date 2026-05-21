@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\CreditAllocation;
 use App\Models\Enrollment;
+use App\Models\EnrollmentDiscount;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use Illuminate\Support\Carbon;
 
 class PaymentAllocationService
 {
@@ -64,7 +66,7 @@ class PaymentAllocationService
     /**
      * Get outstanding amounts for each fee type (payments + credit allocations)
      */
-    public function getOutstandingAmounts(Enrollment $enrollment): array
+    public function getOutstandingAmounts(Enrollment $enrollment, ?Carbon $asOf = null): array
     {
         $outstandingAmounts = [
             'registration' => $enrollment->registration_fee,
@@ -74,8 +76,11 @@ class PaymentAllocationService
 
         // Subtract already paid amounts for each fee type
         $paidAllocations = PaymentAllocation::where('enrollment_id', $enrollment->id)
-            ->whereHas('payment', function($query) {
+            ->whereHas('payment', function($query) use ($asOf) {
                 $query->where('status', 'approved');
+                if ($asOf) {
+                    $query->where('created_at', '<=', $asOf);
+                }
             })
             ->get();
 
@@ -87,10 +92,23 @@ class PaymentAllocationService
         }
 
         // Subtract credit allocations
-        $creditAllocations = CreditAllocation::where('enrollment_id', $enrollment->id)->get();
+        $creditAllocations = CreditAllocation::where('enrollment_id', $enrollment->id)
+            ->when($asOf, fn ($query) => $query->where('created_at', '<=', $asOf))
+            ->get();
         foreach ($creditAllocations as $allocation) {
             $outstandingAmounts[$allocation->fee_type] = round(
                 (float) $outstandingAmounts[$allocation->fee_type] - (float) $allocation->allocated_amount,
+                2
+            );
+        }
+
+        $discountAllocations = EnrollmentDiscount::where('enrollment_id', $enrollment->id)
+            ->when($asOf, fn ($query) => $query->where('applied_at', '<=', $asOf))
+            ->get();
+
+        foreach ($discountAllocations as $allocation) {
+            $outstandingAmounts[$allocation->fee_type] = round(
+                (float) $outstandingAmounts[$allocation->fee_type] - (float) $allocation->amount,
                 2
             );
         }
@@ -157,5 +175,45 @@ class PaymentAllocationService
         $sum = round(array_sum($outstandingAmounts), 2);
 
         return $sum <= 0.004 ? 0.0 : $sum;
+    }
+
+    public function getTotalOutstandingAt(Enrollment $enrollment, Carbon $asOf): float
+    {
+        $outstandingAmounts = $this->getOutstandingAmounts($enrollment, $asOf);
+        $sum = round(array_sum($outstandingAmounts), 2);
+
+        return $sum <= 0.004 ? 0.0 : $sum;
+    }
+
+    public function getTotalDiscount(Enrollment $enrollment, ?Carbon $asOf = null): float
+    {
+        return round((float) EnrollmentDiscount::where('enrollment_id', $enrollment->id)
+            ->when($asOf, fn ($query) => $query->where('applied_at', '<=', $asOf))
+            ->sum('amount'), 2);
+    }
+
+    public function getApprovedPaymentTotal(Enrollment $enrollment, ?Carbon $asOf = null): float
+    {
+        return round((float) Payment::where('enrollment_id', $enrollment->id)
+            ->where('status', 'approved')
+            ->when($asOf, fn ($query) => $query->where('created_at', '<=', $asOf))
+            ->sum('amount'), 2);
+    }
+
+    public function recalculateEnrollmentTotals(Enrollment $enrollment): Enrollment
+    {
+        $totalOutstanding = $this->getTotalOutstanding($enrollment);
+        $totalFee = (float) $enrollment->total_fee;
+        $totalDiscount = $this->getTotalDiscount($enrollment);
+        $coveredAmount = $totalOutstanding <= 0 ? $totalFee : round($totalFee - $totalOutstanding, 2);
+
+        $enrollment->update([
+            'paid_amount' => $coveredAmount,
+            'discount_amount' => $totalDiscount,
+            'outstanding_amount' => $totalOutstanding,
+            'is_eligible_for_assessment' => $totalOutstanding <= 0,
+        ]);
+
+        return $enrollment->fresh();
     }
 }

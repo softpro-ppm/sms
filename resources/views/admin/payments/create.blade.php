@@ -107,8 +107,12 @@
                                             id: {{ $selectedEnrollment->id }},
                                             courseName: "{{ $selectedEnrollment->batch->course->name }}",
                                             batchName: "{{ $selectedEnrollment->batch->batch_name }}",
+                                            registrationFee: {{ $selectedEnrollment->registration_fee ?? 100 }},
+                                            courseFee: {{ $selectedEnrollment->course_fee ?? 0 }},
+                                            assessmentFee: {{ $selectedEnrollment->assessment_fee ?? 100 }},
                                             totalFee: {{ $selectedEnrollment->total_fee }},
-                                            outstandingAmount: {{ $selectedEnrollment->outstanding_amount ?? ($selectedEnrollment->total_fee - $selectedEnrollment->paid_amount) }}
+                                            outstandingAmount: {{ $selectedEnrollment->outstanding_amount ?? ($selectedEnrollment->total_fee - $selectedEnrollment->paid_amount) }},
+                                            discountAmount: {{ $selectedEnrollment->discount_amount ?? 0 }}
                                         };
                                     });
                                 </script>
@@ -140,7 +144,15 @@
                                         <div class="text-xl font-bold text-blue-900" id="total-fee">₹0</div>
                                     </div>
                                 </div>
-                                <div class="mt-3 pt-3 border-t border-blue-200">
+                                <div class="mt-3 grid gap-2 border-t border-blue-200 pt-3 md:grid-cols-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-blue-600 font-medium">Special Discount:</span>
+                                        <span class="text-lg font-bold text-blue-900" id="discount-amount">₹0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-blue-600 font-medium">Net Payable:</span>
+                                        <span class="text-lg font-bold text-blue-900" id="net-payable-amount">₹0</span>
+                                    </div>
                                     <div class="flex justify-between items-center">
                                         <span class="text-sm text-blue-600 font-medium">Outstanding Amount:</span>
                                         <span class="text-lg font-bold text-blue-900" id="outstanding-amount">₹0</span>
@@ -181,6 +193,26 @@
                                        required>
                             </div>
                             @error('amount')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div>
+                            <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                                Payment Method <span class="text-red-500">*</span>
+                            </label>
+                            <select id="payment_method"
+                                    name="payment_method"
+                                    class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 @error('payment_method') border-red-500 @enderror"
+                                    required>
+                                <option value="" disabled {{ old('payment_method', '') === '' ? 'selected' : '' }}>Select</option>
+                                <option value="cash_upi" {{ old('payment_method') === 'cash_upi' ? 'selected' : '' }}>Cash/UPI</option>
+                                <option value="cash" {{ old('payment_method') === 'cash' ? 'selected' : '' }}>Cash</option>
+                                <option value="upi" {{ old('payment_method') === 'upi' ? 'selected' : '' }}>UPI</option>
+                                <option value="online" {{ old('payment_method') === 'online' ? 'selected' : '' }}>Online</option>
+                            </select>
+                            @error('payment_method')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -290,6 +322,13 @@
     // Load students on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadStudents();
+        const amountInput = document.getElementById('amount');
+        if (amountInput) {
+            amountInput.addEventListener('wheel', function(event) {
+                event.preventDefault();
+                this.blur();
+            }, { passive: false });
+        }
         
         // If there's a pre-selected student from URL, select them immediately
         const urlParams = new URLSearchParams(window.location.search);
@@ -403,6 +442,7 @@
                     option.dataset.assessmentFee = enrollment.assessment_fee || 100;
                     option.dataset.totalFee = enrollment.total_fee || 0;
                     option.dataset.paidAmount = enrollment.paid_amount || 0;
+                    option.dataset.discountAmount = enrollment.discount_amount || 0;
                     option.dataset.outstandingAmount = enrollment.outstanding_amount || 0;
                     select.appendChild(option);
                 });
@@ -424,10 +464,12 @@
         const feeBreakdown = document.getElementById('fee-breakdown');
         feeBreakdown.classList.remove('hidden');
         
-        document.getElementById('reg-fee').textContent = `₹100`;
-        document.getElementById('course-fee').textContent = `₹${enrollmentData.totalFee - 200}`;
-        document.getElementById('assessment-fee').textContent = `₹100`;
+        document.getElementById('reg-fee').textContent = `₹${enrollmentData.registrationFee || 0}`;
+        document.getElementById('course-fee').textContent = `₹${enrollmentData.courseFee || 0}`;
+        document.getElementById('assessment-fee').textContent = `₹${enrollmentData.assessmentFee || 0}`;
         document.getElementById('total-fee').textContent = `₹${enrollmentData.totalFee}`;
+        document.getElementById('discount-amount').textContent = `₹${enrollmentData.discountAmount || 0}`;
+        document.getElementById('net-payable-amount').textContent = `₹${(parseFloat(enrollmentData.totalFee || 0) - parseFloat(enrollmentData.discountAmount || 0)).toFixed(2)}`;
         document.getElementById('outstanding-amount').textContent = `₹${enrollmentData.outstandingAmount}`;
         
         // Set max amount for partial payments
@@ -449,6 +491,8 @@
             document.getElementById('course-fee').textContent = `₹${selectedOption.dataset.courseFee}`;
             document.getElementById('assessment-fee').textContent = `₹${selectedOption.dataset.assessmentFee}`;
             document.getElementById('total-fee').textContent = `₹${selectedOption.dataset.totalFee}`;
+            document.getElementById('discount-amount').textContent = `₹${selectedOption.dataset.discountAmount || 0}`;
+            document.getElementById('net-payable-amount').textContent = `₹${(parseFloat(selectedOption.dataset.totalFee || 0) - parseFloat(selectedOption.dataset.discountAmount || 0)).toFixed(2)}`;
             document.getElementById('outstanding-amount').textContent = `₹${selectedOption.dataset.outstandingAmount}`;
             
             // Set max amount for partial payments
