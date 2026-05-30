@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\TrainingPartnerActivityLog;
 use App\Models\TrainingPartner;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -84,6 +85,15 @@ class TpImpersonationController extends Controller
             'audit_id' => $auditId,
         ]);
 
+        TrainingPartnerActivityLog::recordForUser(
+            $target,
+            'impersonation_started',
+            'Super Admin opened centre as '.$target->name,
+            $request,
+            ['training_partner_id' => $trainingPartner->id],
+            $request->user()
+        );
+
         Auth::login($target);
         $request->session()->regenerate();
 
@@ -130,6 +140,16 @@ class TpImpersonationController extends Controller
                 ->where('id', (int) $auditId)
                 ->update(['ended_at' => now(), 'updated_at' => now()]);
         }
+
+        TrainingPartnerActivityLog::recordForUser(
+            $request->user(),
+            'impersonation_ended',
+            'Super Admin ended centre access',
+            $request,
+            ['training_partner_id' => $tpId],
+            $original
+        );
+
         $request->session()->forget('impersonation');
         Auth::login($original);
         $request->session()->regenerate();

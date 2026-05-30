@@ -318,6 +318,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.s
     Route::get('/', [SuperDashboardController::class, 'index'])->name('dashboard');
     Route::get('impersonation-log', [ImpersonationAuditController::class, 'index'])->name('impersonation-log.index');
     Route::post('training-partners/{training_partner}/impersonate', [TpImpersonationController::class, 'start'])->name('training-partners.impersonate');
+    Route::get('training-partners/{training_partner}/activity-export/csv', [TrainingPartnerController::class, 'exportActivityCsv'])->name('training-partners.activity-export.csv');
     Route::get('training-partners/{training_partner}/wallet-export', [TrainingPartnerController::class, 'exportWalletTransactions'])->name('training-partners.wallet-export');
     Route::get('training-partners/{training_partner}/revenue-export/csv', [TrainingPartnerController::class, 'exportRevenueCsv'])->name('training-partners.revenue-export.csv');
     Route::get('training-partners/{training_partner}/revenue-export/pdf', [TrainingPartnerController::class, 'exportRevenuePdf'])->name('training-partners.revenue-export.pdf');

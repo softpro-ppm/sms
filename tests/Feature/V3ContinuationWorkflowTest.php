@@ -9,6 +9,7 @@ use App\Models\PartnerWalletTransaction;
 use App\Models\Student;
 use App\Models\StudentDeletionRequest;
 use App\Models\TrainingPartner;
+use App\Models\TrainingPartnerActivityLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -197,6 +198,55 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertSeeText('₹200.00')
             ->assertSeeText('Staff activity')
             ->assertSeeText($staff->email);
+    }
+
+    public function test_staff_login_creates_partner_activity_log(): void
+    {
+        [$partner, $staff] = $this->makePartnerAdmin();
+
+        $this->post(route('login'), [
+            'email' => $staff->email,
+            'password' => 'password',
+            'role_scope' => 'staff',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseHas('training_partner_activity_logs', [
+            'training_partner_id' => $partner->id,
+            'user_id' => $staff->id,
+            'actor_user_id' => $staff->id,
+            'type' => 'staff_login',
+        ]);
+    }
+
+    public function test_super_admin_partner_activity_shows_audit_timeline_and_exports_csv(): void
+    {
+        [$partner, $staff] = $this->makePartnerAdmin();
+        $superAdmin = User::factory()->create([
+            'role' => 'super_admin',
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        TrainingPartnerActivityLog::create([
+            'training_partner_id' => $partner->id,
+            'user_id' => $staff->id,
+            'actor_user_id' => $staff->id,
+            'type' => 'staff_login',
+            'description' => 'Admin signed in',
+            'ip_address' => '127.0.0.1',
+            'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.super.training-partners.activity', $partner))
+            ->assertOk()
+            ->assertSeeText('Activity timeline')
+            ->assertSeeText('Admin signed in');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.super.training-partners.activity-export.csv', $partner))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 
     public function test_super_admin_can_export_partner_revenue_csv_and_pdf(): void

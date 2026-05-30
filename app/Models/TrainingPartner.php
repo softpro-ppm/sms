@@ -46,6 +46,11 @@ class TrainingPartner extends Model
         return $this->hasMany(Student::class, 'training_partner_id');
     }
 
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(TrainingPartnerActivityLog::class);
+    }
+
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class, 'training_partner_id');

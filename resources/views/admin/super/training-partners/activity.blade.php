@@ -28,6 +28,10 @@
                class="inline-flex items-center px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-800 rounded-lg hover:bg-emerald-100">
                 <i class="fas fa-file-csv mr-2"></i>Revenue CSV
             </a>
+            <a href="{{ route('admin.super.training-partners.activity-export.csv', $trainingPartner) }}"
+               class="inline-flex items-center px-4 py-2 border border-blue-200 bg-blue-50 text-blue-800 rounded-lg hover:bg-blue-100">
+                <i class="fas fa-clock-rotate-left mr-2"></i>Activity CSV
+            </a>
             <a href="{{ route('admin.super.training-partners.revenue-export.pdf', $trainingPartner) }}"
                class="inline-flex items-center px-4 py-2 border border-rose-200 bg-rose-50 text-rose-800 rounded-lg hover:bg-rose-100">
                 <i class="fas fa-file-pdf mr-2"></i>Revenue PDF
@@ -167,6 +171,37 @@
                     </tr>
                     @empty
                     <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No centre access records yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-3 border-b border-gray-200 font-semibold text-gray-900">Activity timeline</div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50"><tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">IP</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($activityTimeline as $log)
+                    <tr>
+                        <td class="px-4 py-2 whitespace-nowrap text-gray-600">{{ $log->occurred_at?->format('M j, Y H:i') }}</td>
+                        <td class="px-4 py-2">
+                            <p class="font-medium text-gray-900">{{ $log->description }}</p>
+                            <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $log->type)) }}</p>
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">{{ $log->user?->name ?? '—' }}</td>
+                        <td class="px-4 py-2 text-gray-700">{{ $log->actor?->name ?? '—' }}</td>
+                        <td class="px-4 py-2 text-gray-500">{{ $log->ip_address ?? '—' }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No activity audit records yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\TrainingPartnerActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -58,6 +59,15 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
+            if (in_array($user->role, ['admin', 'reception'], true)) {
+                TrainingPartnerActivityLog::recordForUser(
+                    $user,
+                    'staff_login',
+                    ucfirst($user->role).' signed in',
+                    $request
+                );
+            }
+
             // Redirect based on role
             return match($user->role) {
                 'admin' => redirect()->route('admin.dashboard'),
@@ -75,6 +85,16 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['admin', 'reception'], true)) {
+            TrainingPartnerActivityLog::recordForUser(
+                $user,
+                'staff_logout',
+                ucfirst($user->role).' signed out',
+                $request
+            );
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

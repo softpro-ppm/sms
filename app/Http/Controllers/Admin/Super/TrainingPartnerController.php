@@ -12,6 +12,7 @@ use App\Models\PartnerWalletTransaction;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\TrainingPartner;
+use App\Models\TrainingPartnerActivityLog;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -230,6 +231,13 @@ class TrainingPartnerController extends Controller
             ];
         });
 
+        $activityTimeline = TrainingPartnerActivityLog::query()
+            ->with(['user:id,name,email,role', 'actor:id,name,email,role'])
+            ->where('training_partner_id', $tpId)
+            ->latest('occurred_at')
+            ->limit(30)
+            ->get();
+
         $impersonationLogs = collect();
         if (Schema::hasTable('impersonation_audit_logs')) {
             $impersonationLogs = DB::table('impersonation_audit_logs as l')
@@ -265,9 +273,41 @@ class TrainingPartnerController extends Controller
             'revenueStats',
             'recentRevenueTransactions',
             'staffActivity',
+            'activityTimeline',
             'impersonationLogs',
             'canImpersonate'
         ));
+    }
+
+    public function exportActivityCsv(TrainingPartner $trainingPartner): StreamedResponse
+    {
+        $filename = 'partner-activity-' . preg_replace('/[^a-zA-Z0-9_-]+/', '', $trainingPartner->code ?: 'partner') . '-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($trainingPartner) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Date', 'Type', 'Description', 'User', 'Actor', 'IP Address', 'User Agent']);
+
+            $trainingPartner->activityLogs()
+                ->with(['user:id,name,email', 'actor:id,name,email'])
+                ->latest('occurred_at')
+                ->chunk(500, function ($logs) use ($out) {
+                    foreach ($logs as $log) {
+                        fputcsv($out, [
+                            $log->occurred_at?->format('Y-m-d H:i:s'),
+                            $log->type,
+                            $log->description,
+                            $log->user?->name . ($log->user?->email ? ' <'.$log->user->email.'>' : ''),
+                            $log->actor?->name . ($log->actor?->email ? ' <'.$log->actor->email.'>' : ''),
+                            $log->ip_address,
+                            $log->user_agent,
+                        ]);
+                    }
+                });
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function exportWalletTransactions(TrainingPartner $trainingPartner): StreamedResponse
