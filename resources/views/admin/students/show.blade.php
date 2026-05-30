@@ -347,7 +347,15 @@
     </div>
 
     <!-- Enrollments Section -->
-            @if($student->enrollments->count() > 0)
+            @php
+                $hasEnrollments = $student->enrollments->count() > 0;
+                $latestDeletionRequest = $student->deletionRequests->first();
+                $canReviewDeletionRequest = (auth()->user()->is_admin || auth()->user()->is_super_admin)
+                    && $latestDeletionRequest
+                    && $latestDeletionRequest->status === 'pending';
+                $canForceDeleteStudent = auth()->user()->is_admin || auth()->user()->is_super_admin;
+            @endphp
+            @if($hasEnrollments)
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <div class="flex items-center mb-6">
                     <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-4">
@@ -448,8 +456,21 @@
                             Enroll as Legacy (HQ)
                         </button>
                         @endif
-
-                        @if($student->enrollments->count() > 0)
+                        @if(auth()->user()->is_reception)
+                        <button type="button" onclick="showDeleteRequestModal()"
+                                class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Request Delete Student
+                        </button>
+                        @endif
+                        @if($canReviewDeletionRequest)
+                        <button type="button" onclick="showDeletionReviewModal()"
+                                class="inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
+                            <i class="fas fa-user-shield mr-2"></i>
+                            Review Deletion Request
+                        </button>
+                        @endif
+                        @if($canForceDeleteStudent)
                         <button onclick="showForceDeleteModal()" 
                                 class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -457,9 +478,27 @@
                         </button>
                         @endif
                     </div>
+                    @if($latestDeletionRequest)
+                    <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-gray-900">Latest deletion request:</span>
+                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $latestDeletionRequest->status === 'pending' ? 'bg-amber-100 text-amber-800' : ($latestDeletionRequest->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-rose-100 text-rose-800') }}">
+                                {{ ucfirst($latestDeletionRequest->status) }}
+                            </span>
+                            <span>by {{ $latestDeletionRequest->requestedBy?->name ?? 'Unknown' }}</span>
+                            <span>on {{ optional($latestDeletionRequest->requested_at)->format('d M Y, h:i A') }}</span>
+                        </div>
+                        <p class="mt-2"><span class="font-medium text-gray-900">Reason:</span> {{ $latestDeletionRequest->request_reason }}</p>
+                        @if($latestDeletionRequest->review_notes)
+                        <p class="mt-1"><span class="font-medium text-gray-900">Admin note:</span> {{ $latestDeletionRequest->review_notes }}</p>
+                        @endif
+                    </div>
+                    @endif
                 </div>
         </div>
-        @else
+        @endif
+
+        @if(!$hasEnrollments)
             <!-- No Enrollments State -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <div class="text-center py-8">
@@ -481,12 +520,39 @@
                             Enroll as Legacy (HQ)
                         </button>
                         @endif
+                        @if(auth()->user()->is_reception)
+                        <button type="button" onclick="showDeleteRequestModal()"
+                                class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Request Delete Student
+                        </button>
+                        @endif
+                        @if($canReviewDeletionRequest)
+                        <button type="button" onclick="showDeletionReviewModal()"
+                                class="inline-flex items-center px-4 py-2 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
+                            <i class="fas fa-user-shield mr-2"></i>
+                            Review Deletion Request
+                        </button>
+                        @endif
+                        @if($canForceDeleteStudent)
                         <button onclick="showForceDeleteModal()" 
                                 class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
                             Force Delete Student
                         </button>
+                        @endif
                     </div>
+                    @if($latestDeletionRequest)
+                    <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm text-gray-700">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-gray-900">Latest deletion request:</span>
+                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $latestDeletionRequest->status === 'pending' ? 'bg-amber-100 text-amber-800' : ($latestDeletionRequest->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-rose-100 text-rose-800') }}">
+                                {{ ucfirst($latestDeletionRequest->status) }}
+                            </span>
+                        </div>
+                        <p class="mt-2"><span class="font-medium text-gray-900">Reason:</span> {{ $latestDeletionRequest->request_reason }}</p>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endif
@@ -949,6 +1015,30 @@
         document.getElementById('forceDeleteForm').reset();
     }
 
+    function showDeleteRequestModal() {
+        document.getElementById('deleteRequestModal')?.classList.remove('hidden');
+    }
+
+    function closeDeleteRequestModal() {
+        const modal = document.getElementById('deleteRequestModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        document.getElementById('deleteRequestForm')?.reset();
+    }
+
+    function showDeletionReviewModal() {
+        document.getElementById('deletionReviewModal')?.classList.remove('hidden');
+    }
+
+    function closeDeletionReviewModal() {
+        const modal = document.getElementById('deletionReviewModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        document.getElementById('rejectDeletionRequestForm')?.reset();
+    }
+
     function showEnrollModal() {
         document.getElementById('enrollModal').classList.remove('hidden');
     }
@@ -985,6 +1075,97 @@
         });
     }
 </script>
+
+<!-- Reception Delete Request Modal -->
+<div id="deleteRequestModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[10000]">
+    <div class="relative top-24 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Request Student Deletion</h3>
+                <button onclick="closeDeleteRequestModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="deleteRequestForm" method="POST" action="{{ route('admin.students.destroy', $student) }}" class="space-y-4">
+                @csrf
+                @method('DELETE')
+                <div>
+                    <label for="request_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for deletion request
+                    </label>
+                    <textarea id="request_reason" name="request_reason" rows="4" required
+                              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                              placeholder="Explain why this student should be deleted..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeDeleteRequestModal()"
+                            class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@php($latestDeletionRequest = $student->deletionRequests->first())
+@if($latestDeletionRequest && $latestDeletionRequest->status === 'pending' && (auth()->user()->is_admin || auth()->user()->is_super_admin))
+<!-- Admin Deletion Review Modal -->
+<div id="deletionReviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[10000]">
+    <div class="relative top-24 mx-auto p-5 border w-[32rem] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Review Deletion Request</h3>
+                <button onclick="closeDeletionReviewModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p><span class="font-semibold">Requested by:</span> {{ $latestDeletionRequest->requestedBy?->name ?? 'Unknown' }}</p>
+                <p class="mt-2"><span class="font-semibold">Reason:</span> {{ $latestDeletionRequest->request_reason }}</p>
+            </div>
+
+            <div class="mt-4 flex flex-col gap-4">
+                <form method="POST" action="{{ route('admin.student-deletion-requests.approve', $latestDeletionRequest) }}">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit"
+                            class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                        Approve & Delete Student
+                    </button>
+                </form>
+
+                <form id="rejectDeletionRequestForm" method="POST" action="{{ route('admin.student-deletion-requests.reject', $latestDeletionRequest) }}" class="space-y-3">
+                    @csrf
+                    @method('PATCH')
+                    <div>
+                        <label for="review_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                            Rejection note
+                        </label>
+                        <textarea id="review_notes" name="review_notes" rows="3"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                  placeholder="Optional reason if you reject this request..."></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="closeDeletionReviewModal()"
+                                class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
+                            Reject Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Force Delete Modal -->
 <div id="forceDeleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[10000]">

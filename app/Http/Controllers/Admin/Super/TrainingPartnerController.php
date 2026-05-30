@@ -8,14 +8,18 @@ use App\Models\AssessmentResult;
 use App\Models\Batch;
 use App\Models\Certificate;
 use App\Models\Enrollment;
+use App\Models\PartnerWalletTransaction;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\TrainingPartner;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -165,6 +169,83 @@ class TrainingPartnerController extends Controller
             ->limit(30)
             ->get();
 
+        $walletBase = PartnerWalletTransaction::query()
+            ->where('training_partner_id', $tpId);
+
+        $approvalRevenue = abs((float) (clone $walletBase)
+            ->where('type', 'student_approval')
+            ->where('amount', '<', 0)
+            ->sum('amount'));
+        $approvalRevenueMonth = abs((float) (clone $walletBase)
+            ->where('type', 'student_approval')
+            ->where('amount', '<', 0)
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->sum('amount'));
+        $recharges = (float) (clone $walletBase)
+            ->where('type', 'recharge')
+            ->where('amount', '>', 0)
+            ->sum('amount');
+        $approvalDeductionCount = (clone $walletBase)
+            ->where('type', 'student_approval')
+            ->where('amount', '<', 0)
+            ->count();
+
+        $revenueStats = [
+            'approval_revenue' => $approvalRevenue,
+            'approval_revenue_month' => $approvalRevenueMonth,
+            'approval_deduction_count' => $approvalDeductionCount,
+            'wallet_recharges' => $recharges,
+            'wallet_balance' => (float) $trainingPartner->wallet_balance,
+            'potential_monthly_revenue' => (float) $stats['students_approved'] * (float) ($trainingPartner->student_approval_deduction ?? 0),
+        ];
+
+        $recentRevenueTransactions = (clone $walletBase)
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
+        $staffUsers = User::query()
+            ->where('training_partner_id', $tpId)
+            ->whereIn('role', ['admin', 'reception'])
+            ->orderBy('role')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'is_active', 'created_at']);
+
+        $lastSessions = collect();
+        if (Schema::hasTable('sessions') && $staffUsers->isNotEmpty()) {
+            $lastSessions = DB::table('sessions')
+                ->whereIn('user_id', $staffUsers->pluck('id'))
+                ->select('user_id', DB::raw('MAX(last_activity) as last_activity'))
+                ->groupBy('user_id')
+                ->pluck('last_activity', 'user_id');
+        }
+
+        $staffActivity = $staffUsers->map(function (User $user) use ($lastSessions) {
+            $lastActivity = $lastSessions->get($user->id);
+
+            return [
+                'user' => $user,
+                'last_seen_at' => $lastActivity ? Carbon::createFromTimestamp((int) $lastActivity) : null,
+            ];
+        });
+
+        $impersonationLogs = collect();
+        if (Schema::hasTable('impersonation_audit_logs')) {
+            $impersonationLogs = DB::table('impersonation_audit_logs as l')
+                ->join('users as su', 'su.id', '=', 'l.super_admin_user_id')
+                ->join('users as tu', 'tu.id', '=', 'l.target_user_id')
+                ->select([
+                    'l.started_at',
+                    'l.ended_at',
+                    'su.name as super_admin_name',
+                    'tu.name as target_name',
+                ])
+                ->where('l.training_partner_id', $tpId)
+                ->orderByDesc('l.started_at')
+                ->limit(10)
+                ->get();
+        }
+
         $canImpersonate = in_array($trainingPartner->status, ['active', 'suspended'], true)
             && User::query()
                 ->where('training_partner_id', $tpId)
@@ -180,6 +261,10 @@ class TrainingPartnerController extends Controller
             'recentPayments',
             'recentResults',
             'recentCertificates',
+            'revenueStats',
+            'recentRevenueTransactions',
+            'staffActivity',
+            'impersonationLogs',
             'canImpersonate'
         ));
     }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CourseLearningManageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\ForcePasswordController;
+use App\Http\Controllers\Admin\LegacyStudentController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QuestionBankController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\StudentDeletionRequestController;
 use App\Http\Controllers\Admin\Super\ImpersonationAuditController;
 use App\Http\Controllers\Admin\Super\SuperDashboardController;
 use App\Http\Controllers\Admin\Super\TrainingPartnerController;
@@ -116,6 +118,9 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
     Route::post('/students/{student}/reset-password', [StudentController::class, 'resetPassword'])->name('students.reset-password');
     Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+    Route::get('/student-deletion-requests', [StudentDeletionRequestController::class, 'index'])->name('student-deletion-requests.index');
+    Route::patch('/student-deletion-requests/{deletionRequest}/approve', [StudentController::class, 'approveDeletionRequest'])->name('student-deletion-requests.approve');
+    Route::patch('/student-deletion-requests/{deletionRequest}/reject', [StudentController::class, 'rejectDeletionRequest'])->name('student-deletion-requests.reject');
     Route::patch('/students/{student}/approve', [StudentController::class, 'approve'])->name('students.approve');
     Route::patch('/students/{student}/reject', [StudentController::class, 'reject'])->name('students.reject');
     Route::post('/students/{student}/enroll', [StudentController::class, 'enroll'])->name('students.enroll');
@@ -126,6 +131,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::delete('/enrollments/{enrollment}/remove', [StudentController::class, 'removeFromEnrollment'])->name('enrollments.remove');
     Route::get('/api/student-batches/by-course', [StudentController::class, 'getBatchesByCourse'])->name('students.batches-by-course');
     Route::get('/api/course-details/{courseId}', [StudentController::class, 'getCourseDetails'])->name('students.course-details');
+    Route::get('/legacy-students', [LegacyStudentController::class, 'index'])->name('legacy-students.index');
 
     // Student Document Management
     Route::post('/students/{student}/documents', [StudentController::class, 'uploadDocument'])->name('students.upload-document');

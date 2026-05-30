@@ -1,5 +1,7 @@
 @extends('layouts.login-split')
 
+@section('title', 'Login')
+
 @section('content')
 <div class="min-h-[calc(100vh-140px)] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
@@ -80,6 +82,7 @@
                                 <input name="remember" type="checkbox" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
                                 <span class="ml-2 text-sm text-gray-700">Remember me</span>
                             </label>
+                            <a href="{{ route('password.request') }}" class="text-sm font-medium text-gray-900 hover:text-amber-600">Forgot password?</a>
                         </div>
                         <button type="submit" class="w-full py-3 px-4 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
                             <i class="fas fa-sign-in-alt"></i> Sign in

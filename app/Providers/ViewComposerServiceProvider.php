@@ -25,9 +25,15 @@ class ViewComposerServiceProvider extends ServiceProvider
         // Share common data with admin layout (TP-scoped for non–Super Admin)
         View::composer('layouts.admin', function ($view) {
             $user = Auth::user();
+            $pendingStudents = AdminLayoutScopes::pendingStudentsCountCached($user);
+            $pendingDeletionRequests = AdminLayoutScopes::pendingDeletionRequestsCountCached($user);
             $view->with([
-                'pendingStudents' => AdminLayoutScopes::pendingStudentsCountCached($user),
+                'pendingStudents' => $pendingStudents,
                 'pendingPayments' => AdminLayoutScopes::pendingPaymentsCountCached($user),
+                'pendingDeletionRequests' => $pendingDeletionRequests,
+                'studentAttentionCount' => ($user && ($user->is_admin || $user->is_super_admin))
+                    ? $pendingStudents + $pendingDeletionRequests
+                    : $pendingStudents,
             ]);
         });
     }

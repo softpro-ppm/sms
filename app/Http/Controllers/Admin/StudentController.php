@@ -15,6 +15,8 @@ use App\Models\StudentDocument;
 use App\Mail\AccountApprovedMail;
 use App\Mail\EnrollmentConfirmationMail;
 use App\Mail\StudentRegistrationMail;
+use App\Models\StudentDeletionRequest;
+use App\Support\AdminLayoutScopes;
 use App\Services\EnrollmentNumberService;
 use App\Services\LegacyAutoCertificationService;
 use App\Services\LegacyEnrollmentService;
@@ -122,7 +124,15 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $this->ensureStudentBelongsToPartner($student);
-        $student->load(['user', 'enrollments.batch.course', 'enrollments.legacyLinkCourse', 'payments', 'assessmentResults.assessment', 'documents']);
+        $student->load([
+            'user',
+            'enrollments.batch.course',
+            'enrollments.legacyLinkCourse',
+            'payments',
+            'assessmentResults.assessment',
+            'documents',
+            'deletionRequests' => fn ($query) => $query->latest('requested_at')->with(['requestedBy', 'reviewedBy']),
+        ]);
 
         $tpId = $this->getTrainingPartnerId();
         $legacyCourseId = LegacyEnrollmentService::legacyCourseId();
@@ -772,6 +782,36 @@ class StudentController extends Controller
     public function destroy(Student $student)
     {
         $this->ensureStudentBelongsToPartner($student);
+        if (auth()->user()->is_reception) {
+            request()->validate([
+                'request_reason' => 'required|string|max:1000',
+            ]);
+
+            $pendingRequest = $student->deletionRequests()
+                ->where('status', StudentDeletionRequest::STATUS_PENDING)
+                ->latest('requested_at')
+                ->first();
+
+            if ($pendingRequest) {
+                return redirect()->back()
+                    ->with('error', 'A deletion request for this student is already pending admin approval.');
+            }
+
+            $student->deletionRequests()->create([
+                'student_name_snapshot' => $student->full_name,
+                'student_email_snapshot' => $student->email,
+                'request_reason' => trim((string) request('request_reason')),
+                'status' => StudentDeletionRequest::STATUS_PENDING,
+                'requested_by' => auth()->id(),
+                'requested_at' => now(),
+            ]);
+
+            AdminLayoutScopes::clearPendingCountsForTrainingPartner($student->training_partner_id);
+
+            return redirect()->back()
+                ->with('success', 'Deletion request submitted to admin for approval.');
+        }
+
         // Check if student has any active enrollments or payments
         if ($student->enrollments()->where('status', 'active')->count() > 0) {
             return redirect()->back()
@@ -785,6 +825,8 @@ class StudentController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $this->approvePendingDeletionRequestsForDeletedStudent($student, 'Student deleted directly by admin.');
 
             // Delete dropped enrollments first
             $student->enrollments()->where('status', 'dropped')->delete();
@@ -810,12 +852,98 @@ class StudentController extends Controller
         }
     }
 
+    public function approveDeletionRequest(StudentDeletionRequest $deletionRequest)
+    {
+        abort_unless(auth()->user()->is_admin || auth()->user()->is_super_admin, 403);
+
+        $student = $deletionRequest->student;
+        if (!$student) {
+            return redirect()->back()->with('error', 'This student record is no longer available.');
+        }
+
+        $this->ensureStudentBelongsToPartner($student);
+
+        if ($deletionRequest->status !== StudentDeletionRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'This deletion request has already been reviewed.');
+        }
+
+        if ($student->enrollments()->where('status', 'active')->count() > 0) {
+            return redirect()->back()
+                ->with('error', 'Cannot approve deletion while the student has active enrollments. Drop enrollments first or use force delete.');
+        }
+
+        if ($student->payments()->count() > 0) {
+            return redirect()->back()
+                ->with('error', 'Cannot approve deletion while the student has payments. Clear payment history or use force delete.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $deletionRequest->update([
+                'status' => StudentDeletionRequest::STATUS_APPROVED,
+                'review_notes' => 'Approved by admin',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+            ]);
+
+            $student->enrollments()->where('status', 'dropped')->delete();
+
+            if ($student->user) {
+                $student->user->delete();
+            }
+
+            $student->delete();
+
+            DB::commit();
+
+            AdminLayoutScopes::clearPendingCountsForTrainingPartner($student->training_partner_id);
+
+            return redirect()->route('admin.students.index')
+                ->with('success', 'Student deletion request approved and student deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->with('error', 'Error approving deletion request: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectDeletionRequest(Request $request, StudentDeletionRequest $deletionRequest)
+    {
+        abort_unless(auth()->user()->is_admin || auth()->user()->is_super_admin, 403);
+
+        $request->validate([
+            'review_notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($deletionRequest->status !== StudentDeletionRequest::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'This deletion request has already been reviewed.');
+        }
+
+        if ($deletionRequest->student) {
+            $this->ensureStudentBelongsToPartner($deletionRequest->student);
+        }
+
+        $deletionRequest->update([
+            'status' => StudentDeletionRequest::STATUS_REJECTED,
+            'review_notes' => trim((string) $request->input('review_notes', '')),
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+        ]);
+
+        AdminLayoutScopes::clearPendingCountsForTrainingPartner($deletionRequest->student?->training_partner_id);
+
+        return redirect()->back()->with('success', 'Deletion request rejected.');
+    }
+
     /**
      * Force delete student with all related data
      */
     public function forceDestroy(Request $request, Student $student)
     {
         $this->ensureStudentBelongsToPartner($student);
+        abort_unless(auth()->user()->is_admin || auth()->user()->is_super_admin, 403);
         $validator = Validator::make($request->all(), [
             'confirmation' => 'required|in:REMOVE'
         ]);
@@ -828,6 +956,8 @@ class StudentController extends Controller
         // Delete all related data in correct order
         try {
             DB::beginTransaction();
+
+            $this->approvePendingDeletionRequestsForDeletedStudent($student, 'Student force deleted by admin.');
 
             $enrollmentIds = $student->enrollments()->pluck('id');
             if ($enrollmentIds->isNotEmpty()) {
@@ -879,6 +1009,19 @@ class StudentController extends Controller
             return redirect()->back()
                 ->with('error', 'Error deleting student: ' . $e->getMessage());
         }
+    }
+
+    private function approvePendingDeletionRequestsForDeletedStudent(Student $student, string $reviewNotes): void
+    {
+        $student->deletionRequests()
+            ->where('status', StudentDeletionRequest::STATUS_PENDING)
+            ->update([
+                'status' => StudentDeletionRequest::STATUS_APPROVED,
+                'review_notes' => $reviewNotes,
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'updated_at' => now(),
+            ]);
     }
 
     /**

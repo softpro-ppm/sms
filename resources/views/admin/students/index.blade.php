@@ -22,10 +22,17 @@
                         <i class="fas fa-user-plus"></i>
                         Register student
                     </a>
-                    <a href="{{ route('admin.batches.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
-                        <i class="fas fa-layer-group"></i>
-                        Batch operations
-                    </a>
+                    @if(auth()->user()->is_admin || auth()->user()->is_super_admin)
+                        <a href="{{ route('admin.student-deletion-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
+                            <i class="fas fa-user-shield"></i>
+                            Deletion requests
+                        </a>
+                    @else
+                        <a href="{{ route('admin.batches.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
+                            <i class="fas fa-layer-group"></i>
+                            Batch operations
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

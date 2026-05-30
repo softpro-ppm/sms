@@ -98,6 +98,11 @@ class Student extends Model
         return $this->hasOne(User::class);
     }
 
+    public function deletionRequests(): HasMany
+    {
+        return $this->hasMany(StudentDeletionRequest::class);
+    }
+
     // Accessors
     public function getIsApprovedAttribute(): bool
     {

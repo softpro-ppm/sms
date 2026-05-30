@@ -12,8 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-
 class RegisterController extends Controller
 {
     public function showRegistrationForm(Request $request)
@@ -33,6 +31,10 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
+        $request->merge([
+            'full_name' => $this->normalizePersonName((string) $request->input('full_name')),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'aadhar_number' => 'required|string|size:12|regex:/^[0-9]{12}$/|unique:students,aadhar_number',
             'full_name' => 'required|string|max:255',
@@ -109,6 +111,15 @@ class RegisterController extends Controller
         }
 
         return redirect()->to('/register/success');
+    }
+
+    private function normalizePersonName(string $value): string
+    {
+        $normalized = preg_replace('/\s+/', ' ', trim($value)) ?? '';
+
+        return preg_replace_callback('/\b([\pL])([\pL]*)/u', function (array $matches) {
+            return mb_strtoupper($matches[1]) . mb_strtolower($matches[2]);
+        }, mb_strtolower($normalized)) ?? $normalized;
     }
 
     public function success()

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Enrollment;
+use App\Models\StudentDeletionRequest;
 use App\Support\AdminLayoutScopes;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -46,9 +47,9 @@ class AppServiceProvider extends ServiceProvider
             $notifications = collect();
             $notificationCount = 0;
 
-            if ($user->is_admin) {
+            if ($user->is_admin || $user->is_super_admin) {
                 $paymentBase = AdminLayoutScopes::pendingPaymentsQuery($user);
-                $notifications = (clone $paymentBase)
+                $paymentNotifications = (clone $paymentBase)
                     ->with('student:id,full_name')
                     ->latest()
                     ->limit(5)
@@ -65,7 +66,39 @@ class AppServiceProvider extends ServiceProvider
                         ];
                     });
 
-                $notificationCount = AdminLayoutScopes::pendingPaymentsCountCached($user);
+                $deletionNotifications = AdminLayoutScopes::pendingDeletionRequestsQuery($user)
+                    ->with([
+                        'student:id,full_name',
+                        'requestedBy:id,name',
+                    ])
+                    ->latest('requested_at')
+                    ->limit(5)
+                    ->get()
+                    ->map(function (StudentDeletionRequest $deletionRequest) {
+                        $studentName = $deletionRequest->student?->full_name
+                            ?? $deletionRequest->student_name_snapshot
+                            ?? 'Student';
+                        $requestedBy = $deletionRequest->requestedBy?->name ?? 'Reception';
+
+                        return [
+                            'title' => 'Student deletion request pending',
+                            'message' => $studentName.' requested by '.$requestedBy,
+                            'time' => $deletionRequest->requested_at,
+                            'type' => 'warning',
+                            'url' => $deletionRequest->student_id
+                                ? route('admin.students.show', $deletionRequest->student_id)
+                                : route('admin.students.index'),
+                        ];
+                    });
+
+                $notifications = collect($paymentNotifications->all())
+                    ->merge($deletionNotifications)
+                    ->sortByDesc('time')
+                    ->take(5)
+                    ->values();
+
+                $notificationCount = AdminLayoutScopes::pendingPaymentsCountCached($user)
+                    + AdminLayoutScopes::pendingDeletionRequestsCountCached($user);
             } elseif ($user->is_reception) {
                 $studentBase = AdminLayoutScopes::pendingStudentsQuery($user);
                 $notifications = (clone $studentBase)

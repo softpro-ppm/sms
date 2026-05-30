@@ -315,14 +315,33 @@
                     
                     <li>
                         <a href="{{ route('admin.students.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
+                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.students.*') || request()->routeIs('admin.student-deletion-requests.*') ? 'active' : '' }}">
                             <i class="fas fa-users w-5 h-5 mr-3"></i>
                             <span class="sidebar-label">Students</span>
-                            @if(($pendingStudents ?? 0) > 0)
-                                <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingStudents ?? 0 }}</span>
+                            @if(($studentAttentionCount ?? 0) > 0)
+                                <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $studentAttentionCount ?? 0 }}</span>
                             @endif
                         </a>
                     </li>
+                    @if(auth()->user()->is_admin)
+                    <li>
+                        <a href="{{ route('admin.student-deletion-requests.index') }}"
+                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.student-deletion-requests.*') ? 'active' : '' }}">
+                            <i class="fas fa-user-shield w-5 h-5 mr-3"></i>
+                            <span class="sidebar-label">Deletion Requests</span>
+                            @if(($pendingDeletionRequests ?? 0) > 0)
+                                <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingDeletionRequests }}</span>
+                            @endif
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.legacy-students.index') }}"
+                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.legacy-students.*') ? 'active' : '' }}">
+                            <i class="fas fa-archive w-5 h-5 mr-3"></i>
+                            <span class="sidebar-label">Legacy Students</span>
+                        </a>
+                    </li>
+                    @endif
                     
                     <li class="relative">
                         <a href="{{ route('admin.payments.index') }}" 

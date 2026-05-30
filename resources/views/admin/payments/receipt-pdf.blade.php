@@ -242,7 +242,10 @@
             ->get();
     }
 
-    $signaturePath = \App\Services\SignatureImageService::getTransparentSignaturePath();
+    $certificateSignatureFile = public_path('images/signatures/director-signature.png');
+    $signaturePath = file_exists($certificateSignatureFile)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($certificateSignatureFile))
+        : null;
 @endphp
 
 <div class="receipt">

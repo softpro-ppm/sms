@@ -1,5 +1,7 @@
 @extends('layouts.login-split')
 
+@section('title', 'Training Partner Registration')
+
 @section('content')
 <div class="min-h-[calc(100vh-140px)] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-2xl mx-auto">

@@ -58,6 +58,113 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs font-medium text-gray-500 uppercase">Platform revenue</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-700">₹{{ number_format($revenueStats['approval_revenue'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">{{ $revenueStats['approval_deduction_count'] }} student approval deductions</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs font-medium text-gray-500 uppercase">This month</p>
+            <p class="mt-2 text-3xl font-bold text-blue-700">₹{{ number_format($revenueStats['approval_revenue_month'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">Approval deduction revenue</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs font-medium text-gray-500 uppercase">Wallet position</p>
+            <p class="mt-2 text-3xl font-bold text-slate-900">₹{{ number_format($revenueStats['wallet_balance'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">Recharged: ₹{{ number_format($revenueStats['wallet_recharges'], 2) }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-3 border-b border-gray-200 font-semibold text-gray-900">Revenue ledger</div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($recentRevenueTransactions as $tx)
+                        <tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-gray-600">{{ $tx->created_at?->format('M j, Y') }}</td>
+                            <td class="px-4 py-2 text-gray-700">{{ ucfirst(str_replace('_', ' ', $tx->type)) }}</td>
+                            <td class="px-4 py-2 font-semibold {{ $tx->amount < 0 ? 'text-emerald-700' : 'text-blue-700' }}">
+                                {{ $tx->amount < 0 ? '-' : '+' }}₹{{ number_format(abs((float) $tx->amount), 2) }}
+                            </td>
+                            <td class="px-4 py-2 text-gray-600">{{ $tx->description ?? '—' }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No wallet activity yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-3 border-b border-gray-200 font-semibold text-gray-900">Staff activity</div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Staff</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last seen</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($staffActivity as $row)
+                        <tr>
+                            <td class="px-4 py-2">
+                                <p class="font-medium text-gray-900">{{ $row['user']->name }}</p>
+                                <p class="text-xs text-gray-500">{{ $row['user']->email }}</p>
+                            </td>
+                            <td class="px-4 py-2 text-gray-600">{{ ucfirst($row['user']->role) }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ $row['last_seen_at'] ? $row['last_seen_at']->diffForHumans() : 'No session found' }}</td>
+                            <td class="px-4 py-2">
+                                <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $row['user']->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
+                                    {{ $row['user']->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No staff users yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-3 border-b border-gray-200 font-semibold text-gray-900">Recent Super Admin centre access</div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50"><tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Started</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ended</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Super Admin</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Entered as</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($impersonationLogs as $log)
+                    <tr>
+                        <td class="px-4 py-2 text-gray-600">{{ \Carbon\Carbon::parse($log->started_at)->format('M j, Y H:i') }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ $log->ended_at ? \Carbon\Carbon::parse($log->ended_at)->format('M j, Y H:i') : 'Still active' }}</td>
+                        <td class="px-4 py-2 text-gray-900">{{ $log->super_admin_name }}</td>
+                        <td class="px-4 py-2 text-gray-900">{{ $log->target_name }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No centre access records yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <div class="px-6 py-3 border-b border-gray-200 font-semibold text-gray-900">Recent batches</div>
         <div class="overflow-x-auto">

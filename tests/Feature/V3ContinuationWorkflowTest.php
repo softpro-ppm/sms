@@ -1,0 +1,156 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Batch;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\PartnerWalletTransaction;
+use App\Models\Student;
+use App\Models\StudentDeletionRequest;
+use App\Models\TrainingPartner;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+class V3ContinuationWorkflowTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_admin_can_open_student_deletion_request_queue(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin();
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '111122223333',
+            'full_name' => 'Queue Delete Student',
+            'email' => 'queue.delete@example.test',
+            'phone' => '9000000001',
+            'whatsapp_number' => '9000000001',
+            'status' => 'approved',
+        ]);
+
+        StudentDeletionRequest::create([
+            'student_id' => $student->id,
+            'student_name_snapshot' => $student->full_name,
+            'student_email_snapshot' => $student->email,
+            'request_reason' => 'Duplicate student record',
+            'status' => StudentDeletionRequest::STATUS_PENDING,
+            'requested_by' => $admin->id,
+            'requested_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.student-deletion-requests.index'))
+            ->assertOk()
+            ->assertSeeText('Student deletion requests')
+            ->assertSeeText('Queue Delete Student')
+            ->assertSeeText('Duplicate student record');
+    }
+
+    public function test_admin_can_open_legacy_students_page(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '222233334444',
+            'full_name' => 'Legacy Learner',
+            'email' => 'legacy.learner@example.test',
+            'phone' => '9000000002',
+            'whatsapp_number' => '9000000002',
+            'status' => 'approved',
+        ]);
+
+        $batch = Batch::where('is_legacy_batch', true)->firstOrFail();
+
+        Enrollment::create([
+            'enrollment_number' => 'LEG-001',
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'enrollment_date' => now()->toDateString(),
+            'status' => 'active',
+            'total_fee' => 2500,
+            'paid_amount' => 1000,
+            'outstanding_amount' => 1500,
+            'is_eligible_for_assessment' => false,
+            'registration_fee' => 500,
+            'course_fee' => 2000,
+            'assessment_fee' => 0,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Historical Tally',
+            'legacy_start_date' => '2018-01-01',
+            'legacy_end_date' => '2018-03-31',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.legacy-students.index'))
+            ->assertOk()
+            ->assertSeeText('Legacy students')
+            ->assertSeeText('Legacy Learner')
+            ->assertSeeText('Historical Tally');
+    }
+
+    public function test_super_admin_partner_activity_shows_revenue_and_staff_activity(): void
+    {
+        [$partner, $staff] = $this->makePartnerAdmin();
+        $superAdmin = User::factory()->create([
+            'role' => 'super_admin',
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        PartnerWalletTransaction::create([
+            'training_partner_id' => $partner->id,
+            'amount' => -200,
+            'type' => 'student_approval',
+            'description' => 'Student approval: Revenue Student',
+            'balance_after' => 800,
+        ]);
+
+        \DB::table('sessions')->insert([
+            'id' => 'staff-session',
+            'user_id' => $staff->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.super.training-partners.activity', $partner))
+            ->assertOk()
+            ->assertSeeText('Platform revenue')
+            ->assertSeeText('₹200.00')
+            ->assertSeeText('Staff activity')
+            ->assertSeeText($staff->email);
+    }
+
+    private function makePartnerAdmin(string $type = 'STANDARD'): array
+    {
+        $partner = $type === 'HQ'
+            ? TrainingPartner::where('type', 'HQ')->firstOrFail()
+            : TrainingPartner::create([
+                'type' => 'STANDARD',
+                'name' => 'Continuation TP',
+                'code' => 'CONTTP',
+                'wallet_balance' => 1000,
+                'student_approval_deduction' => 200,
+                'status' => 'active',
+            ]);
+
+        $admin = User::create([
+            'name' => $type === 'HQ' ? 'HQ Admin' : 'Continuation Admin',
+            'email' => strtolower($type).'.continuation@example.test',
+            'password' => Hash::make('password'),
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        return [$partner, $admin];
+    }
+}
