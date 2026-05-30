@@ -12,10 +12,16 @@
                 <h2 class="mt-1 text-2xl font-semibold text-slate-900">Student deletion requests</h2>
                 <p class="mt-2 max-w-2xl text-sm text-slate-600">Review deletion requests submitted by reception before student records are removed.</p>
             </div>
-            <a href="{{ route('admin.students.index') }}"
-               class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
-                <i class="fas fa-users mr-2"></i>Student queue
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.student-deletion-requests.export-csv', request()->query()) }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100">
+                    <i class="fas fa-file-csv mr-2"></i>Export CSV
+                </a>
+                <a href="{{ route('admin.students.index') }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50">
+                    <i class="fas fa-users mr-2"></i>Student queue
+                </a>
+            </div>
         </div>
 
         <div class="mt-5 grid gap-3 sm:grid-cols-3">

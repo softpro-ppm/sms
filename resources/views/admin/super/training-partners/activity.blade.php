@@ -24,6 +24,14 @@
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                 <i class="fas fa-building mr-2"></i>Partner profile
             </a>
+            <a href="{{ route('admin.super.training-partners.revenue-export.csv', $trainingPartner) }}"
+               class="inline-flex items-center px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-800 rounded-lg hover:bg-emerald-100">
+                <i class="fas fa-file-csv mr-2"></i>Revenue CSV
+            </a>
+            <a href="{{ route('admin.super.training-partners.revenue-export.pdf', $trainingPartner) }}"
+               class="inline-flex items-center px-4 py-2 border border-rose-200 bg-rose-50 text-rose-800 rounded-lg hover:bg-rose-100">
+                <i class="fas fa-file-pdf mr-2"></i>Revenue PDF
+            </a>
             <a href="{{ route('admin.super.training-partners.index') }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                 <i class="fas fa-arrow-left mr-2"></i>All partners

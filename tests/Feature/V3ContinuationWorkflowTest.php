@@ -50,6 +50,36 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertSeeText('Duplicate student record');
     }
 
+    public function test_admin_can_export_student_deletion_requests_csv(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin();
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '111122223334',
+            'full_name' => 'Export Delete Student',
+            'email' => 'export.delete@example.test',
+            'phone' => '9000000003',
+            'whatsapp_number' => '9000000003',
+            'status' => 'approved',
+        ]);
+
+        StudentDeletionRequest::create([
+            'student_id' => $student->id,
+            'student_name_snapshot' => $student->full_name,
+            'student_email_snapshot' => $student->email,
+            'request_reason' => 'Export this request',
+            'status' => StudentDeletionRequest::STATUS_PENDING,
+            'requested_by' => $admin->id,
+            'requested_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.student-deletion-requests.export-csv'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
     public function test_admin_can_open_legacy_students_page(): void
     {
         [$partner, $admin] = $this->makePartnerAdmin('HQ');
@@ -93,6 +123,47 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertSeeText('Historical Tally');
     }
 
+    public function test_admin_can_export_legacy_students_csv(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '222233334445',
+            'full_name' => 'Legacy Export Learner',
+            'email' => 'legacy.export@example.test',
+            'phone' => '9000000004',
+            'whatsapp_number' => '9000000004',
+            'status' => 'approved',
+        ]);
+
+        $batch = Batch::where('is_legacy_batch', true)->firstOrFail();
+
+        Enrollment::create([
+            'enrollment_number' => 'LEG-002',
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'enrollment_date' => now()->toDateString(),
+            'status' => 'active',
+            'total_fee' => 2500,
+            'paid_amount' => 2500,
+            'outstanding_amount' => 0,
+            'is_eligible_for_assessment' => false,
+            'registration_fee' => 500,
+            'course_fee' => 2000,
+            'assessment_fee' => 0,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Historical MS Office',
+            'legacy_start_date' => '2019-01-01',
+            'legacy_end_date' => '2019-03-31',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.legacy-students.export-csv'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
     public function test_super_admin_partner_activity_shows_revenue_and_staff_activity(): void
     {
         [$partner, $staff] = $this->makePartnerAdmin();
@@ -126,6 +197,34 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertSeeText('₹200.00')
             ->assertSeeText('Staff activity')
             ->assertSeeText($staff->email);
+    }
+
+    public function test_super_admin_can_export_partner_revenue_csv_and_pdf(): void
+    {
+        [$partner] = $this->makePartnerAdmin();
+        $superAdmin = User::factory()->create([
+            'role' => 'super_admin',
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        PartnerWalletTransaction::create([
+            'training_partner_id' => $partner->id,
+            'amount' => -200,
+            'type' => 'student_approval',
+            'description' => 'Student approval: Export Revenue Student',
+            'balance_after' => 800,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.super.training-partners.revenue-export.csv', $partner))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.super.training-partners.revenue-export.pdf', $partner))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     private function makePartnerAdmin(string $type = 'STANDARD'): array

@@ -13,6 +13,7 @@ use App\Models\Payment;
 use App\Models\Student;
 use App\Models\TrainingPartner;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -294,6 +295,75 @@ class TrainingPartnerController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    public function exportRevenueCsv(TrainingPartner $trainingPartner): StreamedResponse
+    {
+        $filename = 'partner-revenue-' . preg_replace('/[^a-zA-Z0-9_-]+/', '', $trainingPartner->code ?: 'partner') . '-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($trainingPartner) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Partner', $trainingPartner->name]);
+            fputcsv($out, ['Code', $trainingPartner->code]);
+            fputcsv($out, ['Wallet Balance', $trainingPartner->wallet_balance]);
+            fputcsv($out, []);
+            fputcsv($out, ['Date', 'Type', 'Amount', 'Revenue Amount', 'Balance After', 'Description', 'Reference']);
+
+            $trainingPartner->walletTransactions()
+                ->latest('id')
+                ->chunk(500, function ($chunk) use ($out) {
+                    foreach ($chunk as $tx) {
+                        $isRevenue = $tx->type === 'student_approval' && (float) $tx->amount < 0;
+                        fputcsv($out, [
+                            $tx->created_at?->format('Y-m-d H:i:s'),
+                            $tx->type,
+                            $tx->amount,
+                            $isRevenue ? abs((float) $tx->amount) : 0,
+                            $tx->balance_after,
+                            $tx->description,
+                            ($tx->reference_type ? $tx->reference_type . '#' . $tx->reference_id : ''),
+                        ]);
+                    }
+                });
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function exportRevenuePdf(TrainingPartner $trainingPartner)
+    {
+        $transactions = $trainingPartner->walletTransactions()
+            ->latest('id')
+            ->limit(500)
+            ->get();
+
+        $summary = [
+            'approval_revenue' => abs((float) $trainingPartner->walletTransactions()
+                ->where('type', 'student_approval')
+                ->where('amount', '<', 0)
+                ->sum('amount')),
+            'approval_revenue_month' => abs((float) $trainingPartner->walletTransactions()
+                ->where('type', 'student_approval')
+                ->where('amount', '<', 0)
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->sum('amount')),
+            'recharges' => (float) $trainingPartner->walletTransactions()
+                ->where('type', 'recharge')
+                ->where('amount', '>', 0)
+                ->sum('amount'),
+            'wallet_balance' => (float) $trainingPartner->wallet_balance,
+        ];
+
+        $pdf = Pdf::loadView('admin.super.training-partners.revenue-pdf', compact(
+            'trainingPartner',
+            'transactions',
+            'summary'
+        ));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('partner-revenue-' . ($trainingPartner->code ?: $trainingPartner->id) . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function recharge(Request $request, TrainingPartner $trainingPartner)

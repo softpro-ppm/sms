@@ -12,10 +12,16 @@
                 <h2 class="mt-1 text-2xl font-semibold text-slate-900">Legacy students</h2>
                 <p class="mt-2 max-w-2xl text-sm text-slate-600">Track historical course completions that use the single legacy batch with per-student course, dates, and fee overrides.</p>
             </div>
-            <a href="{{ route('admin.students.index') }}"
-               class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
-                <i class="fas fa-user-plus mr-2"></i>Open student queue
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.legacy-students.export-csv', request()->query()) }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100">
+                    <i class="fas fa-file-csv mr-2"></i>Export CSV
+                </a>
+                <a href="{{ route('admin.students.index') }}"
+                   class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
+                    <i class="fas fa-user-plus mr-2"></i>Open student queue
+                </a>
+            </div>
         </div>
 
         @unless($legacyConfigured)

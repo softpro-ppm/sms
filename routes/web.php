@@ -119,6 +119,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/students/{student}/reset-password', [StudentController::class, 'resetPassword'])->name('students.reset-password');
     Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
     Route::get('/student-deletion-requests', [StudentDeletionRequestController::class, 'index'])->name('student-deletion-requests.index');
+    Route::get('/student-deletion-requests/export-csv', [StudentDeletionRequestController::class, 'exportCsv'])->name('student-deletion-requests.export-csv');
     Route::patch('/student-deletion-requests/{deletionRequest}/approve', [StudentController::class, 'approveDeletionRequest'])->name('student-deletion-requests.approve');
     Route::patch('/student-deletion-requests/{deletionRequest}/reject', [StudentController::class, 'rejectDeletionRequest'])->name('student-deletion-requests.reject');
     Route::patch('/students/{student}/approve', [StudentController::class, 'approve'])->name('students.approve');
@@ -132,6 +133,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/api/student-batches/by-course', [StudentController::class, 'getBatchesByCourse'])->name('students.batches-by-course');
     Route::get('/api/course-details/{courseId}', [StudentController::class, 'getCourseDetails'])->name('students.course-details');
     Route::get('/legacy-students', [LegacyStudentController::class, 'index'])->name('legacy-students.index');
+    Route::get('/legacy-students/export-csv', [LegacyStudentController::class, 'exportCsv'])->name('legacy-students.export-csv');
 
     // Student Document Management
     Route::post('/students/{student}/documents', [StudentController::class, 'uploadDocument'])->name('students.upload-document');
@@ -317,6 +319,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin/super')->name('admin.s
     Route::get('impersonation-log', [ImpersonationAuditController::class, 'index'])->name('impersonation-log.index');
     Route::post('training-partners/{training_partner}/impersonate', [TpImpersonationController::class, 'start'])->name('training-partners.impersonate');
     Route::get('training-partners/{training_partner}/wallet-export', [TrainingPartnerController::class, 'exportWalletTransactions'])->name('training-partners.wallet-export');
+    Route::get('training-partners/{training_partner}/revenue-export/csv', [TrainingPartnerController::class, 'exportRevenueCsv'])->name('training-partners.revenue-export.csv');
+    Route::get('training-partners/{training_partner}/revenue-export/pdf', [TrainingPartnerController::class, 'exportRevenuePdf'])->name('training-partners.revenue-export.pdf');
     Route::post('training-partners/{training_partner}/recharge', [TrainingPartnerController::class, 'recharge'])->name('training-partners.recharge');
     Route::post('training-partners/{training_partner}/approve', [TrainingPartnerController::class, 'approve'])->name('training-partners.approve');
     Route::post('training-partners/{training_partner}/reject', [TrainingPartnerController::class, 'reject'])->name('training-partners.reject');
