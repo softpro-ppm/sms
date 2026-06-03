@@ -13,7 +13,7 @@
                     Automatic FRS kiosk
                 </div>
                 <h2 class="mt-3 text-[2rem] font-semibold tracking-tight text-slate-900">Staff attendance kiosk</h2>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Check-in window: 6:00 AM-10:00 AM. On-time until 9:30 AM. Check-out window: 4:30 PM-9:00 PM.</p>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Testing mode: first successful capture marks check-in, later captures update check-out. Camera pauses when this tab is not active.</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.staff-members.create') }}" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
@@ -125,6 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let popupOpen = false;
     let matcher = null;
     let popupTimer = null;
+    let scanTimer = null;
+    let locationTimer = null;
+    let activeStream = null;
     const staffCooldowns = new Map();
     const cooldownMs = 10000;
 
@@ -200,14 +203,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     };
 
-    const captureImage = () => {
+    const captureImage = (detection = null) => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
         return canvas.toDataURL('image/jpeg', 0.86);
     };
 
-    const punch = async (match) => {
+    const captureAttendanceImage = (detection) => {
+        if (!detection?.detection?.box || !video.videoWidth) {
+            return captureImage();
+        }
+
+        const source = document.createElement('canvas');
+        source.width = video.videoWidth;
+        source.height = video.videoHeight;
+        source.getContext('2d').drawImage(video, 0, 0, source.width, source.height);
+
+        const box = detection.detection.box;
+        const cropWidth = Math.min(source.width, Math.max(box.width * 3.2, 420));
+        const cropHeight = Math.min(source.height, Math.max(box.height * 4.1, 560));
+        const centerX = box.x + box.width / 2;
+        const centerY = box.y + box.height * 1.2;
+        const cropX = Math.max(0, Math.min(source.width - cropWidth, centerX - cropWidth / 2));
+        const cropY = Math.max(0, Math.min(source.height - cropHeight, centerY - cropHeight / 2));
+
+        canvas.width = 720;
+        canvas.height = 900;
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#f8fafc';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(source, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+
+        return canvas.toDataURL('image/jpeg', 0.92);
+    };
+
+    const faceLooksUsable = (detection) => {
+        const box = detection?.detection?.box;
+        if (!box || !video.videoWidth || !video.videoHeight) return false;
+
+        const faceRatio = box.width / video.videoWidth;
+        const centerX = box.x + box.width / 2;
+        const centerY = box.y + box.height / 2;
+        const isCentered = centerX > video.videoWidth * 0.22
+            && centerX < video.videoWidth * 0.78
+            && centerY > video.videoHeight * 0.16
+            && centerY < video.videoHeight * 0.78;
+
+        return faceRatio >= 0.13 && isCentered;
+    };
+
+    const stopKioskCamera = () => {
+        window.clearInterval(scanTimer);
+        window.clearInterval(locationTimer);
+        scanTimer = null;
+        locationTimer = null;
+
+        if (activeStream) {
+            activeStream.getTracks().forEach((track) => track.stop());
+            activeStream = null;
+        }
+
+        video.srcObject = null;
+        status.textContent = 'Kiosk paused. Return to this tab to restart camera.';
+    };
+
+    const startKioskCamera = async () => {
+        if (document.hidden || activeStream || !matcher) return;
+
+        activeStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+            },
+            audio: false,
+        });
+        video.srcObject = activeStream;
+        getLocation();
+        status.textContent = 'Kiosk ready. Recognition is running automatically.';
+        scanTimer = window.setInterval(scan, 2500);
+        locationTimer = window.setInterval(getLocation, 60000);
+    };
+
+    const punch = async (match, detection) => {
         const staffCooldownUntil = staffCooldowns.get(String(match.label)) || 0;
         if (isPunching || popupOpen || Date.now() < staffCooldownUntil) return;
         isPunching = true;
@@ -222,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     staff_member_id: match.label,
-                    face_image: captureImage(),
+                    face_image: captureAttendanceImage(detection),
                     match_distance: match.distance,
                     ...locationSnapshot,
                 }),
@@ -256,6 +335,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (!faceLooksUsable(detection)) {
+            matchedName.textContent = 'Adjust position';
+            matchedDistance.textContent = 'Move closer and face the camera';
+            setMessage('Move closer, keep face centered, and look at the camera.', 'warning');
+            return;
+        }
+
         const match = matcher.findBestMatch(detection.descriptor);
         const staff = staffMembers.find((item) => String(item.id) === String(match.label));
 
@@ -267,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         matchedName.textContent = staff.name;
         matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
-        await punch(match);
+        await punch(match, detection);
     };
 
     const load = async () => {
@@ -288,13 +374,27 @@ document.addEventListener('DOMContentLoaded', () => {
         ));
         matcher = new faceapi.FaceMatcher(labeledDescriptors, settings.max_match_distance);
 
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-        video.srcObject = stream;
-        getLocation();
-        status.textContent = 'Kiosk ready. Recognition is running automatically.';
-        setInterval(scan, 2500);
-        setInterval(getLocation, 60000);
+        await startKioskCamera();
     };
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopKioskCamera();
+        } else {
+            startKioskCamera().catch(() => {
+                status.textContent = 'Camera restart failed. Reload the kiosk page.';
+            });
+        }
+    });
+
+    window.addEventListener('blur', stopKioskCamera);
+    window.addEventListener('focus', () => {
+        startKioskCamera().catch(() => {
+            status.textContent = 'Camera restart failed. Reload the kiosk page.';
+        });
+    });
+
+    window.addEventListener('beforeunload', stopKioskCamera);
 
     load().catch(() => {
         status.textContent = 'Camera/model loading failed. Check permission and reload.';
