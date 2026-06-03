@@ -142,4 +142,30 @@ class PaymentApproveIdempotencyTest extends TestCase
             ->assertSeeText($payment->payment_receipt_number)
             ->assertDontSeeText('APPROVED');
     }
+
+    public function test_pending_approvals_csv_exports_only_pending_payment_approvals(): void
+    {
+        [$admin, $payment] = $this->seedFixture();
+
+        Payment::create([
+            'student_id' => $payment->student_id,
+            'enrollment_id' => $payment->enrollment_id,
+            'payment_receipt_number' => 'RCP-'.now()->format('Y').'-APPROVED'.uniqid(),
+            'amount' => 250,
+            'payment_type' => 'partial',
+            'payment_method' => 'cash',
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.payments.pending-approvals.export-csv'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString($payment->payment_receipt_number, $csv);
+        $this->assertStringNotContainsString('APPROVED', $csv);
+    }
 }

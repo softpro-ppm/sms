@@ -173,6 +173,58 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function exportPendingApprovalsCsv(Request $request)
+    {
+        $filename = 'pending_payment_approvals_'.now()->format('Ymd_His').'.csv';
+
+        return response()->streamDownload(function () use ($request) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Sl. No',
+                'Receipt No',
+                'Student',
+                'Email',
+                'WhatsApp',
+                'Course',
+                'Batch',
+                'Amount',
+                'Payment Method',
+                'Payment Type',
+                'Recorded At',
+                'Remarks',
+            ]);
+
+            $index = 0;
+            $this->pendingApprovalsQuery($request)
+                ->orderBy('created_at')
+                ->chunk(500, function ($payments) use ($handle, &$index) {
+                    foreach ($payments as $payment) {
+                        $index++;
+
+                        fputcsv($handle, [
+                            $index,
+                            $payment->payment_receipt_number,
+                            $payment->student?->full_name,
+                            $payment->student?->email,
+                            $payment->student?->whatsapp_number,
+                            $payment->enrollment?->batch?->course?->name,
+                            $payment->enrollment?->batch?->batch_name,
+                            $payment->amount,
+                            $payment->payment_method_label,
+                            $payment->payment_type,
+                            $payment->created_at?->format('Y-m-d H:i:s'),
+                            $payment->remarks,
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     private function pendingPaymentsQuery(Request $request)
     {
         $query = $this->scopeEnrollments(

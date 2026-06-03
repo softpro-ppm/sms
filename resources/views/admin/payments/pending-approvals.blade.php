@@ -44,26 +44,36 @@
     </section>
 
     <section class="rounded-[20px] border border-gray-200 bg-white p-4 shadow-sm">
-        <form method="GET" action="{{ route('admin.payments.pending-approvals') }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
-            <div class="relative">
-                <input type="text"
-                       name="search"
-                       data-live-search
-                       value="{{ request('search') }}"
-                       placeholder="Search student, receipt, course, batch"
-                       class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <form method="GET" action="{{ route('admin.payments.pending-approvals') }}" class="grid flex-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
+                <div class="relative">
+                    <input type="text"
+                           name="search"
+                           data-live-search
+                           value="{{ request('search') }}"
+                           placeholder="Search student, receipt, course, batch"
+                           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <select id="per_page" name="per_page" data-live-rows class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    @foreach([10,20,50,100] as $size)
+                        <option value="{{ $size }}" {{ (int) request('per_page', 10) === $size ? 'selected' : '' }}>{{ $size }}</option>
+                    @endforeach
+                </select>
+                <a href="{{ route('admin.payments.pending-approvals') }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
+                    Clear
+                </a>
+            </form>
+
+            <div class="flex">
+                <a href="{{ route('admin.payments.pending-approvals.export-csv', request()->query()) }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100">
+                    <i class="fas fa-download"></i>
+                    Download CSV
+                </a>
             </div>
-            <select id="per_page" name="per_page" data-live-rows class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                @foreach([10,20,50,100] as $size)
-                    <option value="{{ $size }}" {{ (int) request('per_page', 10) === $size ? 'selected' : '' }}>{{ $size }}</option>
-                @endforeach
-            </select>
-            <a href="{{ route('admin.payments.pending-approvals') }}"
-               class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
-                Clear
-            </a>
-        </form>
+        </div>
     </section>
 
     <section class="overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-sm">
