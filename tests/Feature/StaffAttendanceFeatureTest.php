@@ -108,7 +108,7 @@ class StaffAttendanceFeatureTest extends TestCase
         $this->assertNotNull($staff->approved_at);
     }
 
-    public function test_kiosk_punch_enforces_time_windows_and_records_check_in(): void
+    public function test_kiosk_punch_uses_first_capture_as_check_in_and_latest_as_check_out(): void
     {
         Storage::fake('public');
 
@@ -145,9 +145,16 @@ class StaffAttendanceFeatureTest extends TestCase
                 'face_image' => $this->dataImage(),
                 'match_distance' => 0.31,
             ])
-            ->assertUnprocessable();
+            ->assertOk()
+            ->assertJsonPath('ok', true);
 
-        $this->travelTo(now()->setTime(9, 45));
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
+        $this->assertSame('test_first_capture', $attendance->check_in_status);
+        $this->assertNotNull($attendance->check_in_at);
+        $this->assertNull($attendance->check_out_at);
+        Storage::disk('public')->assertExists($attendance->check_in_image_path);
+
+        $this->travelTo(now()->setTime(10, 5));
 
         $this->actingAs($reception)
             ->postJson(route('admin.staff-attendance.kiosk.punch'), [
@@ -158,10 +165,25 @@ class StaffAttendanceFeatureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
-        $this->assertSame('late', $attendance->check_in_status);
-        $this->assertNotNull($attendance->check_in_at);
-        Storage::disk('public')->assertExists($attendance->check_in_image_path);
+        $attendance->refresh();
+        $this->assertSame('test_latest_capture', $attendance->check_out_status);
+        $this->assertSame('10:05', $attendance->check_out_at->format('H:i'));
+        Storage::disk('public')->assertExists($attendance->check_out_image_path);
+
+        $this->travelTo(now()->setTime(10, 8));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.29,
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $attendance->refresh();
+        $this->assertSame('10:08', $attendance->check_out_at->format('H:i'));
+        $this->assertSame('0.29000', (string) $attendance->check_out_match_distance);
     }
 
     public function test_admin_attendance_index_is_scoped_to_training_partner(): void

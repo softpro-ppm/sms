@@ -80,13 +80,6 @@ class StaffKioskAttendanceController extends Controller
         }
 
         $now = now();
-        $action = $this->resolveAction($now);
-
-        if ($action === null) {
-            throw ValidationException::withMessages([
-                'attendance' => 'Attendance is outside the allowed check-in/check-out window.',
-            ]);
-        }
 
         $distance = $this->distanceFromCentre($validated['latitude'] ?? null, $validated['longitude'] ?? null);
         if ($distance['configured'] && !$distance['inside']) {
@@ -95,25 +88,19 @@ class StaffKioskAttendanceController extends Controller
             ]);
         }
 
-        $attendance = StaffMemberAttendance::firstOrNew([
-            'staff_member_id' => $staff->id,
-            'attendance_date' => $now->toDateString(),
-        ]);
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)
+            ->whereDate('attendance_date', $now->toDateString())
+            ->first() ?? new StaffMemberAttendance([
+                'staff_member_id' => $staff->id,
+                'attendance_date' => $now->toDateString(),
+            ]);
 
-        if ($action === 'check_in') {
-            if ($attendance->check_in_at) {
-                return response()->json([
-                    'ok' => true,
-                    'message' => "{$staff->name} already checked in at " . $attendance->check_in_at->format('h:i A') . '.',
-                    'staff' => $staff->name,
-                ]);
-            }
-
+        if (!$attendance->check_in_at) {
             $attendance->fill([
                 'training_partner_id' => $staff->training_partner_id,
                 'kiosk_user_id' => auth()->id(),
                 'check_in_at' => $now,
-                'check_in_status' => $now->format('H:i') <= self::CHECK_IN_ON_TIME_UNTIL ? 'on_time' : 'late',
+                'check_in_status' => 'test_first_capture',
                 'check_in_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-ins"),
                 'check_in_match_distance' => $validated['match_distance'],
                 'check_in_latitude' => $validated['latitude'] ?? null,
@@ -131,24 +118,10 @@ class StaffKioskAttendanceController extends Controller
             ]);
         }
 
-        if (!$attendance->check_in_at) {
-            throw ValidationException::withMessages([
-                'attendance' => "{$staff->name} has not checked in today.",
-            ]);
-        }
-
-        if ($attendance->check_out_at) {
-            return response()->json([
-                'ok' => true,
-                'message' => "{$staff->name} already checked out at " . $attendance->check_out_at->format('h:i A') . '.',
-                'staff' => $staff->name,
-            ]);
-        }
-
         $attendance->update([
             'kiosk_user_id' => auth()->id(),
             'check_out_at' => $now,
-            'check_out_status' => $now->format('H:i') < self::CHECK_OUT_EXPECTED ? 'early' : 'normal',
+            'check_out_status' => 'test_latest_capture',
             'check_out_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-outs"),
             'check_out_match_distance' => $validated['match_distance'],
             'check_out_latitude' => $validated['latitude'] ?? null,
@@ -161,7 +134,7 @@ class StaffKioskAttendanceController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => "{$staff->name} check-out recorded at " . $now->format('h:i A') . '.',
+            'message' => "{$staff->name} check-out updated at " . $now->format('h:i A') . '.',
             'staff' => $staff->name,
         ]);
     }
@@ -265,21 +238,6 @@ class StaffKioskAttendanceController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="staff-attendance-' . $from . '-to-' . $to . '.csv"',
         ]);
-    }
-
-    protected function resolveAction(Carbon $now): ?string
-    {
-        $time = $now->format('H:i');
-
-        if ($time >= self::CHECK_IN_START && $time <= self::CHECK_IN_END) {
-            return 'check_in';
-        }
-
-        if ($time >= self::CHECK_OUT_START && $time <= self::CHECK_OUT_END) {
-            return 'check_out';
-        }
-
-        return null;
     }
 
     protected function approvedStaffQuery()
