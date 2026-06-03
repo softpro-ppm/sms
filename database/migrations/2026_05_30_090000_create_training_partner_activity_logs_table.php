@@ -21,8 +21,8 @@ return new class extends Migration
             $table->timestamp('occurred_at');
             $table->timestamps();
 
-            $table->index(['training_partner_id', 'occurred_at']);
-            $table->index(['training_partner_id', 'type']);
+            $table->index(['training_partner_id', 'occurred_at'], 'tp_activity_tp_occurred_idx');
+            $table->index(['training_partner_id', 'type'], 'tp_activity_tp_type_idx');
         });
     }
 
