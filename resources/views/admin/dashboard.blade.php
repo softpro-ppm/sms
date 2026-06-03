@@ -32,7 +32,7 @@
         </div>
 
         <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <a href="{{ route('admin.students.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-blue-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Admissions Today</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -43,8 +43,8 @@
                         <i class="fas fa-user-plus"></i>
                     </div>
                 </div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            </a>
+            <a href="{{ route('admin.students.index', ['queue' => 'missing_documents']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-amber-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Missing Documents</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -55,8 +55,8 @@
                         <i class="fas fa-id-card"></i>
                     </div>
                 </div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            </a>
+            <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-violet-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Pending Approval</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -67,8 +67,8 @@
                         <i class="fas fa-user-clock"></i>
                     </div>
                 </div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            </a>
+            <a href="{{ route('admin.payments.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-emerald-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Payments Today</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -79,7 +79,7 @@
                         <i class="fas fa-credit-card"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </section>
 
@@ -134,7 +134,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('admin.students.index') }}" class="group rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm">
+                <a href="{{ route('admin.students.index', ['queue' => 'missing_documents']) }}" class="group rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm">
                     <div class="flex items-start gap-4">
                         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 shadow-sm">
                             <i class="fas fa-id-card"></i>
@@ -150,7 +150,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('admin.students.index') }}" class="group rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm">
+                <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="group rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm">
                     <div class="flex items-start gap-4">
                         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shadow-sm">
                             <i class="fas fa-user-clock"></i>
@@ -221,7 +221,7 @@
                 <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">Document Completion Queue</p>
                 <h3 class="mt-1 text-xl font-bold text-gray-900">Students needing record updates</h3>
             </div>
-            <a href="{{ route('admin.students.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
+            <a href="{{ route('admin.students.index', ['queue' => 'missing_documents']) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800">
                 Open full student list
                 <i class="fas fa-arrow-right text-xs"></i>
             </a>
@@ -277,7 +277,7 @@
                         <i class="fas fa-user-check"></i>
                         Review students
                     </a>
-                    <a href="{{ route('admin.payments.pending') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                    <a href="{{ route('admin.payments.pending-approvals') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
                         <i class="fas fa-money-check-alt"></i>
                         Pending payments
                     </a>
@@ -294,7 +294,7 @@
         </div>
 
         <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <a href="{{ route('admin.students.index', ['queue' => 'active_students']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-blue-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Active Students</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -305,9 +305,9 @@
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <a href="{{ route('admin.batches.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-violet-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Live Batches</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -318,9 +318,9 @@
                         <i class="fas fa-layer-group"></i>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <a href="{{ route('admin.payments.index', ['status' => 'approved']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-emerald-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Collections</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -331,9 +331,9 @@
                         <i class="fas fa-rupee-sign"></i>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <a href="{{ route('admin.certificates.index', ['status' => 'issued']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-amber-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Certificates Issued</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -344,7 +344,7 @@
                         <i class="fas fa-certificate"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </section>
 
@@ -487,7 +487,7 @@
     @endif
 
     <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <a href="{{ route('admin.students.index') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md">
+        <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">Pending Students</p>
@@ -500,7 +500,7 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.payments.pending') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-rose-300 hover:shadow-md">
+        <a href="{{ route('admin.payments.pending-approvals') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-rose-300 hover:shadow-md">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700">Pending Payments</p>
@@ -513,7 +513,7 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.students.index') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md">
+        <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Ready for Enrollment</p>
@@ -580,7 +580,7 @@
             </div>
 
             <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <a href="{{ route('admin.students.index') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-amber-300 hover:bg-white">
+                <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-amber-300 hover:bg-white">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 shadow-sm">
                         <i class="fas fa-user-clock"></i>
                     </div>
@@ -589,7 +589,7 @@
                     <p class="mt-4 text-sm font-semibold text-amber-700">{{ number_format($adminWorkspace['queue_counts']['pending_students'] ?? 0) }} waiting</p>
                 </a>
 
-                <a href="{{ route('admin.payments.pending') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-rose-300 hover:bg-white">
+                <a href="{{ route('admin.payments.pending-approvals') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-rose-300 hover:bg-white">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700 shadow-sm">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
@@ -598,7 +598,7 @@
                     <p class="mt-4 text-sm font-semibold text-rose-700">{{ number_format($adminWorkspace['queue_counts']['pending_payments'] ?? 0) }} pending</p>
                 </a>
 
-                <a href="{{ route('admin.batches.index') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 hover:bg-white">
+                <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 hover:bg-white">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 shadow-sm">
                         <i class="fas fa-layer-group"></i>
                     </div>
@@ -649,7 +649,7 @@
 
             <div class="mt-6 space-y-4">
                 @forelse(($adminWorkspace['batch_health'] ?? collect()) as $item)
-                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <a href="{{ route('admin.batches.show', $item['batch']) }}" class="block rounded-3xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 hover:bg-white">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h4 class="text-base font-bold text-gray-900">{{ $item['batch']->batch_name }}</h4>
@@ -672,7 +672,7 @@
                                 <div class="h-full rounded-full {{ $item['fill_rate'] < 50 ? 'bg-amber-500' : 'bg-emerald-500' }}" style="width: {{ min(100, $item['fill_rate']) }}%"></div>
                             </div>
                         @endif
-                    </div>
+                    </a>
                 @empty
                     <div class="rounded-3xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
                         No active or upcoming batches to review right now.
@@ -695,7 +695,7 @@
                 <div>
                     <div class="mb-4 flex items-center justify-between">
                         <h4 class="text-base font-semibold text-gray-900">Pending students</h4>
-                        <a href="{{ route('admin.students.index') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">View all</a>
+                        <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">View all</a>
                     </div>
                     <div class="space-y-3">
                         @forelse(($adminWorkspace['pending_students'] ?? collect()) as $student)
@@ -715,7 +715,7 @@
                 <div>
                     <div class="mb-4 flex items-center justify-between">
                         <h4 class="text-base font-semibold text-gray-900">Pending payments</h4>
-                        <a href="{{ route('admin.payments.pending') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">Open queue</a>
+                        <a href="{{ route('admin.payments.pending-approvals') }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">Open queue</a>
                     </div>
                     <div class="space-y-3">
                         @forelse(($adminWorkspace['pending_payments'] ?? collect()) as $payment)

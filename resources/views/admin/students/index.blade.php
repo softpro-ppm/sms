@@ -114,6 +114,7 @@
                     <option value="">All queues</option>
                     <option value="pending_approval" {{ $queue === 'pending_approval' ? 'selected' : '' }}>Pending approval</option>
                     <option value="ready_for_enrollment" {{ $queue === 'ready_for_enrollment' ? 'selected' : '' }}>Ready for enrollment</option>
+                    <option value="missing_documents" {{ $queue === 'missing_documents' ? 'selected' : '' }}>Missing documents</option>
                     <option value="missing_photo" {{ $queue === 'missing_photo' ? 'selected' : '' }}>Missing photo</option>
                     <option value="active_students" {{ $queue === 'active_students' ? 'selected' : '' }}>Approved students</option>
                 </select>

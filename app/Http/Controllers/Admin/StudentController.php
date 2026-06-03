@@ -67,6 +67,12 @@ class StudentController extends Controller
                 'missing_photo' => $studentsQuery
                     ->where('status', 'pending')
                     ->whereDoesntHave('documents', fn ($q) => $q->where('document_type', 'photo')),
+                'missing_documents' => $studentsQuery
+                    ->where(function ($query) {
+                        $query->whereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'photo'))
+                            ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'aadhar'))
+                            ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'qualification_certificate'));
+                    }),
                 'active_students' => $studentsQuery->where('status', 'approved'),
                 default => null,
             };
@@ -106,6 +112,13 @@ class StudentController extends Controller
             'missing_photo' => $this->scopeStudents(
                 Student::where('status', 'pending')
                     ->whereDoesntHave('documents', fn ($q) => $q->where('document_type', 'photo'))
+            )->count(),
+            'missing_documents' => $this->scopeStudents(
+                Student::where(function ($query) {
+                    $query->whereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'photo'))
+                        ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'aadhar'))
+                        ->orWhereDoesntHave('documents', fn ($doc) => $doc->where('document_type', 'qualification_certificate'));
+                })
             )->count(),
         ];
 
