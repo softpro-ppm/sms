@@ -103,6 +103,9 @@
                                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $statusClass }}">{{ ucfirst($staff->status) }}</span>
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap text-right">
+                                <a href="{{ route('admin.staff-members.edit', $staff) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </a>
                                 <a href="{{ route('admin.staff-members.show', $staff) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100" title="Open">
                                     <i class="fas fa-arrow-right"></i>
                                 </a>

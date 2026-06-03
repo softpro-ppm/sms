@@ -18,7 +18,19 @@
                 <h2 class="mt-3 text-[2rem] font-semibold tracking-tight text-slate-900">{{ $staffMember->name }}</h2>
                 <p class="mt-2 text-sm leading-6 text-slate-600">{{ $staffMember->staff_code ?: 'No staff ID' }}{{ $staffMember->designation ? ' · ' . $staffMember->designation : '' }}</p>
             </div>
-            <div>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('admin.staff-members.edit', $staffMember) }}" class="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100">
+                    <i class="fas fa-pen text-xs"></i>
+                    Edit
+                </a>
+                <form method="POST" action="{{ route('admin.staff-members.destroy', $staffMember) }}" onsubmit="return confirm('Delete this staff profile and attendance records? This cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100">
+                        <i class="fas fa-trash text-xs"></i>
+                        Delete
+                    </button>
+                </form>
                 @php
                     $statusClass = match($staffMember->status) {
                         'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -100,9 +112,9 @@
                     <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Face reference images</h3>
                 </div>
                 <div class="grid gap-3 p-6 sm:grid-cols-3">
-                    @forelse($staffMember->face_image_paths ?? [] as $path)
-                        <a href="{{ Storage::disk('public')->url($path) }}" target="_blank">
-                            <img src="{{ Storage::disk('public')->url($path) }}" alt="Face sample" class="aspect-video w-full rounded-2xl border border-slate-200 object-cover">
+                    @forelse($staffMember->face_image_paths ?? [] as $index => $path)
+                        <a href="{{ route('admin.staff-members.face-image', [$staffMember, $index]) }}" target="_blank">
+                            <img src="{{ route('admin.staff-members.face-image', [$staffMember, $index]) }}" alt="Face sample" class="aspect-video w-full rounded-2xl border border-slate-200 object-cover">
                         </a>
                     @empty
                         <p class="text-sm text-slate-500">No face images stored.</p>

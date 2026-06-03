@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\StaffMember;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -111,6 +112,87 @@ class StaffMemberController extends Controller
         $staffMember->load(['creator', 'approver', 'attendances' => fn ($query) => $query->latest('attendance_date')->limit(10)]);
 
         return view('admin.staff-members.show', compact('staffMember'));
+    }
+
+    public function edit(StaffMember $staffMember)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        return view('admin.staff-members.edit', compact('staffMember'));
+    }
+
+    public function update(Request $request, StaffMember $staffMember)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        $tpId = auth()->user()->training_partner_id;
+        $validated = $request->validate([
+            'staff_code' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('staff_members', 'staff_code')
+                    ->ignore($staffMember->id)
+                    ->where(fn ($query) => $query->where('training_partner_id', $tpId)),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'designation' => ['nullable', 'string', 'max:120'],
+            'department' => ['nullable', 'string', 'max:120'],
+            'joining_date' => ['nullable', 'date'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $staffMember->update([
+            'staff_code' => $validated['staff_code'] ?? null,
+            'name' => $validated['name'],
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'designation' => $validated['designation'] ?? null,
+            'department' => $validated['department'] ?? null,
+            'joining_date' => $validated['joining_date'] ?? null,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        return redirect()->route('admin.staff-members.show', $staffMember)
+            ->with('success', 'Staff profile updated.');
+    }
+
+    public function destroy(StaffMember $staffMember)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        $paths = collect($staffMember->face_image_paths ?? [])
+            ->merge($staffMember->attendances()->get(['check_in_image_path', 'check_out_image_path'])->flatMap(fn ($attendance) => [
+                $attendance->check_in_image_path,
+                $attendance->check_out_image_path,
+            ]))
+            ->filter()
+            ->unique()
+            ->values();
+
+        DB::transaction(fn () => $staffMember->delete());
+
+        if ($paths->isNotEmpty()) {
+            Storage::disk('public')->delete($paths->all());
+        }
+
+        return redirect()->route('admin.staff-members.index')
+            ->with('success', 'Staff profile deleted.');
+    }
+
+    public function faceImage(StaffMember $staffMember, int $imageIndex)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        $path = $staffMember->face_image_paths[$imageIndex] ?? null;
+
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('public')->path($path));
     }
 
     public function approve(Request $request, StaffMember $staffMember)

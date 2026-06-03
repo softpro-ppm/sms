@@ -108,6 +108,105 @@ class StaffAttendanceFeatureTest extends TestCase
         $this->assertNotNull($staff->approved_at);
     }
 
+    public function test_staff_face_images_are_served_through_profile_route(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Image Centre',
+            'code' => 'IMG',
+            'status' => 'active',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        Storage::disk('public')->put('staff-members/enrollment/202606/sample-one.png', base64_decode(substr($this->dataImage(), strpos($this->dataImage(), ',') + 1)));
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'Photo Staff',
+            'status' => 'approved',
+            'face_image_paths' => ['staff-members/enrollment/202606/sample-one.png'],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.staff-members.face-image', [$staff, 0]))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+    }
+
+    public function test_staff_profile_can_be_updated_and_deleted(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Edit Centre',
+            'code' => 'EDIT',
+            'status' => 'active',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        Storage::disk('public')->put('staff-members/enrollment/202606/sample.jpg', 'sample');
+        Storage::disk('public')->put('staff-members/attendance/1/check-ins/punch.jpg', 'punch');
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'staff_code' => 'OLD-001',
+            'name' => 'Old Name',
+            'phone' => '9000000000',
+            'status' => 'approved',
+            'face_image_paths' => ['staff-members/enrollment/202606/sample.jpg'],
+            'is_active' => true,
+        ]);
+
+        StaffMemberAttendance::create([
+            'staff_member_id' => $staff->id,
+            'training_partner_id' => $partner->id,
+            'attendance_date' => now()->toDateString(),
+            'check_in_at' => now(),
+            'check_in_image_path' => 'staff-members/attendance/1/check-ins/punch.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.staff-members.update', $staff), [
+                'staff_code' => 'NEW-001',
+                'name' => 'New Name',
+                'phone' => '9111111111',
+                'email' => 'new@example.com',
+                'designation' => 'Trainer',
+                'department' => 'Academics',
+                'joining_date' => now()->toDateString(),
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.staff-members.show', $staff));
+
+        $staff->refresh();
+        $this->assertSame('NEW-001', $staff->staff_code);
+        $this->assertSame('New Name', $staff->name);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.staff-members.destroy', $staff))
+            ->assertRedirect(route('admin.staff-members.index'));
+
+        $this->assertDatabaseMissing('staff_members', ['id' => $staff->id]);
+        Storage::disk('public')->assertMissing('staff-members/enrollment/202606/sample.jpg');
+        Storage::disk('public')->assertMissing('staff-members/attendance/1/check-ins/punch.jpg');
+    }
+
     public function test_kiosk_punch_uses_first_capture_as_check_in_and_latest_as_check_out(): void
     {
         Storage::fake('public');

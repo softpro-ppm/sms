@@ -122,6 +122,10 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/staff-profiles', [StaffMemberController::class, 'index'])->name('staff-members.index');
     Route::get('/staff-profiles/create', [StaffMemberController::class, 'create'])->name('staff-members.create');
     Route::post('/staff-profiles', [StaffMemberController::class, 'store'])->name('staff-members.store');
+    Route::get('/staff-profiles/{staffMember}/edit', [StaffMemberController::class, 'edit'])->name('staff-members.edit');
+    Route::put('/staff-profiles/{staffMember}', [StaffMemberController::class, 'update'])->name('staff-members.update');
+    Route::delete('/staff-profiles/{staffMember}', [StaffMemberController::class, 'destroy'])->name('staff-members.destroy');
+    Route::get('/staff-profiles/{staffMember}/face-images/{imageIndex}', [StaffMemberController::class, 'faceImage'])->name('staff-members.face-image');
     Route::get('/staff-profiles/{staffMember}', [StaffMemberController::class, 'show'])->name('staff-members.show');
 
     // Students management
