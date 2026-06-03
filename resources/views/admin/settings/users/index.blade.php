@@ -20,6 +20,10 @@
                     <i class="fas fa-arrow-left text-xs"></i>
                     Back to settings
                 </a>
+                <a href="{{ route('admin.staff-attendance.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100">
+                    <i class="fas fa-list-check text-xs"></i>
+                    Attendance
+                </a>
                 <a href="{{ route('admin.settings.users.create') }}" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                     <i class="fas fa-user-plus text-xs"></i>
                     Add user
@@ -46,6 +50,7 @@
                     <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Name</th>
                     <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Email</th>
                     <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Role</th>
+                    <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Face</th>
                     <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Status</th>
                     <th class="px-5 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Actions</th>
                 </tr>
@@ -62,6 +67,13 @@
                             {{ $user->role === 'admin' ? 'bg-violet-50 text-violet-700' : 'bg-blue-50 text-blue-700' }}">
                             {{ ucfirst($user->role) }}
                         </span>
+                    </td>
+                    <td class="px-5 py-3.5 whitespace-nowrap">
+                        @if($user->face_enrolled_at)
+                            <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Enrolled</span>
+                        @else
+                            <span class="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span>
+                        @endif
                     </td>
                     <td class="px-5 py-3.5 whitespace-nowrap">
                         @if($user->is_active)
@@ -85,7 +97,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-5 py-10 text-center text-gray-500">No staff users found.</td>
+                    <td colspan="6" class="px-5 py-10 text-center text-gray-500">No staff users found.</td>
                 </tr>
                 @endforelse
             </tbody>

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\QuestionBankController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\StaffAttendanceController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\StudentDeletionRequestController;
 use App\Http\Controllers\Admin\Super\ImpersonationAuditController;
@@ -108,6 +109,12 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/dashboard/dismiss-catalog-onboarding', [DashboardController::class, 'dismissCatalogOnboarding'])
         ->name('dashboard.dismiss-catalog-onboarding');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+
+    // Staff attendance with face capture
+    Route::get('/staff-attendance/check', [StaffAttendanceController::class, 'check'])->name('staff-attendance.check');
+    Route::post('/staff-attendance/enroll-face', [StaffAttendanceController::class, 'enrollFace'])->name('staff-attendance.enroll-face');
+    Route::post('/staff-attendance/check-in', [StaffAttendanceController::class, 'checkIn'])->name('staff-attendance.check-in');
+    Route::post('/staff-attendance/check-out', [StaffAttendanceController::class, 'checkOut'])->name('staff-attendance.check-out');
 
     // Students management
     Route::get('/students', [StudentController::class, 'index'])->name('students.index');
@@ -307,6 +314,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::post('/settings/optimize', [SettingsController::class, 'optimizeApplication'])->name('settings.optimize');
         Route::post('/settings/backup-database', [SettingsController::class, 'backupDatabase'])->name('settings.backup-database');
         Route::get('/settings/export-data', [SettingsController::class, 'exportData'])->name('settings.export-data');
+        Route::get('/staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
+        Route::get('/staff-attendance/export-csv', [StaffAttendanceController::class, 'export'])->name('staff-attendance.export');
         // Staff users (admin & reception management)
         Route::get('/settings/users', [UserManagementController::class, 'index'])->name('settings.users.index');
         Route::get('/settings/users/create', [UserManagementController::class, 'create'])->name('settings.users.create');

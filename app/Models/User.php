@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -28,6 +29,8 @@ class User extends Authenticatable
         'is_active',
         'must_change_password',
         'dismiss_catalog_onboarding',
+        'face_reference_image_path',
+        'face_enrolled_at',
     ];
 
     /**
@@ -53,6 +56,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'dismiss_catalog_onboarding' => 'boolean',
+            'face_enrolled_at' => 'datetime',
         ];
     }
 
@@ -65,6 +69,11 @@ class User extends Authenticatable
     public function trainingPartner(): BelongsTo
     {
         return $this->belongsTo(TrainingPartner::class);
+    }
+
+    public function staffAttendances(): HasMany
+    {
+        return $this->hasMany(StaffAttendance::class);
     }
 
     // Accessors

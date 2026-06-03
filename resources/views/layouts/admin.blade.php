@@ -237,7 +237,7 @@
             openStudents: {{ request()->routeIs('admin.students.*') || request()->routeIs('admin.student-deletion-requests.*') || request()->routeIs('admin.legacy-students.*') ? 'true' : 'false' }},
             openPayments: {{ request()->routeIs('admin.payments.*') ? 'true' : 'false' }},
             openAcademics: {{ request()->routeIs('admin.batches.*') || request()->routeIs('admin.results.*') || request()->routeIs('admin.courses.*') || request()->routeIs('admin.question-banks.*') || request()->routeIs('admin.assessments.*') || request()->routeIs('admin.certificates.*') ? 'true' : 'false' }},
-            openSystem: {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.help') ? 'true' : 'false' }}
+            openSystem: {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.staff-attendance.*') || request()->routeIs('admin.help') ? 'true' : 'false' }}
          }"
          x-init="if (window.innerWidth >= 1024) { sidebarOpen = false }"
          @resize.window="if (window.innerWidth >= 1024) { sidebarOpen = false }"
@@ -427,7 +427,7 @@
                     <li class="relative">
                         <button type="button"
                                 @click="openSystem = !openSystem"
-                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.help') ? 'active' : '' }}">
+                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.staff-attendance.*') || request()->routeIs('admin.help') ? 'active' : '' }}">
                             <i class="fas fa-sliders w-5 h-5 mr-3"></i>
                             <span class="sidebar-label">System</span>
                             <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs transition-transform" :class="openSystem ? 'rotate-180' : ''"></i>
@@ -450,7 +450,17 @@
                                 <i class="fab fa-whatsapp w-4 h-4 mr-2"></i>
                                 <span class="sidebar-label">WhatsApp Inbox</span>
                             </a>
+                            <a href="{{ route('admin.staff-attendance.check') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.staff-attendance.check') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-camera w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">My Attendance</span>
+                            </a>
                             @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.staff-attendance.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.staff-attendance.index') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-list-check w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Staff Attendance</span>
+                            </a>
                             <a href="{{ route('admin.settings.index') }}"
                                class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.settings.*') ? 'bg-primary-700' : '' }}">
                                 <i class="fas fa-cog w-4 h-4 mr-2"></i>

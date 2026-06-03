@@ -20,6 +20,10 @@
                    class="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:border-violet-300 hover:bg-violet-100">
                     <i class="fas fa-user-shield text-xs"></i> Staff users
                 </a>
+                <a href="{{ route('admin.staff-attendance.index') }}"
+                   class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100">
+                    <i class="fas fa-list-check text-xs"></i> Attendance
+                </a>
                 @if($showFullSystemPanels ?? false)
                 <a href="{{ route('admin.settings.email-templates.index') }}"
                    class="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
