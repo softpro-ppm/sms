@@ -39,6 +39,16 @@
         </tr>
         <tr>
             <td>
+                <div class="label">Collected revenue</div>
+                <div class="value">Rs. {{ number_format($summary['collected_revenue'], 2) }}</div>
+            </td>
+            <td>
+                <div class="label">Pending collection</div>
+                <div class="value">Rs. {{ number_format(max(0, $summary['approval_revenue'] - $summary['collected_revenue']), 2) }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <div class="label">Wallet recharges</div>
                 <div class="value">Rs. {{ number_format($summary['recharges'], 2) }}</div>
             </td>
@@ -56,6 +66,7 @@
                 <th>Date</th>
                 <th>Type</th>
                 <th>Amount</th>
+                <th>Collection</th>
                 <th>Balance</th>
                 <th>Description</th>
             </tr>
@@ -68,12 +79,13 @@
                 <td class="{{ $tx->amount < 0 ? 'amount-negative' : 'amount-positive' }}">
                     {{ $tx->amount < 0 ? '-' : '+' }}Rs. {{ number_format(abs((float) $tx->amount), 2) }}
                 </td>
+                <td>{{ $tx->is_revenue ? ucfirst($tx->collection_status) : '-' }}</td>
                 <td>{{ $tx->balance_after !== null ? 'Rs. ' . number_format((float) $tx->balance_after, 2) : '-' }}</td>
                 <td>{{ $tx->description ?? '-' }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="5">No revenue or wallet transactions found.</td>
+                <td colspan="6">No revenue or wallet transactions found.</td>
             </tr>
             @endforelse
         </tbody>

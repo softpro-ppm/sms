@@ -70,21 +70,26 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow p-5">
             <p class="text-xs font-medium text-gray-500 uppercase">Platform revenue</p>
             <p class="mt-2 text-3xl font-bold text-emerald-700">₹{{ number_format($revenueStats['approval_revenue'], 2) }}</p>
             <p class="mt-1 text-sm text-gray-500">{{ $revenueStats['approval_deduction_count'] }} student approval deductions</p>
         </div>
         <div class="bg-white rounded-xl shadow p-5">
-            <p class="text-xs font-medium text-gray-500 uppercase">This month</p>
-            <p class="mt-2 text-3xl font-bold text-blue-700">₹{{ number_format($revenueStats['approval_revenue_month'], 2) }}</p>
-            <p class="mt-1 text-sm text-gray-500">Approval deduction revenue</p>
+            <p class="text-xs font-medium text-gray-500 uppercase">Pending collection</p>
+            <p class="mt-2 text-3xl font-bold text-amber-700">₹{{ number_format($revenueStats['pending_revenue'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">Yet to be marked collected</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs font-medium text-gray-500 uppercase">Collected</p>
+            <p class="mt-2 text-3xl font-bold text-blue-700">₹{{ number_format($revenueStats['collected_revenue'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">Confirmed by Super Admin</p>
         </div>
         <div class="bg-white rounded-xl shadow p-5">
             <p class="text-xs font-medium text-gray-500 uppercase">Wallet position</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">₹{{ number_format($revenueStats['wallet_balance'], 2) }}</p>
-            <p class="mt-1 text-sm text-gray-500">Recharged: ₹{{ number_format($revenueStats['wallet_recharges'], 2) }}</p>
+            <p class="mt-1 text-sm text-gray-500">This month: ₹{{ number_format($revenueStats['approval_revenue_month'], 2) }}</p>
         </div>
     </div>
 
@@ -97,6 +102,7 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Collection</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                     </tr></thead>
                     <tbody class="divide-y divide-gray-200">
@@ -107,10 +113,31 @@
                             <td class="px-4 py-2 font-semibold {{ $tx->amount < 0 ? 'text-emerald-700' : 'text-blue-700' }}">
                                 {{ $tx->amount < 0 ? '-' : '+' }}₹{{ number_format(abs((float) $tx->amount), 2) }}
                             </td>
+                            <td class="px-4 py-2">
+                                @if($tx->is_revenue)
+                                    @if($tx->collection_status === 'collected')
+                                        <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Collected</span>
+                                        <p class="mt-1 text-xs text-gray-500">{{ $tx->collected_at?->format('M j, Y') }}{{ $tx->collectedBy ? ' by '.$tx->collectedBy->name : '' }}</p>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.super.training-partners.revenue.collect', [$trainingPartner, $tx]) }}" class="space-y-2"
+                                              onsubmit="return confirm('Mark this revenue as collected?');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="text" name="collection_notes" maxlength="255" placeholder="Note optional"
+                                                   class="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200">
+                                            <button type="submit" class="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700">
+                                                Mark collected
+                                            </button>
+                                        </form>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-2 text-gray-600">{{ $tx->description ?? '—' }}</td>
                         </tr>
                         @empty
-                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No wallet activity yet.</td></tr>
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No wallet activity yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

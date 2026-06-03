@@ -191,9 +191,17 @@ class TrainingPartnerController extends Controller
             ->where('type', 'student_approval')
             ->where('amount', '<', 0)
             ->count();
+        $collectedRevenue = abs((float) (clone $walletBase)
+            ->where('type', 'student_approval')
+            ->where('amount', '<', 0)
+            ->where('collection_status', 'collected')
+            ->sum('amount'));
+        $pendingRevenue = max(0, $approvalRevenue - $collectedRevenue);
 
         $revenueStats = [
             'approval_revenue' => $approvalRevenue,
+            'collected_revenue' => $collectedRevenue,
+            'pending_revenue' => $pendingRevenue,
             'approval_revenue_month' => $approvalRevenueMonth,
             'approval_deduction_count' => $approvalDeductionCount,
             'wallet_recharges' => $recharges,
@@ -202,6 +210,7 @@ class TrainingPartnerController extends Controller
         ];
 
         $recentRevenueTransactions = (clone $walletBase)
+            ->with('collectedBy:id,name')
             ->latest('id')
             ->limit(20)
             ->get();
@@ -347,9 +356,10 @@ class TrainingPartnerController extends Controller
             fputcsv($out, ['Code', $trainingPartner->code]);
             fputcsv($out, ['Wallet Balance', $trainingPartner->wallet_balance]);
             fputcsv($out, []);
-            fputcsv($out, ['Date', 'Type', 'Amount', 'Revenue Amount', 'Balance After', 'Description', 'Reference']);
+            fputcsv($out, ['Date', 'Type', 'Amount', 'Revenue Amount', 'Collection Status', 'Collected At', 'Collected By', 'Balance After', 'Description', 'Reference']);
 
             $trainingPartner->walletTransactions()
+                ->with('collectedBy:id,name')
                 ->latest('id')
                 ->chunk(500, function ($chunk) use ($out) {
                     foreach ($chunk as $tx) {
@@ -359,6 +369,9 @@ class TrainingPartnerController extends Controller
                             $tx->type,
                             $tx->amount,
                             $isRevenue ? abs((float) $tx->amount) : 0,
+                            $isRevenue ? $tx->collection_status : '',
+                            $isRevenue ? $tx->collected_at?->format('Y-m-d H:i:s') : '',
+                            $isRevenue ? $tx->collectedBy?->name : '',
                             $tx->balance_after,
                             $tx->description,
                             ($tx->reference_type ? $tx->reference_type . '#' . $tx->reference_id : ''),
@@ -384,6 +397,11 @@ class TrainingPartnerController extends Controller
                 ->where('type', 'student_approval')
                 ->where('amount', '<', 0)
                 ->sum('amount')),
+            'collected_revenue' => abs((float) $trainingPartner->walletTransactions()
+                ->where('type', 'student_approval')
+                ->where('amount', '<', 0)
+                ->where('collection_status', 'collected')
+                ->sum('amount')),
             'approval_revenue_month' => abs((float) $trainingPartner->walletTransactions()
                 ->where('type', 'student_approval')
                 ->where('amount', '<', 0)
@@ -404,6 +422,34 @@ class TrainingPartnerController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download('partner-revenue-' . ($trainingPartner->code ?: $trainingPartner->id) . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function markRevenueCollected(Request $request, TrainingPartner $trainingPartner, PartnerWalletTransaction $walletTransaction)
+    {
+        if ((int) $walletTransaction->training_partner_id !== (int) $trainingPartner->id) {
+            abort(404);
+        }
+
+        if (! $walletTransaction->is_revenue) {
+            return redirect()->back()->with('error', 'Only student approval revenue deductions can be marked as collected.');
+        }
+
+        if ($walletTransaction->collection_status === 'collected') {
+            return redirect()->back()->with('info', 'This revenue item is already marked as collected.');
+        }
+
+        $validated = $request->validate([
+            'collection_notes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $walletTransaction->update([
+            'collection_status' => 'collected',
+            'collected_at' => now(),
+            'collected_by' => auth()->id(),
+            'collection_notes' => $validated['collection_notes'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Revenue marked as collected.');
     }
 
     public function recharge(Request $request, TrainingPartner $trainingPartner)

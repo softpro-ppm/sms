@@ -523,6 +523,37 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_super_admin_can_mark_partner_revenue_collected(): void
+    {
+        [$partner] = $this->makePartnerAdmin();
+        $superAdmin = User::factory()->create([
+            'role' => 'super_admin',
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $transaction = PartnerWalletTransaction::create([
+            'training_partner_id' => $partner->id,
+            'amount' => -200,
+            'type' => 'student_approval',
+            'description' => 'Student approval: Collection Student',
+            'balance_after' => 800,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('admin.super.training-partners.revenue.collect', [$partner, $transaction]), [
+                'collection_notes' => 'UPI collected',
+            ])
+            ->assertRedirect();
+
+        $transaction->refresh();
+
+        $this->assertSame('collected', $transaction->collection_status);
+        $this->assertSame($superAdmin->id, $transaction->collected_by);
+        $this->assertSame('UPI collected', $transaction->collection_notes);
+        $this->assertNotNull($transaction->collected_at);
+    }
+
     private function makePartnerAdmin(string $type = 'STANDARD'): array
     {
         $partner = $type === 'HQ'
