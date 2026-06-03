@@ -17,12 +17,7 @@ class CertificateIssuanceService
         }
 
         $student = $result->student;
-        $nameParts = explode(' ', $student->full_name);
-        $firstName = $nameParts[0] ?? '';
-        $lastName = end($nameParts) ?? '';
-        $certificateNumber = 'CERT-' . strtoupper(substr($firstName, 0, 2))
-            . strtoupper(substr($lastName, 0, 2))
-            . '-' . $result->id . '-' . date('Y');
+        $certificateNumber = app(CertificateNumberService::class)->generateForStudent($student);
 
         $certificateContent = $this->buildCertificateHtmlContent($result, $enrollment);
 
@@ -50,12 +45,7 @@ class CertificateIssuanceService
         $batch = $enrollment->batch;
         $batchName = $batch?->batch_name ?? 'N/A';
 
-        $nameParts = explode(' ', $result->student->full_name);
-        $firstName = $nameParts[0] ?? '';
-        $lastName = end($nameParts) ?? '';
-        $certificateNumber = 'CERT-' . strtoupper(substr($firstName, 0, 2))
-            . strtoupper(substr($lastName, 0, 2))
-            . '-' . $result->id . '-' . date('Y');
+        $certificateNumber = app(CertificateNumberService::class)->generateForStudent($student);
 
         $completedAt = $result->completed_at?->format('F d, Y') ?? now()->format('F d, Y');
 

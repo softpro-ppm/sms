@@ -57,6 +57,8 @@ class CertificateTemplateService
                 $trainingPartnerLogoPath = 'data:' . $mime . ';base64,' . $tpLogoData;
             }
         }
+        $trainingPartnerName = $partner?->name ?: 'Softpro Skill Solutions';
+        $trainingPartnerCode = $partner?->code ?: 'HQ';
 
         // SoftPro logo: use data URI for reliable loading in browser, PDF, and saved HTML
         $logoPath = asset('images/logo/Logo_png.png');
@@ -126,6 +128,8 @@ class CertificateTemplateService
             'batch' => $batch,
             'enrollmentNumber' => $enrollmentNumber,
             'trainingPartnerLogoPath' => $trainingPartnerLogoPath,
+            'trainingPartnerName' => $trainingPartnerName,
+            'trainingPartnerCode' => $trainingPartnerCode,
             'logoPath' => $logoPath,
             'salutation' => $salutation,
             'parentLabel' => $parentLabel,
@@ -193,6 +197,8 @@ class CertificateTemplateService
             'batch' => $batch,
             'enrollmentNumber' => 'SP20260001',
             'trainingPartnerLogoPath' => null,
+            'trainingPartnerName' => 'Softpro Skill Solutions',
+            'trainingPartnerCode' => 'HQ',
             'logoPath' => $logoPath,
             'salutation' => 'Ms.',
             'parentLabel' => 'D/o',

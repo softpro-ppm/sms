@@ -97,6 +97,30 @@
             object-fit: contain;
             object-position: right center;
         }
+        .header-partner {
+            position: absolute;
+            top: 3mm;
+            right: 0;
+            width: 38mm;
+            text-align: right;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+        }
+        .header-partner.has-logo {
+            top: 23mm;
+        }
+        .partner-name {
+            font-size: 7.5pt;
+            font-weight: 700;
+            color: #2c1810;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        .partner-code {
+            margin-top: 0.5mm;
+            font-size: 6.5pt;
+            color: #8b7355;
+            letter-spacing: 0.8px;
+        }
         .header-institute {
             position: absolute;
             top: 2mm;
@@ -382,6 +406,10 @@
                 @if(!empty($trainingPartnerLogoPath))
                 <img src="{{ $trainingPartnerLogoPath }}" alt="" class="header-tp-logo">
                 @endif
+                <div class="header-partner {{ !empty($trainingPartnerLogoPath) ? 'has-logo' : '' }}">
+                    <div class="partner-name">{{ $trainingPartnerName }}</div>
+                    <div class="partner-code">Centre Code: {{ $trainingPartnerCode }}</div>
+                </div>
             </div>
 
             <!-- 2) TITLE: top 28mm -->
@@ -462,7 +490,7 @@
         <!-- 10) FOOTER: absolute, relative to certificate -->
         <div class="section-footer">
             <span class="footer-left">Enrol. No. <strong>{{ $enrollmentNumber }}</strong></span>
-            <span class="footer-center">{{ $isoText }}</span>
+            <span class="footer-center">{{ $isoText }}<br>{{ $trainingPartnerName }}</span>
             <span class="footer-right">Cert No. <strong>{{ $certificate->certificate_number }}</strong></span>
         </div>
     </div>

@@ -11,6 +11,7 @@ use App\Models\Batch;
 use App\Models\AssessmentResult;
 use App\Mail\CertificateIssuedMail;
 use App\Services\CertificatePdfService;
+use App\Services\CertificateNumberService;
 use App\Services\CertificateTemplateService;
 use App\Services\StudentPushNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -174,7 +175,8 @@ class CertificatesController extends Controller
         }
         try {
             // Generate certificate number and update certificate
-            $certificateNumber = $this->generateCertificateNumber();
+            $certificate->loadMissing('student.trainingPartner');
+            $certificateNumber = app(CertificateNumberService::class)->generateForStudent($certificate->student);
             $certificate->update([
                 'certificate_number' => $certificateNumber,
                 'is_issued' => true,
@@ -332,27 +334,6 @@ class CertificatesController extends Controller
 
         return redirect()->route('admin.certificates.show', $certificate)
             ->with('success', 'Certificate created successfully!');
-    }
-
-    private function generateCertificateNumber(): string
-    {
-        $prefix = 'CERT';
-        $year = now()->year;
-        $month = now()->format('m');
-        
-        // Get the last certificate number for this month
-        $lastCertificate = Certificate::where('certificate_number', 'like', "{$prefix}{$year}{$month}%")
-            ->orderBy('certificate_number', 'desc')
-            ->first();
-        
-        if ($lastCertificate) {
-            $lastNumber = intval(substr($lastCertificate->certificate_number, -4));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function getBatchesByCourse(Request $request)
