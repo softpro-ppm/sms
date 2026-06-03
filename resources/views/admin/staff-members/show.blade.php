@@ -19,10 +19,24 @@
                 <p class="mt-2 text-sm leading-6 text-slate-600">{{ $staffMember->staff_code ?: 'No staff ID' }}{{ $staffMember->designation ? ' · ' . $staffMember->designation : '' }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('admin.staff-members.reenroll', $staffMember) }}" class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
+                    <i class="fas fa-camera-rotate text-xs"></i>
+                    Re-enroll
+                </a>
                 <a href="{{ route('admin.staff-members.edit', $staffMember) }}" class="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100">
                     <i class="fas fa-pen text-xs"></i>
                     Edit
                 </a>
+                @if(auth()->user()->is_admin && $staffMember->status === 'approved')
+                    <form method="POST" action="{{ $staffMember->is_active ? route('admin.staff-members.deactivate', $staffMember) : route('admin.staff-members.activate', $staffMember) }}">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 transition hover:bg-amber-100">
+                            <i class="fas {{ $staffMember->is_active ? 'fa-user-slash' : 'fa-user-check' }} text-xs"></i>
+                            {{ $staffMember->is_active ? 'Deactivate' : 'Activate' }}
+                        </button>
+                    </form>
+                @endif
                 <form method="POST" action="{{ route('admin.staff-members.destroy', $staffMember) }}" onsubmit="return confirm('Delete this staff profile and attendance records? This cannot be undone.');">
                     @csrf
                     @method('DELETE')
@@ -38,7 +52,7 @@
                         default => 'bg-amber-50 text-amber-700 border-amber-200',
                     };
                 @endphp
-                <span class="inline-flex rounded-full border px-3 py-1.5 text-sm font-semibold {{ $statusClass }}">{{ ucfirst($staffMember->status) }}</span>
+                <span class="inline-flex rounded-full border px-3 py-1.5 text-sm font-semibold {{ !$staffMember->is_active ? 'bg-slate-50 text-slate-600 border-slate-200' : $statusClass }}">{{ !$staffMember->is_active ? 'Inactive' : ucfirst($staffMember->status) }}</span>
             </div>
         </div>
     </section>
@@ -65,6 +79,7 @@
                     'Joining date' => $staffMember->joining_date?->format('d M Y'),
                     'Created by' => $staffMember->creator?->name,
                     'Approved by' => $staffMember->approver?->name,
+                    'Attendance active' => $staffMember->is_active ? 'Yes' : 'No',
                     'Face samples' => count($staffMember->face_descriptors ?? []),
                 ] as $label => $value)
                     <div class="flex items-center justify-between gap-4 px-6 py-3.5">

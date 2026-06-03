@@ -20,6 +20,7 @@ class StaffKioskAttendanceController extends Controller
     private const CHECK_OUT_EXPECTED = '18:00';
     private const CHECK_OUT_END = '21:00';
     private const MAX_MATCH_DISTANCE = 0.52;
+    private const PUNCH_COOLDOWN_SECONDS = 120;
 
     public function kiosk()
     {
@@ -96,11 +97,13 @@ class StaffKioskAttendanceController extends Controller
             ]);
 
         if (!$attendance->check_in_at) {
+            $this->ensureWithinWindow($now, 'check_in');
+
             $attendance->fill([
                 'training_partner_id' => $staff->training_partner_id,
                 'kiosk_user_id' => auth()->id(),
                 'check_in_at' => $now,
-                'check_in_status' => 'test_first_capture',
+                'check_in_status' => $now->format('H:i') > self::CHECK_IN_ON_TIME_UNTIL ? 'late' : 'on_time',
                 'check_in_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-ins"),
                 'check_in_match_distance' => $validated['match_distance'],
                 'check_in_latitude' => $validated['latitude'] ?? null,
@@ -115,13 +118,23 @@ class StaffKioskAttendanceController extends Controller
                 'ok' => true,
                 'message' => "{$staff->name} check-in recorded at " . $now->format('h:i A') . '.',
                 'staff' => $staff->name,
+                'action' => 'check_in',
+                'location' => $distance,
+            ]);
+        }
+
+        $this->ensureWithinWindow($now, 'check_out');
+
+        if ($attendance->check_out_at && $attendance->check_out_at->diffInSeconds($now) < self::PUNCH_COOLDOWN_SECONDS) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Attendance already updated recently. Please wait before punching again.',
             ]);
         }
 
         $attendance->update([
             'kiosk_user_id' => auth()->id(),
             'check_out_at' => $now,
-            'check_out_status' => 'test_latest_capture',
+            'check_out_status' => $now->format('H:i') < self::CHECK_OUT_EXPECTED ? 'early' : 'on_time',
             'check_out_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-outs"),
             'check_out_match_distance' => $validated['match_distance'],
             'check_out_latitude' => $validated['latitude'] ?? null,
@@ -136,7 +149,39 @@ class StaffKioskAttendanceController extends Controller
             'ok' => true,
             'message' => "{$staff->name} check-out updated at " . $now->format('h:i A') . '.',
             'staff' => $staff->name,
+            'action' => 'check_out',
+            'location' => $distance,
         ]);
+    }
+
+    public function updateRecord(Request $request, StaffMemberAttendance $attendance)
+    {
+        if (!auth()->user()->is_admin) {
+            abort(403);
+        }
+
+        $this->ensureAttendanceAccess($attendance);
+
+        $validated = $request->validate([
+            'attendance_date' => ['required', 'date'],
+            'check_in_time' => ['nullable', 'date_format:H:i'],
+            'check_out_time' => ['nullable', 'date_format:H:i'],
+            'check_in_status' => ['nullable', 'string', 'max:50'],
+            'check_out_status' => ['nullable', 'string', 'max:50'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $date = Carbon::parse($validated['attendance_date'])->toDateString();
+        $attendance->update([
+            'attendance_date' => $date,
+            'check_in_at' => !empty($validated['check_in_time']) ? Carbon::parse($date . ' ' . $validated['check_in_time']) : null,
+            'check_out_at' => !empty($validated['check_out_time']) ? Carbon::parse($date . ' ' . $validated['check_out_time']) : null,
+            'check_in_status' => $validated['check_in_status'] ?: null,
+            'check_out_status' => $validated['check_out_status'] ?: null,
+            'notes' => $validated['notes'] ?: null,
+        ]);
+
+        return back()->with('success', 'Attendance record corrected.');
     }
 
     public function records(Request $request)
@@ -161,11 +206,23 @@ class StaffKioskAttendanceController extends Controller
             $query->where('staff_member_id', $request->integer('staff_member_id'));
         }
 
+        $summaryQuery = clone $query;
         $records = $query->paginate(20)->withQueryString();
         $staffMembers = $this->staffListQuery()->get();
         $trainingPartner = auth()->user()->trainingPartner;
+        $geofenceRadius = $trainingPartner?->attendance_radius_meters;
+        $summary = [
+            'present' => (clone $summaryQuery)->count(),
+            'missing_checkout' => (clone $summaryQuery)->whereNotNull('check_in_at')->whereNull('check_out_at')->count(),
+            'late' => (clone $summaryQuery)->where('check_in_status', 'late')->count(),
+            'outside_location' => $geofenceRadius ? (clone $summaryQuery)
+                ->where(function ($inner) use ($geofenceRadius) {
+                    $inner->where('check_in_distance_meters', '>', $geofenceRadius)
+                        ->orWhere('check_out_distance_meters', '>', $geofenceRadius);
+                })->count() : 0,
+        ];
 
-        return view('admin.staff-attendance.records', compact('records', 'staffMembers', 'from', 'to', 'trainingPartner'));
+        return view('admin.staff-attendance.records', compact('records', 'staffMembers', 'from', 'to', 'trainingPartner', 'summary'));
     }
 
     public function updateSettings(Request $request)
@@ -281,6 +338,31 @@ class StaffKioskAttendanceController extends Controller
         $tpId = auth()->user()->training_partner_id;
         if ($tpId !== null) {
             $query->where('training_partner_id', $tpId);
+        }
+    }
+
+    protected function ensureAttendanceAccess(StaffMemberAttendance $attendance): void
+    {
+        $tpId = auth()->user()->training_partner_id;
+        if ($tpId !== null && $attendance->training_partner_id !== $tpId) {
+            abort(404);
+        }
+    }
+
+    protected function ensureWithinWindow(Carbon $now, string $action): void
+    {
+        $time = $now->format('H:i');
+
+        if ($action === 'check_in' && ($time < self::CHECK_IN_START || $time > self::CHECK_IN_END)) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Check-in is allowed only from ' . self::CHECK_IN_START . ' to ' . self::CHECK_IN_END . '.',
+            ]);
+        }
+
+        if ($action === 'check_out' && ($time < self::CHECK_OUT_START || $time > self::CHECK_OUT_END)) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Check-out is allowed only from ' . self::CHECK_OUT_START . ' to ' . self::CHECK_OUT_END . '.',
+            ]);
         }
     }
 

@@ -26,7 +26,11 @@ class StaffMemberController extends Controller
         $this->scopeStaffQuery($query);
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if ($filters['status'] === 'inactive') {
+                $query->where('is_active', false);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (!empty($filters['search'])) {
@@ -159,6 +163,81 @@ class StaffMemberController extends Controller
             ->with('success', 'Staff profile updated.');
     }
 
+    public function reenroll(StaffMember $staffMember)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        return view('admin.staff-members.reenroll', compact('staffMember'));
+    }
+
+    public function updateFace(Request $request, StaffMember $staffMember)
+    {
+        $this->ensureStaffAccess($staffMember);
+
+        $validated = $request->validate([
+            'face_descriptors' => ['required', 'json'],
+            'face_images' => ['required', 'json'],
+        ]);
+
+        $descriptors = json_decode($validated['face_descriptors'], true);
+        $images = json_decode($validated['face_images'], true);
+
+        if (!is_array($descriptors) || count($descriptors) < 3 || !is_array($images) || count($images) < 3) {
+            throw ValidationException::withMessages([
+                'face_images' => 'Capture at least 3 valid face samples before submitting.',
+            ]);
+        }
+
+        $oldPaths = collect($staffMember->face_image_paths ?? [])->filter()->values();
+        $imagePaths = [];
+
+        foreach (array_slice($images, 0, 5) as $index => $image) {
+            $imagePaths[] = $this->storeDataImage((string) $image, 'staff-members/enrollment/' . now()->format('Ym'), "sample-{$index}");
+        }
+
+        $staffMember->update([
+            'face_descriptors' => array_slice($descriptors, 0, 5),
+            'face_image_paths' => $imagePaths,
+            'face_enrolled_at' => now(),
+            'status' => auth()->user()->is_admin ? 'approved' : 'pending',
+            'approved_by' => auth()->user()->is_admin ? auth()->id() : null,
+            'approved_at' => auth()->user()->is_admin ? now() : null,
+            'approval_notes' => auth()->user()->is_admin ? 'Face samples re-enrolled by admin.' : 'Face samples re-enrolled. Awaiting admin approval.',
+            'is_active' => auth()->user()->is_admin,
+        ]);
+
+        if ($oldPaths->isNotEmpty()) {
+            Storage::disk('public')->delete($oldPaths->all());
+        }
+
+        return redirect()->route('admin.staff-members.show', $staffMember)
+            ->with('success', auth()->user()->is_admin ? 'Face samples updated.' : 'Face samples submitted for admin approval.');
+    }
+
+    public function deactivate(StaffMember $staffMember)
+    {
+        $this->ensureAdmin();
+        $this->ensureStaffAccess($staffMember);
+
+        $staffMember->update(['is_active' => false]);
+
+        return back()->with('success', 'Staff profile deactivated for attendance.');
+    }
+
+    public function activate(StaffMember $staffMember)
+    {
+        $this->ensureAdmin();
+        $this->ensureStaffAccess($staffMember);
+
+        if ($staffMember->status !== 'approved') {
+            return back()->withErrors(['status' => 'Only approved staff can be activated.']);
+        }
+
+        $staffMember->update(['is_active' => true]);
+
+        return back()->with('success', 'Staff profile activated for attendance.');
+    }
+
     public function destroy(StaffMember $staffMember)
     {
         $this->ensureStaffAccess($staffMember);
@@ -245,6 +324,7 @@ class StaffMemberController extends Controller
             'pending' => (clone $query)->where('status', 'pending')->count(),
             'approved' => (clone $query)->where('status', 'approved')->where('is_active', true)->count(),
             'rejected' => (clone $query)->where('status', 'rejected')->count(),
+            'inactive' => (clone $query)->where('is_active', false)->count(),
         ];
     }
 

@@ -13,7 +13,7 @@
                     Automatic FRS kiosk
                 </div>
                 <h2 class="mt-3 text-[2rem] font-semibold tracking-tight text-slate-900">Staff attendance kiosk</h2>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Testing mode: first successful capture marks check-in, later captures update check-out. Camera pauses when this tab is not active.</p>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Automatic check-in runs from 6:00 AM to 10:00 AM. Check-out runs from 4:30 PM to 9:00 PM. Camera pauses when this tab is not active.</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.staff-members.create') }}" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
@@ -94,6 +94,10 @@
                 </div>
             </div>
             <p id="popup-message" class="text-base leading-7 text-slate-700">Attendance recorded successfully.</p>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Location</p>
+                <p id="popup-location" class="mt-1 text-sm font-medium text-slate-800">Not checked</p>
+            </div>
             <div class="flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <span class="text-sm font-medium text-emerald-800">Auto closing</span>
                 <span id="popup-countdown" class="text-sm font-semibold text-emerald-900">4s</span>
@@ -118,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupAction = document.getElementById('popup-action');
     const popupTime = document.getElementById('popup-time');
     const popupMessage = document.getElementById('popup-message');
+    const popupLocation = document.getElementById('popup-location');
     const popupCountdown = document.getElementById('popup-countdown');
     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     let locationSnapshot = {};
@@ -129,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let locationTimer = null;
     let activeStream = null;
     const staffCooldowns = new Map();
-    const cooldownMs = 10000;
+    const cooldownMs = 120000;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -166,9 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const showAttendancePopup = (payload, match) => {
         window.clearInterval(popupTimer);
         popupStaff.textContent = payload.staff || 'Staff';
-        popupAction.textContent = payload.message?.toLowerCase().includes('check-in') ? 'Check-in' : 'Check-out';
+        popupAction.textContent = payload.action === 'check_in' ? 'Check-in' : 'Check-out';
         popupTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         popupMessage.textContent = payload.message || 'Attendance recorded successfully.';
+        popupLocation.textContent = payload.location?.configured
+            ? `${payload.location.inside ? 'Inside location fence' : 'Outside location fence'}${payload.location.meters !== null ? ` (${payload.location.meters}m)` : ''}`
+            : 'Geofence not configured or location unavailable';
 
         let remaining = 4;
         popupCountdown.textContent = `${remaining}s`;

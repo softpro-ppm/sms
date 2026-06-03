@@ -32,8 +32,8 @@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('success') }}</div>
     @endif
 
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-        @foreach([['Total', 'total'], ['Pending', 'pending'], ['Approved', 'approved'], ['Rejected', 'rejected']] as [$label, $key])
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+        @foreach([['Total', 'total'], ['Pending', 'pending'], ['Approved', 'approved'], ['Rejected', 'rejected'], ['Inactive', 'inactive']] as [$label, $key])
             <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{{ $label }}</p>
                 <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ number_format($counts[$key] ?? 0) }}</p>
@@ -100,9 +100,12 @@
                                         default => 'bg-amber-50 text-amber-700',
                                     };
                                 @endphp
-                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $statusClass }}">{{ ucfirst($staff->status) }}</span>
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ !$staff->is_active ? 'bg-slate-100 text-slate-600' : $statusClass }}">{{ !$staff->is_active ? 'Inactive' : ucfirst($staff->status) }}</span>
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap text-right">
+                                <a href="{{ route('admin.staff-members.reenroll', $staff) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100" title="Re-enroll face">
+                                    <i class="fas fa-camera-rotate"></i>
+                                </a>
                                 <a href="{{ route('admin.staff-members.edit', $staff) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50" title="Edit">
                                     <i class="fas fa-pen"></i>
                                 </a>

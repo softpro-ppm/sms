@@ -125,6 +125,10 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/staff-profiles/{staffMember}/edit', [StaffMemberController::class, 'edit'])->name('staff-members.edit');
     Route::put('/staff-profiles/{staffMember}', [StaffMemberController::class, 'update'])->name('staff-members.update');
     Route::delete('/staff-profiles/{staffMember}', [StaffMemberController::class, 'destroy'])->name('staff-members.destroy');
+    Route::get('/staff-profiles/{staffMember}/re-enroll', [StaffMemberController::class, 'reenroll'])->name('staff-members.reenroll');
+    Route::patch('/staff-profiles/{staffMember}/re-enroll', [StaffMemberController::class, 'updateFace'])->name('staff-members.update-face');
+    Route::patch('/staff-profiles/{staffMember}/deactivate', [StaffMemberController::class, 'deactivate'])->name('staff-members.deactivate');
+    Route::patch('/staff-profiles/{staffMember}/activate', [StaffMemberController::class, 'activate'])->name('staff-members.activate');
     Route::get('/staff-profiles/{staffMember}/face-images/{imageIndex}', [StaffMemberController::class, 'faceImage'])->name('staff-members.face-image');
     Route::get('/staff-profiles/{staffMember}', [StaffMemberController::class, 'show'])->name('staff-members.show');
 
@@ -329,6 +333,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/staff-attendance', [StaffKioskAttendanceController::class, 'records'])->name('staff-attendance.index');
         Route::get('/staff-attendance/export-csv', [StaffKioskAttendanceController::class, 'export'])->name('staff-attendance.export');
         Route::post('/staff-attendance/geofence', [StaffKioskAttendanceController::class, 'updateSettings'])->name('staff-attendance.geofence.update');
+        Route::patch('/staff-attendance/{attendance}', [StaffKioskAttendanceController::class, 'updateRecord'])->name('staff-attendance.update-record');
         Route::patch('/staff-profiles/{staffMember}/approve', [StaffMemberController::class, 'approve'])->name('staff-members.approve');
         Route::patch('/staff-profiles/{staffMember}/reject', [StaffMemberController::class, 'reject'])->name('staff-members.reject');
         // Staff users (admin & reception management)

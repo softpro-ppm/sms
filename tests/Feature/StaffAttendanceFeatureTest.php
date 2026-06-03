@@ -207,7 +207,7 @@ class StaffAttendanceFeatureTest extends TestCase
         Storage::disk('public')->assertMissing('staff-members/attendance/1/check-ins/punch.jpg');
     }
 
-    public function test_kiosk_punch_uses_first_capture_as_check_in_and_latest_as_check_out(): void
+    public function test_kiosk_punch_uses_final_time_windows_for_check_in_and_check_out(): void
     {
         Storage::fake('public');
 
@@ -236,7 +236,7 @@ class StaffAttendanceFeatureTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->travelTo(now()->setTime(10, 1));
+        $this->travelTo(now()->setTime(9, 45));
 
         $this->actingAs($reception)
             ->postJson(route('admin.staff-attendance.kiosk.punch'), [
@@ -248,12 +248,22 @@ class StaffAttendanceFeatureTest extends TestCase
             ->assertJsonPath('ok', true);
 
         $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
-        $this->assertSame('test_first_capture', $attendance->check_in_status);
+        $this->assertSame('late', $attendance->check_in_status);
         $this->assertNotNull($attendance->check_in_at);
         $this->assertNull($attendance->check_out_at);
         Storage::disk('public')->assertExists($attendance->check_in_image_path);
 
-        $this->travelTo(now()->setTime(10, 5));
+        $this->travelTo(now()->setTime(16, 29));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+            ])
+            ->assertUnprocessable();
+
+        $this->travelTo(now()->setTime(16, 31));
 
         $this->actingAs($reception)
             ->postJson(route('admin.staff-attendance.kiosk.punch'), [
@@ -262,14 +272,25 @@ class StaffAttendanceFeatureTest extends TestCase
                 'match_distance' => 0.31,
             ])
             ->assertOk()
-            ->assertJsonPath('ok', true);
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('action', 'check_out');
 
         $attendance->refresh();
-        $this->assertSame('test_latest_capture', $attendance->check_out_status);
-        $this->assertSame('10:05', $attendance->check_out_at->format('H:i'));
+        $this->assertSame('early', $attendance->check_out_status);
+        $this->assertSame('16:31', $attendance->check_out_at->format('H:i'));
         Storage::disk('public')->assertExists($attendance->check_out_image_path);
 
-        $this->travelTo(now()->setTime(10, 8));
+        $this->travelTo(now()->setTime(16, 32));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.29,
+            ])
+            ->assertUnprocessable();
+
+        $this->travelTo(now()->setTime(18, 35));
 
         $this->actingAs($reception)
             ->postJson(route('admin.staff-attendance.kiosk.punch'), [
@@ -281,8 +302,57 @@ class StaffAttendanceFeatureTest extends TestCase
             ->assertJsonPath('ok', true);
 
         $attendance->refresh();
-        $this->assertSame('10:08', $attendance->check_out_at->format('H:i'));
+        $this->assertSame('18:35', $attendance->check_out_at->format('H:i'));
+        $this->assertSame('on_time', $attendance->check_out_status);
         $this->assertSame('0.29000', (string) $attendance->check_out_match_distance);
+    }
+
+    public function test_admin_can_correct_staff_attendance_record(): void
+    {
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Correction Centre',
+            'code' => 'CORR',
+            'status' => 'active',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'Correction Staff',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $attendance = StaffMemberAttendance::create([
+            'staff_member_id' => $staff->id,
+            'training_partner_id' => $partner->id,
+            'attendance_date' => '2026-06-03',
+            'check_in_at' => '2026-06-03 09:55:00',
+            'check_in_status' => 'late',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.staff-attendance.update-record', $attendance), [
+                'attendance_date' => '2026-06-03',
+                'check_in_time' => '09:25',
+                'check_out_time' => '18:05',
+                'check_in_status' => 'manual',
+                'check_out_status' => 'manual',
+                'notes' => 'Corrected after review',
+            ])
+            ->assertRedirect();
+
+        $attendance->refresh();
+        $this->assertSame('09:25', $attendance->check_in_at->format('H:i'));
+        $this->assertSame('18:05', $attendance->check_out_at->format('H:i'));
+        $this->assertSame('Corrected after review', $attendance->notes);
     }
 
     public function test_admin_attendance_index_is_scoped_to_training_partner(): void

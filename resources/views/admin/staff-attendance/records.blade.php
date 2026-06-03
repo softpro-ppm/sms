@@ -36,6 +36,15 @@
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{{ $errors->first() }}</div>
     @endif
 
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        @foreach([['Present', 'present'], ['Missing out', 'missing_checkout'], ['Late', 'late'], ['Outside location', 'outside_location']] as [$label, $key])
+            <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{{ $label }}</p>
+                <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{{ number_format($summary[$key] ?? 0) }}</p>
+            </div>
+        @endforeach
+    </div>
+
     <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         <form method="GET" action="{{ route('admin.staff-attendance.index') }}" class="grid gap-4 border-b border-slate-200 px-6 py-5 md:grid-cols-[1fr_1fr_1.2fr_auto_auto] md:items-end">
             <div>
@@ -76,6 +85,7 @@
                         <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Match</th>
                         <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Location</th>
                         <th class="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Captures</th>
+                        <th class="px-5 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Admin</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -105,6 +115,9 @@
                             <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-600">
                                 In {{ $record->check_in_distance_meters !== null ? $record->check_in_distance_meters . 'm' : '-' }}<br>
                                 Out {{ $record->check_out_distance_meters !== null ? $record->check_out_distance_meters . 'm' : '-' }}
+                                @if($trainingPartner?->attendance_radius_meters && (($record->check_in_distance_meters !== null && $record->check_in_distance_meters > $trainingPartner->attendance_radius_meters) || ($record->check_out_distance_meters !== null && $record->check_out_distance_meters > $trainingPartner->attendance_radius_meters)))
+                                    <span class="block text-xs text-rose-700">Outside fence</span>
+                                @endif
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
@@ -120,10 +133,62 @@
                                     @endif
                                 </div>
                             </td>
+                            <td class="px-5 py-3.5 text-right align-top">
+                                <details class="group">
+                                    <summary class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                                        <i class="fas fa-pen text-xs"></i>
+                                        Correct
+                                    </summary>
+                                    <form method="POST" action="{{ route('admin.staff-attendance.update-record', $record) }}" class="mt-3 grid min-w-[28rem] gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left shadow-sm">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="grid gap-3 sm:grid-cols-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-600">Date</label>
+                                                <input type="date" name="attendance_date" value="{{ $record->attendance_date?->format('Y-m-d') }}" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-600">Check in</label>
+                                                <input type="time" name="check_in_time" value="{{ $record->check_in_at?->format('H:i') }}" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-600">Check out</label>
+                                                <input type="time" name="check_out_time" value="{{ $record->check_out_at?->format('H:i') }}" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        </div>
+                                        <div class="grid gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-600">In status</label>
+                                                <select name="check_in_status" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm">
+                                                    @foreach(['' => '-', 'on_time' => 'On time', 'late' => 'Late', 'manual' => 'Manual'] as $value => $label)
+                                                        <option value="{{ $value }}" @selected($record->check_in_status === $value)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-600">Out status</label>
+                                                <select name="check_out_status" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm">
+                                                    @foreach(['' => '-', 'on_time' => 'On time', 'early' => 'Early', 'manual' => 'Manual'] as $value => $label)
+                                                        <option value="{{ $value }}" @selected($record->check_out_status === $value)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600">Notes</label>
+                                            <textarea name="notes" rows="2" class="mt-1 w-full rounded-xl border-slate-200 px-3 py-2 text-sm" placeholder="Reason for correction">{{ $record->notes }}</textarea>
+                                        </div>
+                                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+                                            <i class="fas fa-save text-xs"></i>
+                                            Save correction
+                                        </button>
+                                    </form>
+                                </details>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-10 text-center text-gray-500">No attendance records found.</td>
+                            <td colspan="8" class="px-5 py-10 text-center text-gray-500">No attendance records found.</td>
                         </tr>
                     @endforelse
                 </tbody>
