@@ -140,7 +140,7 @@
             <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Geofence</div>
             <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Attendance location fence</h3>
         </div>
-        <form method="POST" action="{{ route('admin.staff-attendance.geofence.update') }}" class="grid gap-4 p-6 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+        <form method="POST" action="{{ route('admin.staff-attendance.geofence.update') }}" class="grid gap-4 p-6 md:grid-cols-[1fr_1fr_1fr_auto_auto] md:items-end">
             @csrf
             <div>
                 <label for="attendance_latitude" class="block text-sm font-medium text-slate-700">Latitude</label>
@@ -154,11 +154,63 @@
                 <label for="attendance_radius_meters" class="block text-sm font-medium text-slate-700">Radius meters</label>
                 <input id="attendance_radius_meters" name="attendance_radius_meters" type="number" min="20" max="1000" value="{{ old('attendance_radius_meters', $trainingPartner?->attendance_radius_meters ?? 100) }}" class="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-2.5 text-sm shadow-sm focus:border-primary-300 focus:ring-primary-100">
             </div>
+            <button type="button" id="detect-attendance-location" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100">
+                <i class="fas fa-location-crosshairs text-xs"></i>
+                Detect
+            </button>
             <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                 <i class="fas fa-save text-xs"></i>
                 Save
             </button>
+            <p id="attendance-location-status" class="md:col-span-5 text-sm text-slate-500">Use Detect on the attendance device, then save the centre geofence.</p>
         </form>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const detectButton = document.getElementById('detect-attendance-location');
+    const latitudeInput = document.getElementById('attendance_latitude');
+    const longitudeInput = document.getElementById('attendance_longitude');
+    const radiusInput = document.getElementById('attendance_radius_meters');
+    const status = document.getElementById('attendance-location-status');
+
+    detectButton?.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            status.textContent = 'Location detection is not supported in this browser.';
+            status.className = 'md:col-span-5 text-sm text-rose-700';
+            return;
+        }
+
+        detectButton.disabled = true;
+        detectButton.classList.add('opacity-70');
+        status.textContent = 'Detecting current location... allow browser location permission.';
+        status.className = 'md:col-span-5 text-sm text-blue-700';
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            latitudeInput.value = position.coords.latitude.toFixed(7);
+            longitudeInput.value = position.coords.longitude.toFixed(7);
+
+            if (!radiusInput.value) {
+                radiusInput.value = 100;
+            }
+
+            const accuracy = Math.round(position.coords.accuracy || 0);
+            status.textContent = `Location detected. Accuracy approximately ${accuracy} meters. Review and click Save.`;
+            status.className = 'md:col-span-5 text-sm text-emerald-700';
+            detectButton.disabled = false;
+            detectButton.classList.remove('opacity-70');
+        }, () => {
+            status.textContent = 'Could not detect location. Please allow permission or enter latitude/longitude manually.';
+            status.className = 'md:col-span-5 text-sm text-rose-700';
+            detectButton.disabled = false;
+            detectButton.classList.remove('opacity-70');
+        }, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+        });
+    });
+});
+</script>
 @endsection
