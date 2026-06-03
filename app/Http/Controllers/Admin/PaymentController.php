@@ -107,6 +107,27 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function pendingApprovals(Request $request)
+    {
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 10;
+
+        $query = $this->pendingApprovalsQuery($request);
+
+        $payments = $query
+            ->orderBy('created_at')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        $statsQuery = $this->pendingApprovalsQuery($request);
+        $stats = [
+            'pending_count' => (clone $statsQuery)->count(),
+            'pending_amount' => (clone $statsQuery)->sum('amount'),
+        ];
+
+        return view('admin.payments.pending-approvals', compact('payments', 'stats'));
+    }
+
     public function exportPendingCsv(Request $request)
     {
         $filename = 'pending_payments_' . now()->format('Ymd_His') . '.csv';
@@ -178,6 +199,34 @@ class PaymentController extends Controller
                             $courseQuery->where('name', 'like', "%{$search}%");
                         });
                 });
+            });
+        }
+
+        return $query;
+    }
+
+    private function pendingApprovalsQuery(Request $request)
+    {
+        $query = $this->scopePayments(
+            Payment::with(['student', 'enrollment.batch.course'])
+                ->where('status', 'pending')
+        );
+
+        $search = trim((string) $request->get('search', ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('payment_receipt_number', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($studentQuery) use ($search) {
+                        $studentQuery->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('whatsapp_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('enrollment.batch', function ($batchQuery) use ($search) {
+                        $batchQuery->where('batch_name', 'like', "%{$search}%")
+                            ->orWhereHas('course', function ($courseQuery) use ($search) {
+                                $courseQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
             });
         }
 

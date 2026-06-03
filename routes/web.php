@@ -151,6 +151,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     // Payments management
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/pending', [PaymentController::class, 'pending'])->name('payments.pending');
+    Route::get('/payments/pending-approvals', [PaymentController::class, 'pendingApprovals'])->name('payments.pending-approvals');
     Route::get('/payments/pending/export-csv', [PaymentController::class, 'exportPendingCsv'])->name('payments.pending.export-csv');
     Route::get('/payments/debug', [PaymentController::class, 'debug'])->name('payments.debug');
     Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');

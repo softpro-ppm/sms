@@ -118,4 +118,28 @@ class PaymentApproveIdempotencyTest extends TestCase
         $afterSecond = \App\Models\PaymentAllocation::where('payment_id', $payment->id)->count();
         $this->assertSame($afterFirst, $afterSecond);
     }
+
+    public function test_pending_approvals_page_shows_only_pending_payment_approvals(): void
+    {
+        [$admin, $payment] = $this->seedFixture();
+
+        Payment::create([
+            'student_id' => $payment->student_id,
+            'enrollment_id' => $payment->enrollment_id,
+            'payment_receipt_number' => 'RCP-'.now()->format('Y').'-APPROVED'.uniqid(),
+            'amount' => 250,
+            'payment_type' => 'partial',
+            'payment_method' => 'cash',
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.payments.pending-approvals'))
+            ->assertOk()
+            ->assertSeeText('Pending Approvals')
+            ->assertSeeText($payment->payment_receipt_number)
+            ->assertDontSeeText('APPROVED');
+    }
 }

@@ -366,6 +366,14 @@
                                 <i class="fas fa-clock w-4 h-4 mr-2"></i>
                                 <span class="sidebar-label">Pending Payments</span>
                             </a>
+                            <a href="{{ route('admin.payments.pending-approvals') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.payments.pending-approvals') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-user-check w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Pending Approvals</span>
+                                @if(($pendingPayments ?? 0) > 0)
+                                    <span class="sidebar-badge ml-auto bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{{ $pendingPayments ?? 0 }}</span>
+                                @endif
+                            </a>
                         </div>
                     </li>
                     
