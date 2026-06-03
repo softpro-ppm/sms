@@ -660,7 +660,7 @@
     </div>
     
     <!-- Global Notifications -->
-    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <div id="notification-container" class="pointer-events-none fixed top-4 right-4 z-50 space-y-2"></div>
     
     <!-- Global Notification Script -->
     <script>
@@ -693,6 +693,7 @@
                 </div>
             `;
             
+            notification.classList.add('app-notification', 'pointer-events-auto');
             document.getElementById('notification-container').appendChild(notification);
             
             // Slide in
@@ -707,7 +708,8 @@
         }
         
         function removeNotification(button) {
-            const notification = button.closest('div');
+            const notification = button?.closest('.app-notification');
+            if (!notification) return;
             notification.classList.add('translate-x-full');
             setTimeout(() => {
                 if (notification.parentNode) {
