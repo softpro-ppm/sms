@@ -260,6 +260,11 @@
 </div>
 @else
 <div class="space-y-6">
+    @php
+        $dashboardCardClass = 'group rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-200';
+        $queueCardClass = 'group rounded-[20px] border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-200';
+    @endphp
+
     <section id="welcome-banner" class="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition-all duration-500 ease-in-out">
         <div class="border-b border-slate-200 bg-slate-50 px-6 py-6">
             <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
@@ -487,12 +492,15 @@
     @endif
 
     <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md">
+        <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="{{ $dashboardCardClass }} hover:border-amber-300">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">Pending Students</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['pending_students'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Student records waiting for approval and account activation.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-amber-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Open queue <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
                     <i class="fas fa-user-clock"></i>
@@ -500,12 +508,15 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.payments.pending-approvals') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-rose-300 hover:shadow-md">
+        <a href="{{ route('admin.payments.pending-approvals') }}" class="{{ $dashboardCardClass }} hover:border-rose-300">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700">Pending Payments</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['pending_payments'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Payment entries waiting for approval and receipt confirmation.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-rose-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Open queue <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
                     <i class="fas fa-money-check-alt"></i>
@@ -513,12 +524,15 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md">
+        <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="{{ $dashboardCardClass }} hover:border-blue-300">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Ready for Enrollment</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['ready_for_enrollment'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Approved students who still need to be assigned to a batch.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-blue-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Open queue <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                     <i class="fas fa-user-check"></i>
@@ -526,12 +540,15 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.results.index') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-300 hover:shadow-md">
+        <a href="{{ route('admin.results.index') }}" class="{{ $dashboardCardClass }} hover:border-violet-300">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Assessment Ready</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['assessment_ready'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Active enrollments that can move into the assessment window.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-violet-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Review results <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                     <i class="fas fa-graduation-cap"></i>
@@ -539,12 +556,15 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.certificates.index', ['status' => 'pending']) }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md">
+        <a href="{{ route('admin.certificates.index', ['status' => 'pending']) }}" class="{{ $dashboardCardClass }} hover:border-emerald-300">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Pending Certificates</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['pending_certificates'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Certificate records prepared but not yet issued to students.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Open certificates <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <i class="fas fa-certificate"></i>
@@ -552,12 +572,15 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.whatsapp.inbox') }}" class="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-400 hover:shadow-md">
+        <a href="{{ route('admin.whatsapp.inbox') }}" class="{{ $dashboardCardClass }} hover:border-slate-400">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">Unread WhatsApp</p>
                     <h3 class="mt-2 text-2xl font-semibold text-slate-900">{{ number_format($adminWorkspace['queue_counts']['unread_whatsapp'] ?? 0) }}</h3>
                     <p class="mt-2 text-sm leading-6 text-slate-600">Conversations still waiting for follow-up or student linking.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-slate-700 opacity-80 transition group-hover:translate-x-1 group-hover:opacity-100">
+                        Open inbox <i class="fas fa-arrow-right text-[10px]"></i>
+                    </span>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
                     <i class="fab fa-whatsapp"></i>
@@ -580,58 +603,58 @@
             </div>
 
             <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-amber-300 hover:bg-white">
+                <a href="{{ route('admin.students.index', ['queue' => 'pending_approval']) }}" class="{{ $queueCardClass }} hover:border-amber-300">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 shadow-sm">
                         <i class="fas fa-user-clock"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Student approvals</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Verify documents, wallet eligibility, and activate student access.</p>
-                    <p class="mt-4 text-sm font-semibold text-amber-700">{{ number_format($adminWorkspace['queue_counts']['pending_students'] ?? 0) }} waiting</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-amber-700">{{ number_format($adminWorkspace['queue_counts']['pending_students'] ?? 0) }} waiting <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
 
-                <a href="{{ route('admin.payments.pending-approvals') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-rose-300 hover:bg-white">
+                <a href="{{ route('admin.payments.pending-approvals') }}" class="{{ $queueCardClass }} hover:border-rose-300">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700 shadow-sm">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Finance queue</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Approve front-desk payment records and clear outstanding fee approvals.</p>
-                    <p class="mt-4 text-sm font-semibold text-rose-700">{{ number_format($adminWorkspace['queue_counts']['pending_payments'] ?? 0) }} pending</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-rose-700">{{ number_format($adminWorkspace['queue_counts']['pending_payments'] ?? 0) }} pending <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
 
-                <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 hover:bg-white">
+                <a href="{{ route('admin.students.index', ['queue' => 'ready_for_enrollment']) }}" class="{{ $queueCardClass }} hover:border-blue-300">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 shadow-sm">
                         <i class="fas fa-layer-group"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Enrollment queue</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Place approved students into active batches and monitor low-fill groups.</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-700">{{ number_format($adminWorkspace['queue_counts']['ready_for_enrollment'] ?? 0) }} ready</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700">{{ number_format($adminWorkspace['queue_counts']['ready_for_enrollment'] ?? 0) }} ready <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
 
-                <a href="{{ route('admin.results.index') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-violet-300 hover:bg-white">
+                <a href="{{ route('admin.results.index') }}" class="{{ $queueCardClass }} hover:border-violet-300">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shadow-sm">
                         <i class="fas fa-clipboard-list"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Assessment queue</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Track enrollments that can take the assessment and review recent outcomes.</p>
-                    <p class="mt-4 text-sm font-semibold text-violet-700">{{ number_format($adminWorkspace['queue_counts']['assessment_ready'] ?? 0) }} ready</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700">{{ number_format($adminWorkspace['queue_counts']['assessment_ready'] ?? 0) }} ready <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
 
-                <a href="{{ route('admin.certificates.index', ['status' => 'pending']) }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-emerald-300 hover:bg-white">
+                <a href="{{ route('admin.certificates.index', ['status' => 'pending']) }}" class="{{ $queueCardClass }} hover:border-emerald-300">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
                         <i class="fas fa-award"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Certificate queue</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Issue pending certificates and check which learners completed the process.</p>
-                    <p class="mt-4 text-sm font-semibold text-emerald-700">{{ number_format($adminWorkspace['queue_counts']['pending_certificates'] ?? 0) }} pending</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">{{ number_format($adminWorkspace['queue_counts']['pending_certificates'] ?? 0) }} pending <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
 
-                <a href="{{ route('admin.whatsapp.inbox') }}" class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-slate-400 hover:bg-white">
+                <a href="{{ route('admin.whatsapp.inbox') }}" class="{{ $queueCardClass }} hover:border-slate-400">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 shadow-sm">
                         <i class="fab fa-whatsapp"></i>
                     </div>
                     <h4 class="mt-4 text-base font-bold text-gray-900">Inbox follow-up</h4>
                     <p class="mt-2 text-sm leading-6 text-gray-600">Reply to unread WhatsApp conversations and link students where needed.</p>
-                    <p class="mt-4 text-sm font-semibold text-slate-700">{{ number_format($adminWorkspace['queue_counts']['unread_whatsapp'] ?? 0) }} unread</p>
+                    <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">{{ number_format($adminWorkspace['queue_counts']['unread_whatsapp'] ?? 0) }} unread <i class="fas fa-arrow-right text-xs opacity-70 transition group-hover:translate-x-1"></i></p>
                 </a>
             </div>
         </div>
@@ -752,7 +775,7 @@
                         @forelse(($adminWorkspace['assessment_ready'] ?? collect()) as $enrollment)
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 <p class="font-semibold text-gray-900">{{ $enrollment->student?->full_name ?? 'Student' }}</p>
-                                <p class="mt-1 text-sm text-gray-600">{{ $enrollment->batch?->course?->name ?? 'Course' }} · {{ $enrollment->batch?->batch_name ?? 'Batch' }}</p>
+                                <p class="mt-1 text-sm text-gray-600">{{ $enrollment->display_course_name }} · {{ $enrollment->batch?->batch_name ?? 'Batch' }}</p>
                                 <p class="mt-2 text-xs text-slate-500">Batch ended {{ optional($enrollment->batch?->end_date)->diffForHumans() }}</p>
                             </div>
                         @empty
@@ -772,7 +795,7 @@
                         @forelse(($adminWorkspace['pending_certificates'] ?? collect()) as $certificate)
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 <p class="font-semibold text-gray-900">{{ $certificate->student?->full_name ?? 'Student' }}</p>
-                                <p class="mt-1 text-sm text-gray-600">{{ $certificate->course?->name ?? 'Course' }} · {{ $certificate->batch?->batch_name ?? 'Batch pending' }}</p>
+                                <p class="mt-1 text-sm text-gray-600">{{ $certificate->enrollment?->display_course_name ?? $certificate->course?->name ?? 'Course' }} · {{ $certificate->batch?->batch_name ?? 'Batch pending' }}</p>
                                 <p class="mt-2 text-xs text-slate-500">Queued {{ $certificate->created_at->diffForHumans() }}</p>
                             </div>
                         @empty

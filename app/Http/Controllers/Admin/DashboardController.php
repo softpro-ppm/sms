@@ -404,7 +404,7 @@ class DashboardController extends Controller
 
         $assessmentReadyCount = (clone $assessmentReadyQuery)->count();
         $assessmentReady = (clone $assessmentReadyQuery)
-            ->with(['student:id,full_name', 'batch:id,batch_name,course_id,end_date', 'batch.course:id,name'])
+            ->with(['student:id,full_name', 'batch:id,batch_name,course_id,end_date', 'batch.course:id,name', 'legacyLinkCourse:id,name'])
             ->latest('updated_at')
             ->limit(5)
             ->get();
@@ -414,8 +414,8 @@ class DashboardController extends Controller
         )->count();
 
         $pendingCertificates = $this->scopeCertificates(
-            Certificate::select('id', 'student_id', 'course_id', 'batch_id', 'issue_date', 'is_issued', 'created_at')
-                ->with(['student:id,full_name', 'course:id,name', 'batch:id,batch_name'])
+            Certificate::select('id', 'student_id', 'course_id', 'batch_id', 'enrollment_id', 'issue_date', 'is_issued', 'created_at')
+                ->with(['student:id,full_name', 'course:id,name', 'batch:id,batch_name', 'enrollment.legacyLinkCourse:id,name'])
                 ->where('is_issued', false)
                 ->latest('created_at')
                 ->limit(5)
