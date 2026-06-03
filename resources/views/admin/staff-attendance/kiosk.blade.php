@@ -69,6 +69,39 @@
     </div>
 </div>
 
+<div id="attendance-popup" class="fixed inset-0 z-[80] hidden items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+    <div class="w-full max-w-xl overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-2xl">
+        <div class="bg-emerald-600 px-6 py-5 text-white">
+            <div class="flex items-center gap-4">
+                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                    <i class="fas fa-check text-3xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-100">Attendance marked</p>
+                    <h3 id="popup-staff" class="mt-1 text-3xl font-bold tracking-tight">Staff</h3>
+                </div>
+            </div>
+        </div>
+        <div class="space-y-4 p-6">
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Action</p>
+                    <p id="popup-action" class="mt-1 text-xl font-semibold text-slate-900">Recorded</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Time</p>
+                    <p id="popup-time" class="mt-1 text-xl font-semibold text-slate-900">--:--</p>
+                </div>
+            </div>
+            <p id="popup-message" class="text-base leading-7 text-slate-700">Attendance recorded successfully.</p>
+            <div class="flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <span class="text-sm font-medium text-emerald-800">Auto closing</span>
+                <span id="popup-countdown" class="text-sm font-semibold text-emerald-900">4s</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="{{ asset('vendor/face-api/face-api.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -80,11 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchedName = document.getElementById('matched-name');
     const matchedDistance = document.getElementById('matched-distance');
     const punchMessage = document.getElementById('punch-message');
+    const popup = document.getElementById('attendance-popup');
+    const popupStaff = document.getElementById('popup-staff');
+    const popupAction = document.getElementById('popup-action');
+    const popupTime = document.getElementById('popup-time');
+    const popupMessage = document.getElementById('popup-message');
+    const popupCountdown = document.getElementById('popup-countdown');
     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     let locationSnapshot = {};
     let isPunching = false;
-    let lastPunchAt = 0;
+    let popupOpen = false;
     let matcher = null;
+    let popupTimer = null;
+    const staffCooldowns = new Map();
+    const cooldownMs = 10000;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -95,6 +137,54 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         punchMessage.className = `rounded-2xl px-4 py-3 text-sm ${colors[mode] || colors.neutral}`;
         punchMessage.textContent = message;
+    };
+
+    const playSuccessTone = () => {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audio = new AudioContext();
+            const gain = audio.createGain();
+            gain.gain.value = 0.08;
+            gain.connect(audio.destination);
+
+            [660, 880].forEach((frequency, index) => {
+                const oscillator = audio.createOscillator();
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                oscillator.connect(gain);
+                oscillator.start(audio.currentTime + index * 0.12);
+                oscillator.stop(audio.currentTime + index * 0.12 + 0.1);
+            });
+        } catch (error) {
+            // Audio feedback is optional; browsers may block it until user interaction.
+        }
+    };
+
+    const showAttendancePopup = (payload, match) => {
+        window.clearInterval(popupTimer);
+        popupStaff.textContent = payload.staff || 'Staff';
+        popupAction.textContent = payload.message?.toLowerCase().includes('check-in') ? 'Check-in' : 'Check-out';
+        popupTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        popupMessage.textContent = payload.message || 'Attendance recorded successfully.';
+
+        let remaining = 4;
+        popupCountdown.textContent = `${remaining}s`;
+        popup.classList.remove('hidden');
+        popup.classList.add('flex');
+        popupOpen = true;
+        playSuccessTone();
+
+        popupTimer = window.setInterval(() => {
+            remaining -= 1;
+            popupCountdown.textContent = `${Math.max(remaining, 0)}s`;
+            if (remaining <= 0) {
+                window.clearInterval(popupTimer);
+                popup.classList.add('hidden');
+                popup.classList.remove('flex');
+                popupOpen = false;
+                staffCooldowns.set(String(match.label), Date.now() + cooldownMs);
+            }
+        }, 1000);
     };
 
     const getLocation = () => {
@@ -118,9 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const punch = async (match) => {
-        if (isPunching || Date.now() - lastPunchAt < 12000) return;
+        const staffCooldownUntil = staffCooldowns.get(String(match.label)) || 0;
+        if (isPunching || popupOpen || Date.now() < staffCooldownUntil) return;
         isPunching = true;
-        lastPunchAt = Date.now();
 
         try {
             const response = await fetch('{{ route('admin.staff-attendance.kiosk.punch') }}', {
@@ -146,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             setMessage(payload.message, 'success');
+            showAttendancePopup(payload, match);
         } catch (error) {
             setMessage('Network error while marking attendance.', 'error');
         } finally {
@@ -154,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const scan = async () => {
-        if (!matcher || isPunching || !video.videoWidth) return;
+        if (!matcher || isPunching || popupOpen || !video.videoWidth) return;
         const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks(true)
             .withFaceDescriptor();
