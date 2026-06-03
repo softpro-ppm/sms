@@ -23,12 +23,18 @@ class TrainingPartner extends Model
         'contact_email',
         'wallet_balance',
         'student_approval_deduction',
+        'attendance_latitude',
+        'attendance_longitude',
+        'attendance_radius_meters',
         'status',
     ];
 
     protected $casts = [
         'wallet_balance' => 'decimal:2',
         'student_approval_deduction' => 'decimal:2',
+        'attendance_latitude' => 'decimal:7',
+        'attendance_longitude' => 'decimal:7',
+        'attendance_radius_meters' => 'integer',
     ];
 
     public function walletTransactions(): HasMany

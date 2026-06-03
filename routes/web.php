@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StaffAttendanceController;
+use App\Http\Controllers\Admin\StaffKioskAttendanceController;
+use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\StudentDeletionRequestController;
 use App\Http\Controllers\Admin\Super\ImpersonationAuditController;
@@ -115,6 +117,12 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::post('/staff-attendance/enroll-face', [StaffAttendanceController::class, 'enrollFace'])->name('staff-attendance.enroll-face');
     Route::post('/staff-attendance/check-in', [StaffAttendanceController::class, 'checkIn'])->name('staff-attendance.check-in');
     Route::post('/staff-attendance/check-out', [StaffAttendanceController::class, 'checkOut'])->name('staff-attendance.check-out');
+    Route::get('/staff-attendance/kiosk', [StaffKioskAttendanceController::class, 'kiosk'])->name('staff-attendance.kiosk');
+    Route::post('/staff-attendance/kiosk/punch', [StaffKioskAttendanceController::class, 'punch'])->name('staff-attendance.kiosk.punch');
+    Route::get('/staff-profiles', [StaffMemberController::class, 'index'])->name('staff-members.index');
+    Route::get('/staff-profiles/create', [StaffMemberController::class, 'create'])->name('staff-members.create');
+    Route::post('/staff-profiles', [StaffMemberController::class, 'store'])->name('staff-members.store');
+    Route::get('/staff-profiles/{staffMember}', [StaffMemberController::class, 'show'])->name('staff-members.show');
 
     // Students management
     Route::get('/students', [StudentController::class, 'index'])->name('students.index');
@@ -314,8 +322,11 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::post('/settings/optimize', [SettingsController::class, 'optimizeApplication'])->name('settings.optimize');
         Route::post('/settings/backup-database', [SettingsController::class, 'backupDatabase'])->name('settings.backup-database');
         Route::get('/settings/export-data', [SettingsController::class, 'exportData'])->name('settings.export-data');
-        Route::get('/staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
-        Route::get('/staff-attendance/export-csv', [StaffAttendanceController::class, 'export'])->name('staff-attendance.export');
+        Route::get('/staff-attendance', [StaffKioskAttendanceController::class, 'records'])->name('staff-attendance.index');
+        Route::get('/staff-attendance/export-csv', [StaffKioskAttendanceController::class, 'export'])->name('staff-attendance.export');
+        Route::post('/staff-attendance/geofence', [StaffKioskAttendanceController::class, 'updateSettings'])->name('staff-attendance.geofence.update');
+        Route::patch('/staff-profiles/{staffMember}/approve', [StaffMemberController::class, 'approve'])->name('staff-members.approve');
+        Route::patch('/staff-profiles/{staffMember}/reject', [StaffMemberController::class, 'reject'])->name('staff-members.reject');
         // Staff users (admin & reception management)
         Route::get('/settings/users', [UserManagementController::class, 'index'])->name('settings.users.index');
         Route::get('/settings/users/create', [UserManagementController::class, 'create'])->name('settings.users.create');

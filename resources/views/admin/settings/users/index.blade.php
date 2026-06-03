@@ -24,6 +24,10 @@
                     <i class="fas fa-list-check text-xs"></i>
                     Attendance
                 </a>
+                <a href="{{ route('admin.staff-members.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 transition hover:border-amber-300 hover:bg-amber-100">
+                    <i class="fas fa-id-badge text-xs"></i>
+                    Staff profiles
+                </a>
                 <a href="{{ route('admin.settings.users.create') }}" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
                     <i class="fas fa-user-plus text-xs"></i>
                     Add user

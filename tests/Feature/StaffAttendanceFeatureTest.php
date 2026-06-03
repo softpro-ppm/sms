@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\StaffAttendance;
+use App\Models\StaffMember;
+use App\Models\StaffMemberAttendance;
 use App\Models\TrainingPartner;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,6 +53,117 @@ class StaffAttendanceFeatureTest extends TestCase
         Storage::disk('public')->assertExists($attendance->check_out_image_path);
     }
 
+    public function test_reception_can_register_staff_and_admin_can_approve(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Attendance Centre',
+            'code' => 'ATT',
+            'status' => 'active',
+        ]);
+
+        $reception = User::factory()->create([
+            'role' => 'reception',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $payload = [
+            'staff_code' => 'EMP-001',
+            'name' => 'Kiosk Staff',
+            'phone' => '9000000001',
+            'designation' => 'Trainer',
+            'face_descriptors' => json_encode([
+                array_fill(0, 128, 0.1),
+                array_fill(0, 128, 0.2),
+                array_fill(0, 128, 0.3),
+            ]),
+            'face_images' => json_encode([$this->dataImage(), $this->dataImage(), $this->dataImage()]),
+        ];
+
+        $this->actingAs($reception)
+            ->post(route('admin.staff-members.store'), $payload)
+            ->assertRedirect(route('admin.staff-members.index'));
+
+        $staff = StaffMember::where('staff_code', 'EMP-001')->firstOrFail();
+        $this->assertSame('pending', $staff->status);
+        $this->assertCount(3, $staff->face_image_paths);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.staff-members.approve', $staff))
+            ->assertRedirect();
+
+        $staff->refresh();
+        $this->assertSame('approved', $staff->status);
+        $this->assertNotNull($staff->approved_at);
+    }
+
+    public function test_kiosk_punch_enforces_time_windows_and_records_check_in(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Kiosk Centre',
+            'code' => 'KIOSK',
+            'status' => 'active',
+        ]);
+
+        $reception = User::factory()->create([
+            'role' => 'reception',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'Auto Match Staff',
+            'status' => 'approved',
+            'face_descriptors' => [array_fill(0, 128, 0.1), array_fill(0, 128, 0.2), array_fill(0, 128, 0.3)],
+            'face_image_paths' => ['staff/sample.jpg'],
+            'face_enrolled_at' => now(),
+            'approved_at' => now(),
+            'is_active' => true,
+        ]);
+
+        $this->travelTo(now()->setTime(10, 1));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+            ])
+            ->assertUnprocessable();
+
+        $this->travelTo(now()->setTime(9, 45));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
+        $this->assertSame('late', $attendance->check_in_status);
+        $this->assertNotNull($attendance->check_in_at);
+        Storage::disk('public')->assertExists($attendance->check_in_image_path);
+    }
+
     public function test_admin_attendance_index_is_scoped_to_training_partner(): void
     {
         $firstPartner = TrainingPartner::create([
@@ -75,31 +188,29 @@ class StaffAttendanceFeatureTest extends TestCase
             'must_change_password' => false,
         ]);
 
-        $firstStaff = User::factory()->create([
+        $firstStaff = StaffMember::create([
             'name' => 'Visible Staff',
-            'role' => 'reception',
             'training_partner_id' => $firstPartner->id,
+            'status' => 'approved',
             'is_active' => true,
-            'must_change_password' => false,
         ]);
 
-        $secondStaff = User::factory()->create([
+        $secondStaff = StaffMember::create([
             'name' => 'Hidden Staff',
-            'role' => 'reception',
             'training_partner_id' => $secondPartner->id,
+            'status' => 'approved',
             'is_active' => true,
-            'must_change_password' => false,
         ]);
 
-        StaffAttendance::create([
-            'user_id' => $firstStaff->id,
+        StaffMemberAttendance::create([
+            'staff_member_id' => $firstStaff->id,
             'training_partner_id' => $firstPartner->id,
             'attendance_date' => now()->toDateString(),
             'check_in_at' => now(),
         ]);
 
-        StaffAttendance::create([
-            'user_id' => $secondStaff->id,
+        StaffMemberAttendance::create([
+            'staff_member_id' => $secondStaff->id,
             'training_partner_id' => $secondPartner->id,
             'attendance_date' => now()->toDateString(),
             'check_in_at' => now(),
