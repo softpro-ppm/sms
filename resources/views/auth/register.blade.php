@@ -60,6 +60,7 @@
                    type="text" 
                    required 
                    value="{{ old('full_name') }}"
+                   autocapitalize="words"
                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 @error('full_name') border-red-500 @enderror"
                    placeholder="Enter your full name"
                    oninput="capitalizeWords(this)"
@@ -327,7 +328,7 @@
 
 @section('scripts')
 <script>
-    // Capitalize first letter of each word - works for Full Name, Address, City, State
+    // Force first letter uppercase and remaining letters lowercase for every word.
     function capitalizeWords(input) {
         if (!input) return;
         if (input.value === undefined || input.value === null || input.value === '') return;
@@ -336,18 +337,37 @@
         const end = input.selectionEnd;
         const originalValue = input.value;
 
-        // Capitalize first letter of each word
-        input.value = input.value.replace(/\b\w/g, function(txt) {
-            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-        });
+        input.value = titleCaseWords(input.value);
 
         if (input.value !== originalValue && typeof start === 'number' && typeof end === 'number') {
             input.setSelectionRange(start, end);
         }
     }
+
+    function titleCaseWords(value) {
+        return String(value)
+            .replace(/\s+/g, ' ')
+            .replace(/(^|\s)([^\s]+)/g, function(match, prefix, word) {
+                const lowerWord = word.toLocaleLowerCase();
+                return prefix + lowerWord.charAt(0).toLocaleUpperCase() + lowerWord.slice(1);
+            });
+    }
     
     // Make function globally accessible
     window.capitalizeWords = capitalizeWords;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const registrationForm = document.querySelector('form[action="{{ route('register') }}"]');
+        const fullNameInput = document.getElementById('full_name');
+
+        if (fullNameInput) {
+            capitalizeWords(fullNameInput);
+        }
+
+        registrationForm?.addEventListener('submit', function() {
+            capitalizeWords(fullNameInput);
+        });
+    });
 
     function validateEmail(input) {
         if (!input) return;

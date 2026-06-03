@@ -231,7 +231,14 @@
         </p>
     </div>
     <div class="flex h-screen @if(session()->has('impersonation')) pt-11 @endif"
-         x-data="{ sidebarOpen: false, desktopSidebarCollapsed: false }"
+         x-data="{
+            sidebarOpen: false,
+            desktopSidebarCollapsed: false,
+            openStudents: {{ request()->routeIs('admin.students.*') || request()->routeIs('admin.student-deletion-requests.*') || request()->routeIs('admin.legacy-students.*') ? 'true' : 'false' }},
+            openPayments: {{ request()->routeIs('admin.payments.*') ? 'true' : 'false' }},
+            openAcademics: {{ request()->routeIs('admin.batches.*') || request()->routeIs('admin.results.*') || request()->routeIs('admin.courses.*') || request()->routeIs('admin.question-banks.*') || request()->routeIs('admin.assessments.*') || request()->routeIs('admin.certificates.*') ? 'true' : 'false' }},
+            openSystem: {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.help') ? 'true' : 'false' }}
+         }"
          x-init="if (window.innerWidth >= 1024) { sidebarOpen = false }"
          @resize.window="if (window.innerWidth >= 1024) { sidebarOpen = false }"
          @keydown.escape.window="sidebarOpen = false">
@@ -305,63 +312,59 @@
                             <span class="sidebar-label">Dashboard</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('admin.help') }}"
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.help') ? 'active' : '' }}">
-                            <i class="fas fa-circle-question w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">How it works</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="{{ route('admin.students.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.students.*') || request()->routeIs('admin.student-deletion-requests.*') ? 'active' : '' }}">
+                    <li class="relative">
+                        <button type="button"
+                                @click="openStudents = !openStudents"
+                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.students.*') || request()->routeIs('admin.student-deletion-requests.*') || request()->routeIs('admin.legacy-students.*') ? 'active' : '' }}">
                             <i class="fas fa-users w-5 h-5 mr-3"></i>
                             <span class="sidebar-label">Students</span>
                             @if(($studentAttentionCount ?? 0) > 0)
                                 <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $studentAttentionCount ?? 0 }}</span>
                             @endif
-                        </a>
-                    </li>
-                    @if(auth()->user()->is_admin)
-                    <li>
-                        <a href="{{ route('admin.student-deletion-requests.index') }}"
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.student-deletion-requests.*') ? 'active' : '' }}">
-                            <i class="fas fa-user-shield w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Deletion Requests</span>
-                            @if(($pendingDeletionRequests ?? 0) > 0)
-                                <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingDeletionRequests }}</span>
+                            <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs transition-transform" :class="openStudents ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="openStudents" x-cloak class="sidebar-submenu ml-4 mt-2 space-y-1">
+                            <a href="{{ route('admin.students.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.students.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-list w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Student Queue</span>
+                            </a>
+                            @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.student-deletion-requests.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.student-deletion-requests.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-user-shield w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Deletion Requests</span>
+                                @if(($pendingDeletionRequests ?? 0) > 0)
+                                    <span class="sidebar-badge ml-auto bg-warning-500 text-white text-xs px-2 py-0.5 rounded-full">{{ $pendingDeletionRequests }}</span>
+                                @endif
+                            </a>
+                            <a href="{{ route('admin.legacy-students.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.legacy-students.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-archive w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Legacy Students</span>
+                            </a>
                             @endif
-                        </a>
+                        </div>
                     </li>
-                    <li>
-                        <a href="{{ route('admin.legacy-students.index') }}"
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.legacy-students.*') ? 'active' : '' }}">
-                            <i class="fas fa-archive w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Legacy Students</span>
-                        </a>
-                    </li>
-                    @endif
-                    
+
                     <li class="relative">
-                        <a href="{{ route('admin.payments.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
+                        <button type="button"
+                                @click="openPayments = !openPayments"
+                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                             <i class="fas fa-credit-card w-5 h-5 mr-3"></i>
                             <span class="sidebar-label">Payments</span>
                             @if(($pendingPayments ?? 0) > 0)
                                 <span class="sidebar-badge ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full">{{ $pendingPayments ?? 0 }}</span>
                             @endif
-                            <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs"></i>
-                        </a>
-                        
-                        <!-- Submenu -->
-                        <div class="sidebar-submenu ml-4 mt-2 space-y-1 {{ request()->routeIs('admin.payments.*') ? 'block' : 'hidden' }}">
-                            <a href="{{ route('admin.payments.index') }}" 
+                            <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs transition-transform" :class="openPayments ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="openPayments" x-cloak class="sidebar-submenu ml-4 mt-2 space-y-1">
+                            <a href="{{ route('admin.payments.index') }}"
                                class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.payments.index') ? 'bg-primary-700' : '' }}">
                                 <i class="fas fa-list w-4 h-4 mr-2"></i>
                                 <span class="sidebar-label">All Payments</span>
                             </a>
-                            <a href="{{ route('admin.payments.pending') }}" 
+                            <a href="{{ route('admin.payments.pending') }}"
                                class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.payments.pending') ? 'bg-primary-700' : '' }}">
                                 <i class="fas fa-clock w-4 h-4 mr-2"></i>
                                 <span class="sidebar-label">Pending Payments</span>
@@ -376,79 +379,86 @@
                             </a>
                         </div>
                     </li>
-                    
-                    <li>
-                        <a href="{{ route('admin.batches.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.batches.*') ? 'active' : '' }}">
+
+                    <li class="relative">
+                        <button type="button"
+                                @click="openAcademics = !openAcademics"
+                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.batches.*') || request()->routeIs('admin.results.*') || request()->routeIs('admin.courses.*') || request()->routeIs('admin.question-banks.*') || request()->routeIs('admin.assessments.*') || request()->routeIs('admin.certificates.*') ? 'active' : '' }}">
                             <i class="fas fa-layer-group w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Batches</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="{{ route('admin.results.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.results.*') ? 'active' : '' }}">
-                            <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Results</span>
-                        </a>
-                    </li>
-
-                    @if(auth()->user()->is_admin)
-                    <li>
-                        <a href="{{ route('admin.courses.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-                            <i class="fas fa-book w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Courses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.question-banks.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.question-banks.*') ? 'active' : '' }}">
-                            <i class="fas fa-database w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Question Banks</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.assessments.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.assessments.*') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-check w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Exams</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.reports.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                            <i class="fas fa-chart-pie w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Reports</span>
-                        </a>
-                    </li>
-                    @endif
-                    
-                    <li>
-                        <a href="{{ route('admin.certificates.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.certificates.*') ? 'active' : '' }}">
-                            <i class="fas fa-certificate w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Certificates</span>
-                        </a>
+                            <span class="sidebar-label">Academics</span>
+                            <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs transition-transform" :class="openAcademics ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="openAcademics" x-cloak class="sidebar-submenu ml-4 mt-2 space-y-1">
+                            <a href="{{ route('admin.batches.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.batches.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-layer-group w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Batches</span>
+                            </a>
+                            <a href="{{ route('admin.results.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.results.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-chart-line w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Results</span>
+                            </a>
+                            @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.courses.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.courses.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-book w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Courses</span>
+                            </a>
+                            <a href="{{ route('admin.question-banks.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.question-banks.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-database w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Question Banks</span>
+                            </a>
+                            <a href="{{ route('admin.assessments.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.assessments.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-clipboard-check w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Exams</span>
+                            </a>
+                            @endif
+                            <a href="{{ route('admin.certificates.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.certificates.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-certificate w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Certificates</span>
+                            </a>
+                        </div>
                     </li>
 
-                    <li>
-                        <a href="{{ route('admin.whatsapp.inbox') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.whatsapp.inbox') ? 'active' : '' }}">
-                            <i class="fab fa-whatsapp w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">WhatsApp Inbox</span>
-                        </a>
+                    <li class="relative">
+                        <button type="button"
+                                @click="openSystem = !openSystem"
+                                class="sidebar-item relative flex w-full items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.whatsapp.inbox') || request()->routeIs('admin.settings.*') || request()->routeIs('admin.help') ? 'active' : '' }}">
+                            <i class="fas fa-sliders w-5 h-5 mr-3"></i>
+                            <span class="sidebar-label">System</span>
+                            <i class="sidebar-chevron fas fa-chevron-down ml-auto text-xs transition-transform" :class="openSystem ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="openSystem" x-cloak class="sidebar-submenu ml-4 mt-2 space-y-1">
+                            <a href="{{ route('admin.help') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.help') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-circle-question w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">How it works</span>
+                            </a>
+                            @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.reports.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.reports.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-chart-pie w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Reports</span>
+                            </a>
+                            @endif
+                            <a href="{{ route('admin.whatsapp.inbox') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.whatsapp.inbox') ? 'bg-primary-700' : '' }}">
+                                <i class="fab fa-whatsapp w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">WhatsApp Inbox</span>
+                            </a>
+                            @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.settings.index') }}"
+                               class="sidebar-item flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-primary-700 {{ request()->routeIs('admin.settings.*') ? 'bg-primary-700' : '' }}">
+                                <i class="fas fa-cog w-4 h-4 mr-2"></i>
+                                <span class="sidebar-label">Settings</span>
+                            </a>
+                            @endif
+                        </div>
                     </li>
-                    
-                    @if(auth()->user()->is_admin)
-                    <li>
-                        <a href="{{ route('admin.settings.index') }}" 
-                           class="sidebar-item relative flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-                            <i class="fas fa-cog w-5 h-5 mr-3"></i>
-                            <span class="sidebar-label">Settings</span>
-                        </a>
-                    </li>
-                    @endif
                     @endif
                 </ul>
             </nav>
@@ -480,7 +490,34 @@
                         <h1 class="text-2xl font-bold text-gray-900">@yield('page-title', 'Dashboard')</h1>
                     </div>
                     
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        @if(!auth()->user()->is_super_admin)
+                        <div class="hidden items-center gap-2 md:flex">
+                            <a href="{{ route('admin.students.create') }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100">
+                                <i class="fas fa-user-plus text-xs"></i>
+                                <span>Add Student</span>
+                            </a>
+                            <a href="{{ route('admin.payments.create') }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100">
+                                <i class="fas fa-receipt text-xs"></i>
+                                <span>Record Payment</span>
+                            </a>
+                        </div>
+                        <div class="flex items-center gap-1 md:hidden">
+                            <a href="{{ route('admin.students.create') }}"
+                               title="Add Student"
+                               class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-800 transition hover:bg-blue-100">
+                                <i class="fas fa-user-plus text-sm"></i>
+                            </a>
+                            <a href="{{ route('admin.payments.create') }}"
+                               title="Record Payment"
+                               class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 transition hover:bg-emerald-100">
+                                <i class="fas fa-receipt text-sm"></i>
+                            </a>
+                        </div>
+                        @endif
+
                         <!-- Notifications -->
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" 
