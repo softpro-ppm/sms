@@ -6,11 +6,14 @@ use App\Models\Batch;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\PartnerWalletTransaction;
+use App\Models\Payment;
 use App\Models\Student;
 use App\Models\StudentDeletionRequest;
 use App\Models\TrainingPartner;
 use App\Models\TrainingPartnerActivityLog;
 use App\Models\User;
+use App\Services\WhatsAppNotificationService;
+use App\Services\WhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -552,6 +555,75 @@ class V3ContinuationWorkflowTest extends TestCase
         $this->assertSame($superAdmin->id, $transaction->collected_by);
         $this->assertSame('UPI collected', $transaction->collection_notes);
         $this->assertNotNull($transaction->collected_at);
+    }
+
+    public function test_whatsapp_payment_approved_uses_legacy_display_course_name(): void
+    {
+        config(['services.whatsapp.template_language' => 'en_US']);
+
+        [$partner] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '777788889999',
+            'full_name' => 'WhatsApp Legacy Learner',
+            'email' => 'whatsapp.legacy@example.test',
+            'phone' => '9000000008',
+            'whatsapp_number' => '9000000008',
+            'status' => 'approved',
+        ]);
+
+        $batch = Batch::where('is_legacy_batch', true)->firstOrFail();
+
+        $enrollment = Enrollment::create([
+            'enrollment_number' => 'LEG-WA-001',
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'enrollment_date' => now()->toDateString(),
+            'status' => 'active',
+            'total_fee' => 2500,
+            'paid_amount' => 1000,
+            'outstanding_amount' => 1500,
+            'registration_fee' => 500,
+            'course_fee' => 2000,
+            'assessment_fee' => 0,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Historical MS Office',
+            'legacy_start_date' => '2019-01-01',
+            'legacy_end_date' => '2019-03-31',
+        ]);
+
+        $payment = Payment::create([
+            'student_id' => $student->id,
+            'enrollment_id' => $enrollment->id,
+            'payment_receipt_number' => 'RCP-WA-001',
+            'amount' => 1000,
+            'payment_type' => 'course_fee',
+            'payment_method' => 'cash',
+            'status' => 'approved',
+        ]);
+
+        $sentBodyParams = null;
+
+        $this->mock(WhatsAppService::class, function ($mock) use (&$sentBodyParams) {
+            $mock->shouldReceive('sendTemplateMessage')
+                ->once()
+                ->andReturnUsing(function ($to, $templateName, $languageCode, $bodyParams) use (&$sentBodyParams) {
+                    $sentBodyParams = $bodyParams;
+
+                    $this->assertSame('9000000008', $to);
+                    $this->assertSame('payment_approved2', $templateName);
+                    $this->assertSame('en_US', $languageCode);
+
+                    return ['success' => true, 'message_id' => 'wamid.test', 'error' => null];
+                });
+        });
+
+        $sent = app(WhatsAppNotificationService::class)->sendPaymentApproved($payment->fresh(['student', 'enrollment.batch.course']));
+
+        $this->assertTrue($sent);
+        $this->assertSame('Historical MS Office', $sentBodyParams[3]);
+        $this->assertNotSame('Legacy (Archive)', $sentBodyParams[3]);
     }
 
     private function makePartnerAdmin(string $type = 'STANDARD'): array

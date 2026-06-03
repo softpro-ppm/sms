@@ -204,7 +204,7 @@ class WhatsAppNotificationService
         }
 
         $enrollment = $payment->enrollment;
-        $course = $enrollment?->batch?->course?->name ?? 'N/A';
+        $course = $enrollment?->display_course_name ?? 'N/A';
 
         return $this->sendTemplate(
             $student->id,
@@ -229,7 +229,8 @@ class WhatsAppNotificationService
         $phone = $student->whatsapp_number ?? $student->phone ?? null;
         if (!$phone) return false;
 
-        $course = $enrollment->batch->course;
+        $course = $enrollment->display_course_name;
+        $batchName = $enrollment->batch?->batch_name ?? 'Batch';
 
         return $this->sendTemplate(
             $student->id,
@@ -238,8 +239,8 @@ class WhatsAppNotificationService
             'fully_paid',
             [
                 $student->full_name,
-                $course->name,
-                $enrollment->batch->batch_name,
+                $course,
+                $batchName,
             ],
             null,
             ['student_name', 'course_name', 'batch_name']
@@ -253,7 +254,9 @@ class WhatsAppNotificationService
         if (!$phone) return false;
 
         $status = $result->is_passed ? 'Passed' : 'Not passed';
-        $course = $result->assessment?->course?->name ?? $result->enrollment?->batch?->course?->name ?? 'Course';
+        $course = $result->enrollment?->display_course_name
+            ?? $result->assessment?->course?->name
+            ?? 'Course';
 
         return $this->sendTemplate(
             $student->id,
@@ -286,7 +289,7 @@ class WhatsAppNotificationService
             'certificate_issued',
             [
                 $student->full_name,
-                $certificate->course->name,
+                $certificate->enrollment?->display_course_name ?? $certificate->course?->name ?? 'Course',
                 $certificate->certificate_number ?? 'N/A',
             ],
             null,
