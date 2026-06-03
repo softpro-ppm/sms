@@ -32,7 +32,7 @@
         </div>
 
         <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
-            <a href="{{ route('admin.students.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-blue-300 hover:bg-white hover:shadow-sm">
+            <a href="{{ route('admin.students.index', ['queue' => 'admissions_today']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-blue-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Admissions Today</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -68,7 +68,7 @@
                     </div>
                 </div>
             </a>
-            <a href="{{ route('admin.payments.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-emerald-300 hover:bg-white hover:shadow-sm">
+            <a href="{{ route('admin.payments.index', ['date_filter' => 'today']) }}" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-emerald-300 hover:bg-white hover:shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Payments Today</p>
                 <div class="mt-3 flex items-end justify-between gap-3">
                     <div>
@@ -196,7 +196,7 @@
 
                 <div class="mt-5 space-y-3">
                     @forelse(($receptionWorkspace['recent_payments'] ?? collect()) as $payment)
-                        <div class="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                        <a href="{{ route('admin.payments.show', $payment) }}" class="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-emerald-200 hover:bg-white hover:shadow-sm">
                             <div>
                                 <p class="font-semibold text-gray-900">{{ $payment->student?->full_name ?? 'Student' }}</p>
                                 <p class="text-sm text-gray-500">₹{{ number_format($payment->amount) }} · {{ $payment->created_at->diffForHumans() }}</p>
@@ -204,7 +204,7 @@
                             <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $payment->status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ($payment->status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') }}">
                                 {{ ucfirst($payment->status) }}
                             </span>
-                        </div>
+                        </a>
                     @empty
                         <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500">
                             No payment entries yet today.

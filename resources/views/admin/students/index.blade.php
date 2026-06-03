@@ -112,6 +112,7 @@
 
                 <select name="queue" data-live-filter class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     <option value="">All queues</option>
+                    <option value="admissions_today" {{ $queue === 'admissions_today' ? 'selected' : '' }}>Admissions today</option>
                     <option value="pending_approval" {{ $queue === 'pending_approval' ? 'selected' : '' }}>Pending approval</option>
                     <option value="ready_for_enrollment" {{ $queue === 'ready_for_enrollment' ? 'selected' : '' }}>Ready for enrollment</option>
                     <option value="missing_documents" {{ $queue === 'missing_documents' ? 'selected' : '' }}>Missing documents</option>

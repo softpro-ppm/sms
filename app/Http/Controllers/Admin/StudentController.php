@@ -60,6 +60,7 @@ class StudentController extends Controller
 
         if ($queue !== '') {
             match ($queue) {
+                'admissions_today' => $studentsQuery->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()]),
                 'pending_approval' => $studentsQuery->where('status', 'pending'),
                 'ready_for_enrollment' => $studentsQuery
                     ->where('status', 'approved')

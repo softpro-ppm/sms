@@ -41,6 +41,7 @@ class PaymentController extends Controller
         $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 15;
         $search = trim((string) $request->get('search', ''));
         $status = trim((string) $request->get('status', ''));
+        $dateFilter = trim((string) $request->get('date_filter', ''));
 
         $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course', 'approvedBy']));
 
@@ -65,6 +66,10 @@ class PaymentController extends Controller
             $query->where('status', $status);
         }
 
+        if ($dateFilter === 'today') {
+            $query->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()]);
+        }
+
         $payments = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->appends($request->query());
@@ -80,7 +85,7 @@ class PaymentController extends Controller
             'total_remaining_amount' => $this->calculateTotalRemainingAmount(),
         ];
 
-        return view('admin.payments.index', compact('payments', 'stats'));
+        return view('admin.payments.index', compact('payments', 'stats', 'dateFilter'));
     }
 
     public function pending(Request $request)
