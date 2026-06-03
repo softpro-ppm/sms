@@ -134,6 +134,8 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/api/course-details/{courseId}', [StudentController::class, 'getCourseDetails'])->name('students.course-details');
     Route::get('/legacy-students', [LegacyStudentController::class, 'index'])->name('legacy-students.index');
     Route::get('/legacy-students/export-csv', [LegacyStudentController::class, 'exportCsv'])->name('legacy-students.export-csv');
+    Route::get('/legacy-students/{enrollment}/edit', [LegacyStudentController::class, 'edit'])->name('legacy-students.edit');
+    Route::put('/legacy-students/{enrollment}', [LegacyStudentController::class, 'update'])->name('legacy-students.update');
 
     // Student Document Management
     Route::post('/students/{student}/documents', [StudentController::class, 'uploadDocument'])->name('students.upload-document');

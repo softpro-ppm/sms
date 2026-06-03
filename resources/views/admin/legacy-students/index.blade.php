@@ -108,11 +108,16 @@
                             </span>
                         </td>
                         <td class="px-5 py-4">
-                            @if($enrollment->student)
-                            <a href="{{ route('admin.students.show', $enrollment->student) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-50">
-                                Open student
-                            </a>
-                            @endif
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ route('admin.legacy-students.edit', $enrollment) }}" class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100">
+                                    Edit legacy
+                                </a>
+                                @if($enrollment->student)
+                                <a href="{{ route('admin.students.show', $enrollment->student) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-50">
+                                    Open student
+                                </a>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty

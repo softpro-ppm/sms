@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\Concerns\ScopesByTrainingPartner;
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Enrollment;
+use App\Services\LegacyAutoCertificationService;
 use App\Services\LegacyEnrollmentService;
+use App\Services\PaymentAllocationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LegacyStudentController extends Controller
 {
@@ -94,6 +98,76 @@ class LegacyStudentController extends Controller
         ]);
     }
 
+    public function edit(Enrollment $enrollment)
+    {
+        $this->ensureEditableLegacyEnrollment($enrollment);
+
+        $legacyCourseId = LegacyEnrollmentService::legacyCourseId();
+        $linkCourses = Course::query()
+            ->where('is_active', true)
+            ->when($legacyCourseId, fn ($q) => $q->where('id', '!=', $legacyCourseId))
+            ->orderBy('name')
+            ->get();
+
+        $enrollment->load(['student', 'batch', 'legacyLinkCourse']);
+
+        return view('admin.legacy-students.edit', compact('enrollment', 'linkCourses'));
+    }
+
+    public function update(Request $request, Enrollment $enrollment)
+    {
+        $this->ensureEditableLegacyEnrollment($enrollment);
+
+        $validated = $request->validate([
+            'legacy_course_name' => ['required', 'string', 'max:255'],
+            'legacy_start_date' => ['required', 'date'],
+            'legacy_end_date' => ['required', 'date', 'after_or_equal:legacy_start_date'],
+            'enrollment_date' => ['required', 'date'],
+            'registration_fee' => ['required', 'numeric', 'min:0'],
+            'course_fee' => ['required', 'numeric', 'min:0'],
+            'assessment_fee' => ['required', 'numeric', 'min:0'],
+            'legacy_link_course_id' => ['nullable', 'exists:courses,id'],
+            'status' => ['required', 'in:active,completed,dropped'],
+        ]);
+
+        if (! empty($validated['legacy_link_course_id'])) {
+            $this->ensureCourseAccessible(Course::findOrFail((int) $validated['legacy_link_course_id']));
+        }
+
+        $enrollment = DB::transaction(function () use ($enrollment, $validated) {
+            $registrationFee = round((float) $validated['registration_fee'], 2);
+            $courseFee = round((float) $validated['course_fee'], 2);
+            $assessmentFee = round((float) $validated['assessment_fee'], 2);
+            $totalFee = round($registrationFee + $courseFee + $assessmentFee, 2);
+
+            $enrollment->update([
+                'legacy_course_name' => $validated['legacy_course_name'],
+                'legacy_start_date' => $validated['legacy_start_date'],
+                'legacy_end_date' => $validated['legacy_end_date'],
+                'legacy_link_course_id' => $validated['legacy_link_course_id'] ?: null,
+                'enrollment_date' => $validated['enrollment_date'],
+                'registration_fee' => $registrationFee,
+                'course_fee' => $courseFee,
+                'assessment_fee' => $assessmentFee,
+                'total_fee' => $totalFee,
+                'status' => $validated['status'],
+            ]);
+
+            return app(PaymentAllocationService::class)
+                ->recalculateEnrollmentTotals($enrollment->fresh());
+        });
+
+        if ($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch && $enrollment->is_fully_paid) {
+            app(LegacyAutoCertificationService::class)->issueIfEligible(
+                $enrollment->fresh(['batch', 'student', 'legacyLinkCourse'])
+            );
+        }
+
+        return redirect()
+            ->route('admin.legacy-students.index')
+            ->with('success', 'Legacy enrollment updated successfully.');
+    }
+
     private function filteredQuery(Request $request): array
     {
         $search = trim((string) $request->get('search', ''));
@@ -120,5 +194,18 @@ class LegacyStudentController extends Controller
         }
 
         return [$query, $search, $status];
+    }
+
+    private function ensureEditableLegacyEnrollment(Enrollment $enrollment): void
+    {
+        $enrollment->loadMissing(['student.trainingPartner', 'batch']);
+
+        abort_unless($enrollment->is_legacy && $enrollment->batch?->is_legacy_batch, 404);
+
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null) {
+            abort_unless((int) $enrollment->student?->training_partner_id === $tpId, 404);
+            abort_unless((bool) $enrollment->student?->trainingPartner?->is_hq, 403);
+        }
     }
 }
