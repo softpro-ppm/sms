@@ -24,6 +24,17 @@ class StudentCreditService
         $student = $enrollment->student;
 
         return DB::transaction(function () use ($student, $enrollment, $paidAmount, $type) {
+            $existingTransfer = StudentCreditTransaction::query()
+                ->where('reference_enrollment_id', $enrollment->id)
+                ->where('amount', '>', 0)
+                ->whereIn('type', ['enrollment_drop', 'enrollment_remove'])
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingTransfer) {
+                return $existingTransfer;
+            }
+
             $transaction = StudentCreditTransaction::create([
                 'student_id' => $student->id,
                 'amount' => $paidAmount,
