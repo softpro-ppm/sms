@@ -75,7 +75,7 @@
                     <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-lg font-semibold text-gray-800">
-                                {{ $enrollment->batch->course->name ?? 'Course' }}
+                                {{ $enrollment->display_course_name }}
                             </h4>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                 @if($enrollment->status === 'active') bg-green-100 text-green-800

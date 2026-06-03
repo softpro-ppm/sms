@@ -307,8 +307,8 @@
                         <div class="field">
                             <div class="field-label">Course</div>
                             <div class="field-value">
-                                @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->course)
-                                    {{ $payment->enrollment->batch->course->name }}
+                                @if($payment->enrollment)
+                                    {{ $payment->enrollment->display_course_name }}
                                 @else
                                     No Course Assigned
                                 @endif
@@ -327,8 +327,8 @@
                         <div class="field">
                             <div class="field-label">Batch Start Date</div>
                             <div class="field-value">
-                                @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->start_date)
-                                    {{ \Carbon\Carbon::parse($payment->enrollment->batch->start_date)->format('d M Y') }}
+                                @if($payment->enrollment && $payment->enrollment->effective_start_date)
+                                    {{ $payment->enrollment->effective_start_date->format('d M Y') }}
                                 @else
                                     N/A
                                 @endif
@@ -337,8 +337,8 @@
                         <div class="field">
                             <div class="field-label">Batch End Date</div>
                             <div class="field-value">
-                                @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->end_date)
-                                    {{ \Carbon\Carbon::parse($payment->enrollment->batch->end_date)->format('d M Y') }}
+                                @if($payment->enrollment && $payment->enrollment->effective_end_date)
+                                    {{ $payment->enrollment->effective_end_date->format('d M Y') }}
                                 @else
                                     N/A
                                 @endif

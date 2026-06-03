@@ -249,10 +249,10 @@
                         </td>
                         <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
-                                @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->course)
-                                    <div class="font-medium">{{ $payment->enrollment->batch->course->name }}</div>
-                                    <div class="mt-0.5 text-gray-500">{{ $payment->enrollment->batch->batch_name }}</div>
-                                    <div class="mt-0.5 text-xs text-gray-400">Batch #{{ $payment->enrollment->batch->id }}</div>
+                                @if($payment->enrollment)
+                                    <div class="font-medium">{{ $payment->enrollment->display_course_name }}</div>
+                                    <div class="mt-0.5 text-gray-500">{{ $payment->enrollment->batch?->batch_name ?? 'No batch' }}</div>
+                                    <div class="mt-0.5 text-xs text-gray-400">{{ $payment->enrollment->batch ? 'Batch #'.$payment->enrollment->batch->id : 'Standalone Payment' }}</div>
                                 @else
                                     <div class="font-medium text-gray-400">No Course Assigned</div>
                                     <div class="mt-0.5 text-gray-500">Registration Fee</div>

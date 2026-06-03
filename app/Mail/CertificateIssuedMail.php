@@ -19,14 +19,17 @@ class CertificateIssuedMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $this->certificate->loadMissing(['course', 'enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['certificate' => $this->certificate];
-        $subject = $service->hasCustomTemplate('certificate-issued') ? $service->getSubject('certificate-issued', $data) : 'Softpro - Certificate Ready: ' . ($this->certificate->course->name ?? 'Course');
+        $courseName = $this->certificate->enrollment?->display_course_name ?? $this->certificate->course?->name ?? 'Course';
+        $subject = $service->hasCustomTemplate('certificate-issued') ? $service->getSubject('certificate-issued', $data) : 'Softpro - Certificate Ready: ' . $courseName;
         return new Envelope(subject: $subject);
     }
 
     public function content(): Content
     {
+        $this->certificate->loadMissing(['course', 'enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['certificate' => $this->certificate];
         if ($service->hasCustomTemplate('certificate-issued')) {

@@ -153,7 +153,7 @@
                         </td>
                         <td class="px-5 py-3.5">
                             <p class="text-sm font-semibold text-gray-900">
-                                {{ $payment->enrollment?->batch?->course?->name ?? $payment->enrollment?->display_course_name ?? 'Standalone payment' }}
+                                {{ $payment->enrollment?->display_course_name ?? 'Standalone payment' }}
                             </p>
                             <p class="mt-0.5 text-sm text-gray-600">{{ $payment->enrollment?->batch?->batch_name ?? 'No batch' }}</p>
                             <p class="mt-0.5 font-mono text-xs text-gray-500">{{ $payment->payment_receipt_number }}</p>

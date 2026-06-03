@@ -72,7 +72,7 @@ class StudentController extends Controller
 
         // Get student's certificates
         $certificates = Certificate::where('student_id', $student->id)
-            ->with(['course', 'batch'])
+            ->with(['course', 'batch', 'enrollment.legacyLinkCourse'])
             ->orderBy('issue_date', 'desc')
             ->limit(5)
             ->get();
@@ -652,7 +652,7 @@ class StudentController extends Controller
         }
 
         $certificates = Certificate::where('student_id', $student->id)
-            ->with(['course', 'batch', 'enrollment'])
+            ->with(['course', 'batch', 'enrollment.legacyLinkCourse'])
             ->orderBy('issue_date', 'desc')
             ->paginate(10);
 
@@ -735,7 +735,7 @@ class StudentController extends Controller
                 ->with('error', 'Receipt is only available for approved payments.');
         }
 
-        $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
+        $payment->load(['student', 'enrollment.batch.course', 'enrollment.legacyLinkCourse', 'approvedBy', 'allocations']);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
         $pdf->setPaper('a5', 'landscape');
@@ -757,7 +757,7 @@ class StudentController extends Controller
                 ->with('error', 'Receipt is only available for approved payments.');
         }
 
-        $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
+        $payment->load(['student', 'enrollment.batch.course', 'enrollment.legacyLinkCourse', 'approvedBy', 'allocations']);
 
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
         $pdf->setPaper('a5', 'landscape');
@@ -988,7 +988,7 @@ class StudentController extends Controller
 
         // Send assessment result email (pass or fail)
         try {
-            $result->load(['assessment.course', 'enrollment.batch.course', 'student']);
+            $result->load(['assessment.course', 'enrollment.batch.course', 'enrollment.legacyLinkCourse', 'student']);
             Mail::to($result->student->email)->send(new AssessmentResultMail($result));
             try {
                 app(\App\Services\WhatsAppNotificationService::class)->sendAssessmentResult($result);

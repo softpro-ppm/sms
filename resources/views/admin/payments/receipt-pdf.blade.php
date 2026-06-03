@@ -222,7 +222,7 @@
 @php
     $rs = 'Rs. ';
     $enrollment = $payment->enrollment;
-    $courseName = $enrollment?->batch?->course?->name ?? 'N/A';
+    $courseName = $enrollment?->display_course_name ?? 'N/A';
     $batchName = $enrollment?->batch?->batch_name ?? 'N/A';
     $asOf = \Carbon\Carbon::parse($payment->approved_at ?? $payment->created_at);
     $allocationService = app(\App\Services\PaymentAllocationService::class);

@@ -151,7 +151,7 @@
                             </td>
                             <td class="px-5 py-3.5">
                                 <div class="space-y-0.5">
-                                    <p class="text-sm font-semibold leading-5 text-gray-900">{{ $enrollment->batch->course->name }}</p>
+                                    <p class="text-sm font-semibold leading-5 text-gray-900">{{ $enrollment->display_course_name }}</p>
                                     <p class="text-sm leading-5 text-gray-600">{{ $enrollment->batch->batch_name }}</p>
                                     <p class="text-xs text-slate-500">Batch #{{ $enrollment->batch->id }}</p>
                                 </div>

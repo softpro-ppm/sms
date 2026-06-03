@@ -105,7 +105,7 @@
                                     document.addEventListener('DOMContentLoaded', function() {
                                         window.preSelectedEnrollment = {
                                             id: {{ $selectedEnrollment->id }},
-                                            courseName: "{{ $selectedEnrollment->batch->course->name }}",
+                                            courseName: @json($selectedEnrollment->display_course_name),
                                             batchName: "{{ $selectedEnrollment->batch->batch_name }}",
                                             registrationFee: {{ $selectedEnrollment->registration_fee ?? 100 }},
                                             courseFee: {{ $selectedEnrollment->course_fee ?? 0 }},

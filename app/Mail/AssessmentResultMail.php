@@ -19,6 +19,7 @@ class AssessmentResultMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $this->result->loadMissing(['assessment.course', 'enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['result' => $this->result];
         $defaultSubject = "Softpro - Assessment " . ($this->result->is_passed ? 'Passed' : 'Completed') . ": " . ($this->result->assessment?->title ?? $this->result->assessment?->course?->name ?? 'Exam');
@@ -28,6 +29,7 @@ class AssessmentResultMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
+        $this->result->loadMissing(['assessment.course', 'enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['result' => $this->result];
         if ($service->hasCustomTemplate('assessment-result')) {

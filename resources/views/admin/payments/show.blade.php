@@ -231,8 +231,8 @@
                         <div class="flex justify-between items-center py-2 border-b border-gray-200">
                             <span class="text-gray-600 font-medium">Course</span>
                             <span class="text-gray-900 font-semibold">
-                                @if($payment->enrollment && $payment->enrollment->batch && $payment->enrollment->batch->course)
-                                    {{ $payment->enrollment->batch->course->name }}
+                                @if($payment->enrollment)
+                                    {{ $payment->enrollment->display_course_name }}
                                 @else
                                     No Course Assigned
                                 @endif

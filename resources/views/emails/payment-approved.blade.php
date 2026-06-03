@@ -11,7 +11,7 @@
     <div class="info-box">
         <div class="info-row"><span class="info-label">Receipt Number :</span> <span class="info-value">{{ $payment->payment_receipt_number }}</span></div>
         <div class="info-row"><span class="info-label">Amount :</span> <span class="info-value">₹{{ number_format($payment->amount, 2) }}</span></div>
-        <div class="info-row"><span class="info-label">Course :</span> <span class="info-value">{{ $enrollment?->batch?->course?->name ?? 'N/A' }}</span></div>
+        <div class="info-row"><span class="info-label">Course :</span> <span class="info-value">{{ $enrollment?->display_course_name ?? 'N/A' }}</span></div>
         <div class="info-row"><span class="info-label">Outstanding :</span> <span class="info-value">₹{{ number_format($enrollment?->outstanding_amount ?? 0, 2) }}</span></div>
     </div>
     @if($enrollment && $enrollment->outstanding_amount <= 0)

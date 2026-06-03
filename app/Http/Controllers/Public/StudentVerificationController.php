@@ -18,7 +18,7 @@ class StudentVerificationController extends Controller
     public function verifyByEnrollment(string $enrollment_no)
     {
         $enrollment = Enrollment::where('enrollment_number', $enrollment_no)
-            ->with(['student.documents', 'batch.course'])
+            ->with(['student.documents', 'batch.course', 'legacyLinkCourse'])
             ->first();
 
         if (!$enrollment || !$enrollment->student) {
@@ -28,6 +28,7 @@ class StudentVerificationController extends Controller
         $student = $enrollment->student;
         $student->load([
             'enrollments.batch.course',
+            'enrollments.legacyLinkCourse',
             'documents',
         ]);
 
@@ -74,6 +75,7 @@ class StudentVerificationController extends Controller
 
         $student->load([
             'enrollments.batch.course',
+            'enrollments.legacyLinkCourse',
             'documents',
         ]);
 
@@ -117,6 +119,7 @@ class StudentVerificationController extends Controller
             })
             ->with([
                 'enrollments.batch.course',
+                'enrollments.legacyLinkCourse',
             ])
             ->get()
             ->unique('id')

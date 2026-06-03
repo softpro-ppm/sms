@@ -61,14 +61,14 @@
                                                 Certificate #{{ $certificate->certificate_number ?? 'Pending' }}
                                             </div>
                                             <div class="text-sm text-gray-500">
-                                                {{ $certificate->course->name }}
+                                                {{ $certificate->enrollment?->display_course_name ?? $certificate->course->name }}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-5 py-3.5 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
-                                        {{ $certificate->course->name }}
+                                        {{ $certificate->enrollment?->display_course_name ?? $certificate->course->name }}
                                     </div>
                                     <div class="text-sm text-gray-500">
                                         {{ $certificate->course->duration_days }} days

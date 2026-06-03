@@ -19,6 +19,7 @@ class PaymentApprovedMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $this->payment->loadMissing(['enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['payment' => $this->payment];
         $subject = $service->hasCustomTemplate('payment-approved') ? $service->getSubject('payment-approved', $data) : 'Softpro - Payment Approved (Receipt #' . $this->payment->payment_receipt_number . ')';
@@ -27,6 +28,7 @@ class PaymentApprovedMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
+        $this->payment->loadMissing(['enrollment.legacyLinkCourse']);
         $service = app(EmailTemplateService::class);
         $data = ['payment' => $this->payment];
         if ($service->hasCustomTemplate('payment-approved')) {

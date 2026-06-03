@@ -369,6 +369,48 @@ class V3ContinuationWorkflowTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_public_verification_uses_legacy_course_and_dates(): void
+    {
+        [$partner] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '222233334448',
+            'full_name' => 'Legacy Verify Learner',
+            'email' => 'legacy.verify@example.test',
+            'phone' => '9000000007',
+            'whatsapp_number' => '9000000007',
+            'status' => 'approved',
+        ]);
+
+        $batch = Batch::where('is_legacy_batch', true)->firstOrFail();
+
+        Enrollment::create([
+            'enrollment_number' => 'LEG-VERIFY-001',
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'enrollment_date' => '2026-01-01',
+            'status' => 'completed',
+            'total_fee' => 2500,
+            'paid_amount' => 2500,
+            'outstanding_amount' => 0,
+            'is_eligible_for_assessment' => false,
+            'registration_fee' => 500,
+            'course_fee' => 2000,
+            'assessment_fee' => 0,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Historical MS Office',
+            'legacy_start_date' => '2018-02-01',
+            'legacy_end_date' => '2018-04-30',
+        ]);
+
+        $this->get(route('verify.show', 'LEG-VERIFY-001'))
+            ->assertOk()
+            ->assertSeeText('Historical MS Office')
+            ->assertSeeText('01-02-2018 to 30-04-2018')
+            ->assertDontSeeText('Legacy (Archive)');
+    }
+
     public function test_super_admin_partner_activity_shows_revenue_and_staff_activity(): void
     {
         [$partner, $staff] = $this->makePartnerAdmin();

@@ -360,7 +360,7 @@
                 @forelse($certificates->take(3) as $certificate)
                     <div class="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
                         <div>
-                            <p class="font-semibold text-gray-900">{{ $certificate->course->name }}</p>
+                            <p class="font-semibold text-gray-900">{{ $certificate->enrollment?->display_course_name ?? $certificate->course->name }}</p>
                             <p class="text-sm text-gray-500">
                                 {{ $certificate->issue_date ? $certificate->issue_date->format('d M Y') : 'Issue pending' }}
                             </p>
