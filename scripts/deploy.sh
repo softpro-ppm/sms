@@ -55,8 +55,14 @@ echo '--- artisan route:cache ---'
 php artisan route:cache
 echo '--- artisan view:cache ---'
 php artisan view:cache
-echo '--- storage link (ignore if exists) ---'
-php artisan storage:link 2>/dev/null || true
+echo '--- storage link (shell fallback for Hostinger) ---'
+if [ -d public/storage ] && [ ! -L public/storage ]; then
+  cp -a public/storage/. storage/app/public/ 2>/dev/null || true
+  mv public/storage public/storage.backup.$(date +%Y%m%d%H%M%S)
+fi
+if [ ! -e public/storage ]; then
+  ln -s ../storage/app/public public/storage
+fi
 echo '--- remote deploy OK ---'
 "
 
