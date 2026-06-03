@@ -39,8 +39,8 @@ echo '--- git pull ---'
 git pull
 echo '--- composer install ---'
 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-echo '--- clear generated bootstrap cache manifests ---'
-rm -f bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/events.php
+echo '--- clear generated bootstrap cache files ---'
+rm -f bootstrap/cache/*.php
 echo '--- composer dump-autoload ---'
 composer dump-autoload --optimize --no-dev --no-interaction --no-scripts
 echo '--- artisan package:discover ---'
