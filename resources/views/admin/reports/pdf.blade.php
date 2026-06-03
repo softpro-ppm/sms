@@ -36,7 +36,7 @@
                     @if($report === 'payments')
                         <td>{{ $row->payment_receipt_number }}</td>
                         <td>{{ $row->student?->full_name }}</td>
-                        <td>{{ $row->enrollment?->batch?->course?->name }}</td>
+                        <td>{{ $row->enrollment?->display_course_name }}</td>
                         <td>{{ $row->enrollment?->batch?->batch_name }}</td>
                         <td>{{ $row->amount }}</td>
                         <td>{{ $row->status }}</td>
@@ -44,7 +44,7 @@
                     @elseif($report === 'enrollments')
                         <td>{{ $row->enrollment_number }}</td>
                         <td>{{ $row->student?->full_name }}</td>
-                        <td>{{ $row->batch?->course?->name }}</td>
+                        <td>{{ $row->display_course_name }}</td>
                         <td>{{ $row->batch?->batch_name }}</td>
                         <td>{{ $row->total_fee }}</td>
                         <td>{{ $row->paid_amount }}</td>
@@ -61,7 +61,7 @@
                     @else
                         <td>{{ $row->student?->name }}</td>
                         <td>{{ $row->assessment?->title }}</td>
-                        <td>{{ $row->enrollment?->batch?->course?->name }}</td>
+                        <td>{{ $row->enrollment?->display_course_name }}</td>
                         <td>{{ $row->enrollment?->batch?->batch_name }}</td>
                         <td>{{ $row->percentage }}</td>
                         <td>{{ $row->is_passed ? 'Passed' : 'Failed' }}</td>

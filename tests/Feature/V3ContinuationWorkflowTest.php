@@ -626,6 +626,51 @@ class V3ContinuationWorkflowTest extends TestCase
         $this->assertNotSame('Legacy (Archive)', $sentBodyParams[3]);
     }
 
+    public function test_reports_enrollment_csv_uses_legacy_display_course_name(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '888899990000',
+            'full_name' => 'Report Legacy Learner',
+            'email' => 'report.legacy@example.test',
+            'phone' => '9000000009',
+            'whatsapp_number' => '9000000009',
+            'status' => 'approved',
+        ]);
+
+        $batch = Batch::where('is_legacy_batch', true)->firstOrFail();
+
+        Enrollment::create([
+            'enrollment_number' => 'LEG-REPORT-001',
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'enrollment_date' => now()->toDateString(),
+            'status' => 'active',
+            'total_fee' => 2500,
+            'paid_amount' => 1000,
+            'outstanding_amount' => 1500,
+            'registration_fee' => 500,
+            'course_fee' => 2000,
+            'assessment_fee' => 0,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Historical Tally Prime',
+            'legacy_start_date' => '2020-01-01',
+            'legacy_end_date' => '2020-03-31',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.export', ['report' => 'enrollments', 'format' => 'csv']));
+
+        $response->assertOk();
+
+        $csv = $response->streamedContent();
+
+        $this->assertStringContainsString('Historical Tally Prime', $csv);
+        $this->assertStringNotContainsString('Legacy (Archive)', $csv);
+    }
+
     private function makePartnerAdmin(string $type = 'STANDARD'): array
     {
         $partner = $type === 'HQ'

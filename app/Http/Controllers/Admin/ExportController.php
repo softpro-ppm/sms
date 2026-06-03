@@ -17,7 +17,7 @@ class ExportController extends Controller
 {
     public function exportStudents(Request $request)
     {
-        $query = Student::with(['user', 'enrollments.batch.course']);
+        $query = Student::with(['user', 'enrollments.batch.course', 'enrollments.legacyLinkCourse']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -62,9 +62,9 @@ class ExportController extends Controller
                         $student->aadhar_number,
                         $student->status,
                         $enrollment->enrollment_number,
-                        $enrollment->batch->course->name,
-                        $enrollment->batch->batch_name,
-                        $enrollment->enrollment_date->format('Y-m-d'),
+                        $enrollment->display_course_name,
+                        $enrollment->batch?->batch_name ?? 'N/A',
+                        $enrollment->enrollment_date?->format('Y-m-d'),
                         $student->created_at->format('Y-m-d H:i:s')
                     ]);
                 }
@@ -77,7 +77,7 @@ class ExportController extends Controller
 
     public function exportPayments(Request $request)
     {
-        $query = Payment::with(['student.user', 'enrollment.batch.course']);
+        $query = Payment::with(['student.user', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -117,9 +117,9 @@ class ExportController extends Controller
                     $payment->payment_type,
                     $payment->payment_method_label,
                     $payment->status,
-                    $payment->payment_number,
-                    $payment->enrollment->batch->course->name,
-                    $payment->enrollment->batch->batch_name,
+                    $payment->payment_receipt_number,
+                    $payment->enrollment?->display_course_name ?? 'N/A',
+                    $payment->enrollment?->batch?->batch_name ?? 'N/A',
                     $payment->created_at->format('Y-m-d H:i:s')
                 ]);
             }
@@ -131,7 +131,7 @@ class ExportController extends Controller
 
     public function exportAssessmentResults(Request $request)
     {
-        $query = AssessmentResult::with(['student.user', 'assessment', 'enrollment.batch.course']);
+        $query = AssessmentResult::with(['student.user', 'assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']);
 
         // Apply filters
         if ($request->filled('student_id')) {
@@ -172,9 +172,9 @@ class ExportController extends Controller
                     $result->id,
                     $result->student->user->name,
                     $result->student->user->email,
-                    $result->assessment->title,
-                    $result->enrollment->batch->course->name,
-                    $result->enrollment->batch->batch_name,
+                    $result->assessment?->title ?? 'N/A',
+                    $result->enrollment?->display_course_name ?? 'N/A',
+                    $result->enrollment?->batch?->batch_name ?? 'N/A',
                     $result->total_questions,
                     $result->correct_answers,
                     $result->wrong_answers,
@@ -192,7 +192,7 @@ class ExportController extends Controller
 
     public function exportCertificates(Request $request)
     {
-        $query = Certificate::with(['student.user', 'course', 'batch']);
+        $query = Certificate::with(['student.user', 'course', 'batch', 'enrollment.legacyLinkCourse']);
 
         // Apply filters
         if ($request->filled('student_id')) {
@@ -225,7 +225,7 @@ class ExportController extends Controller
                     $certificate->id,
                     $certificate->student->user->name,
                     $certificate->student->user->email,
-                    $certificate->course->name,
+                    $certificate->enrollment?->display_course_name ?? $certificate->course?->name ?? 'N/A',
                     $certificate->batch ? $certificate->batch->batch_name : 'N/A',
                     $certificate->certificate_number,
                     $certificate->issue_date ? $certificate->issue_date->format('Y-m-d') : 'N/A',
@@ -241,7 +241,7 @@ class ExportController extends Controller
 
     public function exportFinancialReport(Request $request)
     {
-        $query = Payment::with(['student.user', 'enrollment.batch.course']);
+        $query = Payment::with(['student.user', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']);
 
         // Apply filters
         if ($request->filled('start_date')) {
@@ -269,7 +269,7 @@ class ExportController extends Controller
                 fputcsv($file, [
                     $payment->created_at->format('Y-m-d'),
                     $payment->student->user->name,
-                    $payment->enrollment->batch->course->name,
+                    $payment->enrollment?->display_course_name ?? 'N/A',
                     $payment->payment_type,
                     $payment->amount,
                     $payment->status,

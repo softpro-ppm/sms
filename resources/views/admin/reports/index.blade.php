@@ -234,7 +234,7 @@
                                     <div class="text-xs text-gray-500">{{ $payment->student?->whatsapp_number ?? '' }}</div>
                                 </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">
-                                    <div class="font-medium">{{ $payment->enrollment?->batch?->course?->name ?? 'N/A' }}</div>
+                                    <div class="font-medium">{{ $payment->enrollment?->display_course_name ?? 'N/A' }}</div>
                                     <div class="text-xs text-gray-500">{{ $payment->enrollment?->batch?->batch_name ?? '' }}</div>
                                 </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">₹{{ number_format($payment->amount) }}</td>
@@ -312,7 +312,7 @@
                                     <div class="text-xs text-gray-500">{{ $enrollment->student?->whatsapp_number ?? '' }}</div>
                                 </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">
-                                    <div class="font-medium">{{ $enrollment->batch?->course?->name ?? 'N/A' }}</div>
+                                    <div class="font-medium">{{ $enrollment->display_course_name ?? 'N/A' }}</div>
                                     <div class="text-xs text-gray-500">{{ $enrollment->batch?->batch_name ?? '' }}</div>
                                 </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">
@@ -457,7 +457,7 @@
                                 <td class="px-5 py-3.5 text-sm text-gray-900">{{ $result->student?->name ?? 'N/A' }}</td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">{{ $result->assessment?->title ?? 'N/A' }}</td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">
-                                    <div class="font-medium">{{ $result->enrollment?->batch?->course?->name ?? 'N/A' }}</div>
+                                    <div class="font-medium">{{ $result->enrollment?->display_course_name ?? 'N/A' }}</div>
                                     <div class="text-xs text-gray-500">{{ $result->enrollment?->batch?->batch_name ?? '' }}</div>
                                 </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-900">{{ number_format($result->percentage, 1) }}%</td>

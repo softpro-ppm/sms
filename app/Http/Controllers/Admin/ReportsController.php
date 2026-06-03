@@ -120,7 +120,7 @@ class ReportsController extends Controller
                         $enrollment->student?->full_name,
                         $enrollment->student?->whatsapp_number,
                         $enrollment->student?->email,
-                        $enrollment->batch?->course?->name,
+                        $enrollment->display_course_name,
                         $enrollment->batch?->batch_name,
                         $enrollment->enrollment_number,
                         $total,
@@ -179,7 +179,7 @@ class ReportsController extends Controller
                             $payment->student?->full_name,
                             $payment->student?->email,
                             $payment->student?->whatsapp_number,
-                            $payment->enrollment?->batch?->course?->name,
+                            $payment->enrollment?->display_course_name,
                             $payment->enrollment?->batch?->batch_name,
                             $payment->amount,
                             $payment->status,
@@ -195,7 +195,7 @@ class ReportsController extends Controller
                             $enrollment->enrollment_number,
                             $enrollment->student?->full_name,
                             $enrollment->student?->whatsapp_number,
-                            $enrollment->batch?->course?->name,
+                            $enrollment->display_course_name,
                             $enrollment->batch?->batch_name,
                             $enrollment->total_fee,
                             $enrollment->paid_amount,
@@ -226,7 +226,7 @@ class ReportsController extends Controller
                         fputcsv($handle, [
                             $result->student?->name,
                             $result->assessment?->title,
-                            $result->enrollment?->batch?->course?->name,
+                            $result->enrollment?->display_course_name,
                             $result->enrollment?->batch?->batch_name,
                             $result->percentage,
                             $result->is_passed ? 'Passed' : 'Failed',
@@ -270,7 +270,7 @@ class ReportsController extends Controller
     {
         $query = $this->scopeEnrollments(
             Enrollment::query()
-                ->with(['student', 'batch.course'])
+                ->with(['student', 'batch.course', 'legacyLinkCourse'])
                 ->where('status', 'active')
                 ->where('outstanding_amount', '>', 0)
         );
@@ -310,7 +310,7 @@ class ReportsController extends Controller
 
     private function paymentQuery(Request $request): Builder
     {
-        $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course']));
+        $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
@@ -353,7 +353,7 @@ class ReportsController extends Controller
 
     private function enrollmentQuery(Request $request): Builder
     {
-        $query = $this->scopeEnrollments(Enrollment::with(['student', 'batch.course']));
+        $query = $this->scopeEnrollments(Enrollment::with(['student', 'batch.course', 'legacyLinkCourse']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
@@ -411,7 +411,7 @@ class ReportsController extends Controller
 
     private function assessmentResultQuery(Request $request): Builder
     {
-        $query = $this->scopeAssessmentResults(AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course']));
+        $query = $this->scopeAssessmentResults(AssessmentResult::with(['student', 'assessment', 'enrollment.batch.course', 'enrollment.legacyLinkCourse']));
 
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
