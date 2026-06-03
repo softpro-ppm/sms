@@ -13,6 +13,12 @@
                 <p class="mt-2 max-w-2xl text-sm text-slate-600">Track historical course completions that use the single legacy batch with per-student course, dates, and fee overrides.</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                @if(auth()->user()->is_super_admin || auth()->user()->trainingPartner?->is_hq)
+                <a href="{{ route('admin.legacy-students.import-template') }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-100">
+                    <i class="fas fa-download mr-2"></i>Import template
+                </a>
+                @endif
                 <a href="{{ route('admin.legacy-students.export-csv', request()->query()) }}"
                    class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100">
                     <i class="fas fa-file-csv mr-2"></i>Export CSV
@@ -23,6 +29,30 @@
                 </a>
             </div>
         </div>
+
+        @if(session('legacy_import_summary'))
+            @php($summary = session('legacy_import_summary'))
+            <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <p class="font-semibold">
+                        Import summary: {{ $summary['created'] }} created,
+                        {{ $summary['students_created'] }} new student account(s),
+                        {{ $summary['skipped'] }} skipped,
+                        {{ count($summary['errors']) }} issue(s).
+                    </p>
+                </div>
+                @if(!empty($summary['errors']))
+                    <ul class="mt-2 space-y-1 text-blue-900">
+                        @foreach(array_slice($summary['errors'], 0, 8) as $error)
+                            <li>Row {{ $error['row'] }}: {{ $error['message'] }}</li>
+                        @endforeach
+                        @if(count($summary['errors']) > 8)
+                            <li>{{ count($summary['errors']) - 8 }} more issue(s) not shown.</li>
+                        @endif
+                    </ul>
+                @endif
+            </div>
+        @endif
 
         @unless($legacyConfigured)
             <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -49,6 +79,25 @@
             </div>
         </div>
     </section>
+
+    @if(auth()->user()->is_super_admin || auth()->user()->trainingPartner?->is_hq)
+    <section class="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
+        <form method="POST" action="{{ route('admin.legacy-students.import') }}" enctype="multipart/form-data" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            @csrf
+            <div>
+                <label for="csv_file" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Legacy CSV import</label>
+                <input type="file" id="csv_file" name="csv_file" accept=".csv,text/csv"
+                       class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                @error('csv_file')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+            <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                <i class="fas fa-upload mr-2"></i>Import CSV
+            </button>
+        </form>
+    </section>
+    @endif
 
     <section class="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
         <form method="GET" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto]">

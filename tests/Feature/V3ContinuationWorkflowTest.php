@@ -12,6 +12,7 @@ use App\Models\TrainingPartner;
 use App\Models\TrainingPartnerActivityLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -237,6 +238,94 @@ class V3ContinuationWorkflowTest extends TestCase
         $this->assertSame('completed', $enrollment->status);
         $this->assertSame(1900.0, (float) $enrollment->total_fee);
         $this->assertSame(1900.0, (float) $enrollment->outstanding_amount);
+    }
+
+    public function test_hq_admin_can_download_legacy_import_template(): void
+    {
+        [, $admin] = $this->makePartnerAdmin('HQ');
+
+        $this->actingAs($admin)
+            ->get(route('admin.legacy-students.import-template'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_hq_admin_can_import_legacy_students_csv(): void
+    {
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        Course::create([
+            'name' => 'Import Linked Course',
+            'course_fee' => 1000,
+            'registration_fee' => 100,
+            'assessment_fee' => 100,
+            'is_active' => true,
+        ]);
+
+        $csv = implode("\n", [
+            'full_name,email,whatsapp_number,aadhar_number,gender,qualification,father_name,legacy_course_name,legacy_start_date,legacy_end_date,enrollment_date,registration_fee,course_fee,assessment_fee,legacy_link_course_name,status',
+            'Imported Legacy Student,imported.legacy@example.test,9000000101,333344445555,Female,Graduate,Imported Father,Old Accounting,2018-01-01,2018-04-30,2026-03-01,500,2500,200,Import Linked Course,active',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.legacy-students.import'), [
+                'csv_file' => UploadedFile::fake()->createWithContent('legacy.csv', $csv),
+            ])
+            ->assertRedirect(route('admin.legacy-students.index'))
+            ->assertSessionHas('legacy_import_summary');
+
+        $student = Student::where('email', 'imported.legacy@example.test')->firstOrFail();
+
+        $this->assertSame($partner->id, $student->training_partner_id);
+        $this->assertTrue($student->is_approved);
+        $this->assertDatabaseHas('users', [
+            'email' => 'imported.legacy@example.test',
+            'role' => 'student',
+            'student_id' => $student->id,
+        ]);
+        $this->assertDatabaseHas('enrollments', [
+            'student_id' => $student->id,
+            'is_legacy' => true,
+            'legacy_course_name' => 'Old Accounting',
+            'total_fee' => 3200,
+            'outstanding_amount' => 3200,
+        ]);
+    }
+
+    public function test_standard_partner_cannot_import_legacy_students_csv(): void
+    {
+        [, $admin] = $this->makePartnerAdmin();
+
+        $this->actingAs($admin)
+            ->post(route('admin.legacy-students.import'), [
+                'csv_file' => UploadedFile::fake()->createWithContent('legacy.csv', "full_name\nBlocked"),
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_legacy_import_reports_invalid_rows(): void
+    {
+        [, $admin] = $this->makePartnerAdmin('HQ');
+
+        $csv = implode("\n", [
+            'full_name,email,whatsapp_number,aadhar_number,legacy_course_name,legacy_start_date,legacy_end_date,enrollment_date,registration_fee,course_fee,assessment_fee',
+            ',bad-email,9000000102,not-aadhar,Old Course,2018-01-01,2018-04-30,2026-03-01,500,2500,200',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.legacy-students.import'), [
+                'csv_file' => UploadedFile::fake()->createWithContent('legacy.csv', $csv),
+            ])
+            ->assertRedirect(route('admin.legacy-students.index'))
+            ->assertSessionHas('legacy_import_summary', function (array $summary) {
+                return $summary['created'] === 0
+                    && count($summary['errors']) === 1
+                    && $summary['errors'][0]['row'] === 2;
+            });
+
+        $this->assertDatabaseMissing('students', [
+            'email' => 'bad-email',
+        ]);
     }
 
     public function test_standard_partner_cannot_edit_hq_legacy_enrollment(): void
