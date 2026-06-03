@@ -93,7 +93,11 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-slate-900">{{ $record->attendance_date?->format('d M Y') }}</td>
                             <td class="px-5 py-3.5 whitespace-nowrap">
-                                <p class="text-sm font-semibold text-slate-900">{{ $record->staffMember?->name }}</p>
+                                @if($record->staffMember)
+                                    <a href="{{ route('admin.staff-attendance.staff-report', $record->staffMember) }}" class="text-sm font-semibold text-primary-700 hover:text-primary-800">{{ $record->staffMember->name }}</a>
+                                @else
+                                    <p class="text-sm font-semibold text-slate-900">-</p>
+                                @endif
                                 <p class="text-xs text-slate-500">{{ $record->staffMember?->staff_code ?: '-' }}</p>
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-600">

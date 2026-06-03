@@ -355,6 +355,67 @@ class StaffAttendanceFeatureTest extends TestCase
         $this->assertSame('Corrected after review', $attendance->notes);
     }
 
+    public function test_admin_can_view_individual_staff_attendance_report(): void
+    {
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Report Centre',
+            'code' => 'RPT',
+            'status' => 'active',
+            'attendance_radius_meters' => 100,
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'staff_code' => 'REP-001',
+            'name' => 'Report Staff',
+            'designation' => 'Trainer',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        StaffMemberAttendance::create([
+            'staff_member_id' => $staff->id,
+            'training_partner_id' => $partner->id,
+            'attendance_date' => '2026-06-01',
+            'check_in_at' => '2026-06-01 09:20:00',
+            'check_out_at' => '2026-06-01 18:05:00',
+            'check_in_status' => 'on_time',
+            'check_out_status' => 'on_time',
+            'check_in_distance_meters' => 30,
+        ]);
+
+        StaffMemberAttendance::create([
+            'staff_member_id' => $staff->id,
+            'training_partner_id' => $partner->id,
+            'attendance_date' => '2026-06-02',
+            'check_in_at' => '2026-06-02 09:45:00',
+            'check_in_status' => 'late',
+            'check_in_distance_meters' => 150,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.staff-attendance.staff-report', [
+                'staffMember' => $staff,
+                'from' => '2026-06-01',
+                'to' => '2026-06-02',
+            ]))
+            ->assertOk()
+            ->assertSeeText('Report Staff')
+            ->assertSeeText('On-time punch %')
+            ->assertSeeText('50%')
+            ->assertSeeText('Late punch %')
+            ->assertSeeText('Outside location')
+            ->assertSeeText('Status split');
+    }
+
     public function test_admin_attendance_index_is_scoped_to_training_partner(): void
     {
         $firstPartner = TrainingPartner::create([

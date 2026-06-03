@@ -333,6 +333,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
         Route::get('/staff-attendance', [StaffKioskAttendanceController::class, 'records'])->name('staff-attendance.index');
         Route::get('/staff-attendance/export-csv', [StaffKioskAttendanceController::class, 'export'])->name('staff-attendance.export');
         Route::post('/staff-attendance/geofence', [StaffKioskAttendanceController::class, 'updateSettings'])->name('staff-attendance.geofence.update');
+        Route::get('/staff-attendance/staff/{staffMember}/report', [StaffKioskAttendanceController::class, 'staffReport'])->name('staff-attendance.staff-report');
         Route::patch('/staff-attendance/{attendance}', [StaffKioskAttendanceController::class, 'updateRecord'])->name('staff-attendance.update-record');
         Route::patch('/staff-profiles/{staffMember}/approve', [StaffMemberController::class, 'approve'])->name('staff-members.approve');
         Route::patch('/staff-profiles/{staffMember}/reject', [StaffMemberController::class, 'reject'])->name('staff-members.reject');

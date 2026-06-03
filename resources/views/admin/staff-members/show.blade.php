@@ -19,6 +19,12 @@
                 <p class="mt-2 text-sm leading-6 text-slate-600">{{ $staffMember->staff_code ?: 'No staff ID' }}{{ $staffMember->designation ? ' · ' . $staffMember->designation : '' }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
+                @if(auth()->user()->is_admin)
+                    <a href="{{ route('admin.staff-attendance.staff-report', $staffMember) }}" class="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
+                        <i class="fas fa-chart-line text-xs"></i>
+                        Report
+                    </a>
+                @endif
                 <a href="{{ route('admin.staff-members.reenroll', $staffMember) }}" class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
                     <i class="fas fa-camera-rotate text-xs"></i>
                     Re-enroll

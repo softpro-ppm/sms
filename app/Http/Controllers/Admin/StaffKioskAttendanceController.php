@@ -225,6 +225,73 @@ class StaffKioskAttendanceController extends Controller
         return view('admin.staff-attendance.records', compact('records', 'staffMembers', 'from', 'to', 'trainingPartner', 'summary'));
     }
 
+    public function staffReport(Request $request, StaffMember $staffMember)
+    {
+        if (!auth()->user()->is_admin) {
+            abort(403);
+        }
+
+        $this->ensureStaffAccess($staffMember);
+
+        $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+        ]);
+
+        $from = Carbon::parse($request->input('from', now()->startOfMonth()->toDateString()))->startOfDay();
+        $to = Carbon::parse($request->input('to', now()->toDateString()))->endOfDay();
+        $trainingPartner = auth()->user()->trainingPartner;
+        $geofenceRadius = $trainingPartner?->attendance_radius_meters;
+
+        $records = StaffMemberAttendance::where('staff_member_id', $staffMember->id)
+            ->whereBetween('attendance_date', [$from->toDateString(), $to->toDateString()])
+            ->orderBy('attendance_date')
+            ->get();
+
+        $present = $records->whereNotNull('check_in_at')->count();
+        $onTime = $records->where('check_in_status', 'on_time')->count();
+        $late = $records->where('check_in_status', 'late')->count();
+        $missingCheckout = $records->whereNotNull('check_in_at')->whereNull('check_out_at')->count();
+        $earlyCheckout = $records->where('check_out_status', 'early')->count();
+        $outsideLocation = $geofenceRadius ? $records->filter(fn ($record) => (
+            ($record->check_in_distance_meters !== null && $record->check_in_distance_meters > $geofenceRadius)
+            || ($record->check_out_distance_meters !== null && $record->check_out_distance_meters > $geofenceRadius)
+        ))->count() : 0;
+
+        $totalMinutes = $records->sum(fn ($record) => $record->check_in_at && $record->check_out_at
+            ? $record->check_in_at->diffInMinutes($record->check_out_at)
+            : 0);
+
+        $metrics = [
+            'records' => $records->count(),
+            'present' => $present,
+            'on_time' => $onTime,
+            'late' => $late,
+            'missing_checkout' => $missingCheckout,
+            'early_checkout' => $earlyCheckout,
+            'outside_location' => $outsideLocation,
+            'on_time_percent' => $present ? round(($onTime / $present) * 100, 1) : 0,
+            'late_percent' => $present ? round(($late / $present) * 100, 1) : 0,
+            'missing_checkout_percent' => $present ? round(($missingCheckout / $present) * 100, 1) : 0,
+            'total_hours' => round($totalMinutes / 60, 2),
+            'average_hours' => $present ? round(($totalMinutes / 60) / $present, 2) : 0,
+            'average_check_in_match' => round((float) $records->whereNotNull('check_in_match_distance')->avg('check_in_match_distance'), 3),
+            'average_check_out_match' => round((float) $records->whereNotNull('check_out_match_distance')->avg('check_out_match_distance'), 3),
+        ];
+
+        $chart = [
+            'status_labels' => ['On time', 'Late', 'Missing checkout', 'Early checkout'],
+            'status_values' => [$onTime, $late, $missingCheckout, $earlyCheckout],
+            'daily_labels' => $records->map(fn ($record) => $record->attendance_date?->format('d M'))->values(),
+            'daily_hours' => $records->map(fn ($record) => $record->check_in_at && $record->check_out_at
+                ? round($record->check_in_at->diffInMinutes($record->check_out_at) / 60, 2)
+                : 0)->values(),
+            'daily_late' => $records->map(fn ($record) => $record->check_in_status === 'late' ? 1 : 0)->values(),
+        ];
+
+        return view('admin.staff-attendance.staff-report', compact('staffMember', 'records', 'from', 'to', 'trainingPartner', 'metrics', 'chart'));
+    }
+
     public function updateSettings(Request $request)
     {
         if (!auth()->user()->is_admin) {
