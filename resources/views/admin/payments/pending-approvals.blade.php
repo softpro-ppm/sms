@@ -87,10 +87,45 @@
             </div>
         </div>
 
+        @if($payments->count() > 0 && auth()->user()->is_admin)
+            <div class="flex flex-col gap-3 border-b border-gray-200 bg-slate-50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-wrap items-center gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <input type="checkbox"
+                               id="selectAllPendingApprovals"
+                               class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                        Select all on this page
+                    </label>
+                    <span class="text-sm text-slate-500">
+                        <span id="selectedPendingApprovalCount">0</span> selected
+                    </span>
+                </div>
+                <form method="POST"
+                      action="{{ route('admin.payments.bulk-approve') }}"
+                      id="pendingApprovalsBulkForm"
+                      class="inline-flex"
+                      onsubmit="return confirm('Approve selected pending payments?')">
+                    @csrf
+                    <button type="submit"
+                            id="bulkApprovePendingApprovalsBtn"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            disabled>
+                        <i class="fas fa-check-double"></i>
+                        Approve selected
+                    </button>
+                </form>
+            </div>
+        @endif
+
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-slate-50">
                     <tr>
+                        @if(auth()->user()->is_admin)
+                            <th class="w-12 px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                                <span class="sr-only">Select</span>
+                            </th>
+                        @endif
                         <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Student</th>
                         <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Course & Receipt</th>
                         <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Amount</th>
@@ -101,6 +136,16 @@
                 <tbody class="divide-y divide-gray-200 bg-white">
                     @forelse($payments as $payment)
                     <tr class="align-top transition hover:bg-slate-50">
+                        @if(auth()->user()->is_admin)
+                            <td class="px-5 py-3.5">
+                                <input type="checkbox"
+                                       name="payment_ids[]"
+                                       value="{{ $payment->id }}"
+                                       form="pendingApprovalsBulkForm"
+                                       class="pending-approval-checkbox h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                       aria-label="Select payment {{ $payment->payment_receipt_number }}">
+                            </td>
+                        @endif
                         <td class="px-5 py-3.5">
                             <p class="text-sm font-semibold text-gray-900">{{ $payment->student?->full_name ?? 'Student removed' }}</p>
                             <p class="mt-0.5 text-sm text-gray-600">{{ $payment->student?->email ?? 'No email' }}</p>
@@ -156,7 +201,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center">
+                        <td colspan="{{ auth()->user()->is_admin ? 6 : 5 }}" class="px-6 py-12 text-center">
                             <div class="text-gray-500">
                                 <i class="fas fa-check-circle mb-4 text-4xl text-emerald-500"></i>
                                 <p class="text-lg font-medium">No pending approvals</p>
@@ -176,4 +221,40 @@
         @endif
     </section>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAll = document.getElementById('selectAllPendingApprovals');
+        const checkboxes = Array.from(document.querySelectorAll('.pending-approval-checkbox'));
+        const selectedCount = document.getElementById('selectedPendingApprovalCount');
+        const approveButton = document.getElementById('bulkApprovePendingApprovalsBtn');
+
+        if (!selectAll || checkboxes.length === 0 || !selectedCount || !approveButton) {
+            return;
+        }
+
+        const refreshBulkState = () => {
+            const count = checkboxes.filter((checkbox) => checkbox.checked).length;
+            selectedCount.textContent = count;
+            approveButton.disabled = count === 0;
+            selectAll.checked = count === checkboxes.length;
+            selectAll.indeterminate = count > 0 && count < checkboxes.length;
+        };
+
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = selectAll.checked;
+            });
+            refreshBulkState();
+        });
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', refreshBulkState);
+        });
+
+        refreshBulkState();
+    });
+</script>
 @endsection

@@ -143,6 +143,42 @@ class PaymentApproveIdempotencyTest extends TestCase
             ->assertDontSeeText('APPROVED');
     }
 
+    public function test_admin_can_bulk_approve_pending_approvals(): void
+    {
+        Mail::fake();
+        Http::fake([
+            '*' => Http::response(['transaction_id' => 'AMS-TX-1'], 200),
+        ]);
+
+        [$admin, $payment] = $this->seedFixture();
+
+        $secondPayment = Payment::create([
+            'student_id' => $payment->student_id,
+            'enrollment_id' => $payment->enrollment_id,
+            'payment_receipt_number' => 'RCP-'.now()->format('Y').'-BULK'.uniqid(),
+            'amount' => 250,
+            'payment_type' => 'partial',
+            'payment_method' => 'cash',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.payments.pending-approvals'))
+            ->assertOk()
+            ->assertSee('pendingApprovalsBulkForm')
+            ->assertSee($payment->payment_receipt_number)
+            ->assertSee($secondPayment->payment_receipt_number);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.bulk-approve'), [
+                'payment_ids' => [$payment->id, $secondPayment->id],
+            ])
+            ->assertRedirect(route('admin.payments.index'));
+
+        $this->assertSame('approved', $payment->fresh()->status);
+        $this->assertSame('approved', $secondPayment->fresh()->status);
+    }
+
     public function test_pending_approvals_csv_exports_only_pending_payment_approvals(): void
     {
         [$admin, $payment] = $this->seedFixture();
