@@ -231,8 +231,8 @@ class StaffAttendanceFeatureTest extends TestCase
             'status' => 'approved',
             'face_descriptors' => [array_fill(0, 128, 0.1), array_fill(0, 128, 0.2), array_fill(0, 128, 0.3)],
             'face_image_paths' => ['staff/sample.jpg'],
-            'face_enrolled_at' => now(),
-            'approved_at' => now(),
+            'face_enrolled_at' => now()->subDay(),
+            'approved_at' => now()->subDay(),
             'is_active' => true,
         ]);
 
@@ -305,6 +305,115 @@ class StaffAttendanceFeatureTest extends TestCase
         $this->assertSame('18:35', $attendance->check_out_at->format('H:i'));
         $this->assertSame('on_time', $attendance->check_out_status);
         $this->assertSame('0.29000', (string) $attendance->check_out_match_distance);
+    }
+
+    public function test_registration_day_allows_attendance_outside_normal_time_windows(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'First Day Centre',
+            'code' => 'FIRSTDAY',
+            'status' => 'active',
+        ]);
+
+        $reception = User::factory()->create([
+            'role' => 'reception',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $this->travelTo(now()->setTime(14, 10));
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'First Day Staff',
+            'status' => 'approved',
+            'face_descriptors' => [array_fill(0, 128, 0.1), array_fill(0, 128, 0.2), array_fill(0, 128, 0.3)],
+            'face_image_paths' => ['staff/sample.jpg'],
+            'face_enrolled_at' => now(),
+            'approved_at' => now(),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+            ])
+            ->assertOk()
+            ->assertJsonPath('action', 'check_in');
+
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
+        $this->assertSame('registration_day', $attendance->check_in_status);
+
+        $this->travelTo(now()->setTime(15, 5));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+            ])
+            ->assertOk()
+            ->assertJsonPath('action', 'check_out');
+
+        $attendance->refresh();
+        $this->assertSame('registration_day', $attendance->check_out_status);
+        $this->assertSame('15:05', $attendance->check_out_at->format('H:i'));
+    }
+
+    public function test_geofence_uses_browser_accuracy_tolerance(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Accuracy Centre',
+            'code' => 'ACCURACY',
+            'status' => 'active',
+            'attendance_latitude' => 18.7654390,
+            'attendance_longitude' => 83.4229265,
+            'attendance_radius_meters' => 100,
+        ]);
+
+        $reception = User::factory()->create([
+            'role' => 'reception',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'Accuracy Staff',
+            'status' => 'approved',
+            'face_descriptors' => [array_fill(0, 128, 0.1), array_fill(0, 128, 0.2), array_fill(0, 128, 0.3)],
+            'face_image_paths' => ['staff/sample.jpg'],
+            'face_enrolled_at' => now()->subDay(),
+            'approved_at' => now()->subDay(),
+            'is_active' => true,
+        ]);
+
+        $this->travelTo(now()->setTime(9, 15));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'match_distance' => 0.31,
+                'latitude' => 18.7834390,
+                'longitude' => 83.4229265,
+                'accuracy' => 2100,
+            ])
+            ->assertOk()
+            ->assertJsonPath('location.inside', true);
+
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
+        $this->assertGreaterThan(100, $attendance->check_in_distance_meters);
     }
 
     public function test_admin_can_correct_staff_attendance_record(): void

@@ -82,10 +82,17 @@ class StaffKioskAttendanceController extends Controller
 
         $now = now();
 
-        $distance = $this->distanceFromCentre($validated['latitude'] ?? null, $validated['longitude'] ?? null);
+        $distance = $this->distanceFromCentre(
+            $validated['latitude'] ?? null,
+            $validated['longitude'] ?? null,
+            $validated['accuracy'] ?? null
+        );
         if ($distance['configured'] && !$distance['inside']) {
             throw ValidationException::withMessages([
-                'attendance' => 'This device is outside the approved attendance location.',
+                'attendance' => 'This device is outside the approved attendance location'
+                    . ($distance['meters'] !== null ? ' (' . $distance['meters'] . 'm away' : '')
+                    . ($distance['accuracy_meters'] !== null ? ', GPS accuracy ' . $distance['accuracy_meters'] . 'm' : '')
+                    . ').',
             ]);
         }
 
@@ -97,13 +104,16 @@ class StaffKioskAttendanceController extends Controller
             ]);
 
         if (!$attendance->check_in_at) {
-            $this->ensureWithinWindow($now, 'check_in');
+            $isRegistrationDay = $this->isRegistrationDay($staff, $now);
+            if (!$isRegistrationDay) {
+                $this->ensureWithinWindow($now, 'check_in');
+            }
 
             $attendance->fill([
                 'training_partner_id' => $staff->training_partner_id,
                 'kiosk_user_id' => auth()->id(),
                 'check_in_at' => $now,
-                'check_in_status' => $now->format('H:i') > self::CHECK_IN_ON_TIME_UNTIL ? 'late' : 'on_time',
+                'check_in_status' => $isRegistrationDay ? 'registration_day' : ($now->format('H:i') > self::CHECK_IN_ON_TIME_UNTIL ? 'late' : 'on_time'),
                 'check_in_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-ins"),
                 'check_in_match_distance' => $validated['match_distance'],
                 'check_in_latitude' => $validated['latitude'] ?? null,
@@ -123,7 +133,10 @@ class StaffKioskAttendanceController extends Controller
             ]);
         }
 
-        $this->ensureWithinWindow($now, 'check_out');
+        $isRegistrationDay = $this->isRegistrationDay($staff, $now);
+        if (!$isRegistrationDay) {
+            $this->ensureWithinWindow($now, 'check_out');
+        }
 
         if ($attendance->check_out_at && $attendance->check_out_at->diffInSeconds($now) < self::PUNCH_COOLDOWN_SECONDS) {
             throw ValidationException::withMessages([
@@ -134,7 +147,7 @@ class StaffKioskAttendanceController extends Controller
         $attendance->update([
             'kiosk_user_id' => auth()->id(),
             'check_out_at' => $now,
-            'check_out_status' => $now->format('H:i') < self::CHECK_OUT_EXPECTED ? 'early' : 'on_time',
+            'check_out_status' => $isRegistrationDay ? 'registration_day' : ($now->format('H:i') < self::CHECK_OUT_EXPECTED ? 'early' : 'on_time'),
             'check_out_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-outs"),
             'check_out_match_distance' => $validated['match_distance'],
             'check_out_latitude' => $validated['latitude'] ?? null,
@@ -433,11 +446,11 @@ class StaffKioskAttendanceController extends Controller
         }
     }
 
-    protected function distanceFromCentre($latitude, $longitude): array
+    protected function distanceFromCentre($latitude, $longitude, $accuracy = null): array
     {
         $tp = auth()->user()->trainingPartner;
         if (!$tp?->attendance_latitude || !$tp?->attendance_longitude || !$tp?->attendance_radius_meters || !$latitude || !$longitude) {
-            return ['configured' => false, 'inside' => true, 'meters' => null];
+            return ['configured' => false, 'inside' => true, 'meters' => null, 'accuracy_meters' => null, 'effective_meters' => null];
         }
 
         $earthRadius = 6371000;
@@ -450,12 +463,23 @@ class StaffKioskAttendanceController extends Controller
 
         $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
         $meters = (int) round($angle * $earthRadius);
+        $accuracyMeters = $accuracy !== null ? (int) round((float) $accuracy) : null;
+        $effectiveMeters = max(0, $meters - min($accuracyMeters ?? 0, 5000));
 
         return [
             'configured' => true,
-            'inside' => $meters <= (int) $tp->attendance_radius_meters,
+            'inside' => $effectiveMeters <= (int) $tp->attendance_radius_meters,
             'meters' => $meters,
+            'accuracy_meters' => $accuracyMeters,
+            'effective_meters' => $effectiveMeters,
         ];
+    }
+
+    protected function isRegistrationDay(StaffMember $staff, Carbon $now): bool
+    {
+        $reference = $staff->face_enrolled_at ?: $staff->created_at;
+
+        return $reference !== null && $reference->isSameDay($now);
     }
 
     protected function storeDataImage(string $image, string $directory): string
