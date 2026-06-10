@@ -17,6 +17,7 @@ use App\Services\WhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class V3ContinuationWorkflowTest extends TestCase
@@ -241,6 +242,100 @@ class V3ContinuationWorkflowTest extends TestCase
         $this->assertSame('completed', $enrollment->status);
         $this->assertSame(1900.0, (float) $enrollment->total_fee);
         $this->assertSame(1900.0, (float) $enrollment->outstanding_amount);
+    }
+
+    public function test_hq_admin_can_add_multiple_different_legacy_enrollments_for_same_student(): void
+    {
+        Mail::fake();
+        $this->mock(WhatsAppNotificationService::class, function ($mock) {
+            $mock->shouldReceive('sendEnrollmentConfirmation')->twice()->andReturn(true);
+        });
+
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '222233334447',
+            'full_name' => 'Multi Legacy Learner',
+            'email' => 'multi.legacy@example.test',
+            'phone' => '9000000015',
+            'whatsapp_number' => '9000000015',
+            'status' => 'approved',
+        ]);
+
+        $basePayload = [
+            'legacy_start_date' => '2018-01-01',
+            'legacy_end_date' => '2018-03-31',
+            'enrollment_date' => '2026-02-01',
+            'registration_fee' => 100,
+            'course_fee' => 900,
+            'assessment_fee' => 0,
+            'credit_to_apply' => 0,
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('admin.students.enroll-legacy', $student), $basePayload + [
+                'legacy_course_name' => 'Legacy MS Office',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->post(route('admin.students.enroll-legacy', $student), $basePayload + [
+                'legacy_course_name' => 'Legacy Tally',
+            ])
+            ->assertRedirect();
+
+        $legacyEnrollments = Enrollment::where('student_id', $student->id)
+            ->where('is_legacy', true)
+            ->pluck('legacy_course_name')
+            ->all();
+
+        $this->assertCount(2, $legacyEnrollments);
+        $this->assertContains('Legacy MS Office', $legacyEnrollments);
+        $this->assertContains('Legacy Tally', $legacyEnrollments);
+    }
+
+    public function test_hq_admin_cannot_add_exact_duplicate_legacy_enrollment_for_same_student(): void
+    {
+        Mail::fake();
+        $this->mock(WhatsAppNotificationService::class, function ($mock) {
+            $mock->shouldReceive('sendEnrollmentConfirmation')->once()->andReturn(true);
+        });
+
+        [$partner, $admin] = $this->makePartnerAdmin('HQ');
+
+        $student = Student::create([
+            'training_partner_id' => $partner->id,
+            'aadhar_number' => '222233334448',
+            'full_name' => 'Duplicate Legacy Learner',
+            'email' => 'duplicate.legacy@example.test',
+            'phone' => '9000000016',
+            'whatsapp_number' => '9000000016',
+            'status' => 'approved',
+        ]);
+
+        $payload = [
+            'legacy_course_name' => 'Legacy Accounting',
+            'legacy_start_date' => '2018-01-01',
+            'legacy_end_date' => '2018-03-31',
+            'enrollment_date' => '2026-02-01',
+            'registration_fee' => 100,
+            'course_fee' => 900,
+            'assessment_fee' => 0,
+            'credit_to_apply' => 0,
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('admin.students.enroll-legacy', $student), $payload)
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->from(route('admin.students.show', $student))
+            ->post(route('admin.students.enroll-legacy', $student), $payload)
+            ->assertRedirect(route('admin.students.show', $student))
+            ->assertSessionHas('error', 'This exact legacy enrollment already exists for this student.');
+
+        $this->assertSame(1, Enrollment::where('student_id', $student->id)->where('is_legacy', true)->count());
     }
 
     public function test_hq_admin_can_download_legacy_import_template(): void

@@ -449,7 +449,7 @@
                             <i class="fas fa-plus mr-2"></i>
                             Enroll in New Batch
                         </button>
-                        @if(($canEnrollLegacy ?? false) && !($hasLegacyEnrollment ?? false))
+                        @if($canEnrollLegacy ?? false)
                         <button type="button" onclick="showLegacyEnrollModal()"
                                 class="inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
                             <i class="fas fa-archive mr-2"></i>
@@ -513,7 +513,7 @@
                             <i class="fas fa-plus mr-2"></i>
                             Enroll in Batch
                         </button>
-                        @if(($canEnrollLegacy ?? false) && !($hasLegacyEnrollment ?? false))
+                        @if($canEnrollLegacy ?? false)
                         <button type="button" onclick="showLegacyEnrollModal()"
                                 class="inline-flex items-center px-4 py-2 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200">
                             <i class="fas fa-archive mr-2"></i>

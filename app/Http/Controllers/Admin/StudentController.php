@@ -167,14 +167,11 @@ class StudentController extends Controller
                 ->get()
             : collect();
 
-        $hasLegacyEnrollment = $student->enrollments->contains(fn ($e) => $e->batch?->is_legacy_batch);
-
         return view('admin.students.show', compact(
             'student',
             'courses',
             'canEnrollLegacy',
-            'linkCoursesForLegacy',
-            'hasLegacyEnrollment'
+            'linkCoursesForLegacy'
         ));
     }
 
@@ -417,13 +414,21 @@ class StudentController extends Controller
             $this->ensureCourseAccessible($linkCourse);
         }
 
+        $normalizedLegacyCourseName = Str::lower(Str::squish($request->legacy_course_name));
+        $legacyLinkCourseId = $request->filled('legacy_link_course_id') ? (int) $request->legacy_link_course_id : null;
+
         $existingEnrollment = Enrollment::where('student_id', $student->id)
             ->where('batch_id', $legacyBatch->id)
-            ->first();
+            ->where('is_legacy', true)
+            ->whereDate('legacy_start_date', $request->legacy_start_date)
+            ->whereDate('legacy_end_date', $request->legacy_end_date)
+            ->when($legacyLinkCourseId, fn ($query) => $query->where('legacy_link_course_id', $legacyLinkCourseId), fn ($query) => $query->whereNull('legacy_link_course_id'))
+            ->get()
+            ->first(fn (Enrollment $enrollment) => Str::lower(Str::squish((string) $enrollment->legacy_course_name)) === $normalizedLegacyCourseName);
 
         if ($existingEnrollment) {
             return redirect()->back()
-                ->with('error', 'This student already has a legacy enrollment. Drop or remove it before adding another.');
+                ->with('error', 'This exact legacy enrollment already exists for this student.');
         }
 
         $registrationFee = (float) $request->registration_fee;
@@ -461,7 +466,7 @@ class StudentController extends Controller
             'legacy_course_name' => $request->legacy_course_name,
             'legacy_start_date' => $request->legacy_start_date,
             'legacy_end_date' => $request->legacy_end_date,
-            'legacy_link_course_id' => $request->legacy_link_course_id ?: null,
+            'legacy_link_course_id' => $legacyLinkCourseId,
         ]);
 
         if ($creditToApply > 0) {
