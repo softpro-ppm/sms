@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class StudentController extends Controller
 {
@@ -448,8 +449,7 @@ class StudentController extends Controller
         }
 
         $enrollmentNumber = EnrollmentNumberService::generateEnrollmentNumber();
-
-        $enrollment = Enrollment::create([
+        $enrollmentPayload = [
             'enrollment_number' => $enrollmentNumber,
             'student_id' => $student->id,
             'batch_id' => $legacyBatch->id,
@@ -467,7 +467,25 @@ class StudentController extends Controller
             'legacy_start_date' => $request->legacy_start_date,
             'legacy_end_date' => $request->legacy_end_date,
             'legacy_link_course_id' => $legacyLinkCourseId,
-        ]);
+        ];
+
+        try {
+            $enrollment = Enrollment::create($enrollmentPayload);
+        } catch (UniqueConstraintViolationException $e) {
+            $dedicatedLegacyBatch = Batch::create([
+                'course_id' => $legacyBatch->course_id,
+                'training_partner_id' => $legacyBatch->training_partner_id,
+                'batch_name' => 'Legacy Batch - ' . $student->id . ' - ' . Str::upper(Str::random(6)),
+                'start_date' => $request->legacy_start_date,
+                'end_date' => $request->legacy_end_date,
+                'max_students' => null,
+                'is_active' => true,
+                'is_legacy_batch' => true,
+            ]);
+
+            $enrollmentPayload['batch_id'] = $dedicatedLegacyBatch->id;
+            $enrollment = Enrollment::create($enrollmentPayload);
+        }
 
         if ($creditToApply > 0) {
             try {
