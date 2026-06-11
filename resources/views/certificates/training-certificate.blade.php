@@ -439,7 +439,7 @@
                     <table style="width: 100%" cellpadding="0" cellspacing="0"><tr><td align="center">
                     <p class="course-line">
                         has successfully completed the course <span class="course-name">{{ $certificateCourseName }}</span>
-                        @if($batch)
+                        @if($batch && ! $batch->is_legacy_batch)
                         (Batch: {{ $batch->batch_name }})
                         @endif
                         conducted by Softpro Skill Solutions during the period <span class="course-dates">{{ $startDate }}&nbsp;–&nbsp;{{ $endDate }}</span>
