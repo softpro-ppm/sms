@@ -38,7 +38,7 @@
             </div>
             <div class="p-6">
                 <div class="relative mx-auto max-w-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 sm:max-w-none">
-                    <video id="kiosk-video" class="aspect-[3/4] w-full object-cover sm:aspect-video" playsinline autoplay muted></video>
+                    <video id="kiosk-video" class="aspect-[3/4] w-full object-contain sm:aspect-video" playsinline autoplay muted></video>
                     <canvas id="kiosk-canvas" class="hidden"></canvas>
                 </div>
                 <p id="kiosk-status" class="mt-3 text-sm text-slate-500">Loading face recognition models...</p>
@@ -134,9 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let locationTimer = null;
     let activeStream = null;
     let isScanning = false;
+    let confirmedMatch = null;
     const staffCooldowns = new Map();
     const cooldownMs = 120000;
     const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
+    const requiredStableMatches = 3;
+    const minimumDistanceGap = 0.045;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -285,8 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'user',
-                width: { ideal: portraitCamera ? 720 : 1280 },
-                height: { ideal: portraitCamera ? 1280 : 720 },
+                width: { ideal: portraitCamera ? 640 : 1280 },
+                height: { ideal: portraitCamera ? 480 : 720 },
             },
             audio: false,
         });
@@ -334,6 +337,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const findBestStaffMatch = (descriptor) => {
+        const staffDistances = staffMembers.map((staff) => {
+            const distances = staff.descriptors.map((storedDescriptor) => (
+                faceapi.euclideanDistance(descriptor, new Float32Array(storedDescriptor))
+            ));
+
+            return {
+                label: String(staff.id),
+                staff,
+                distance: Math.min(...distances),
+            };
+        }).sort((first, second) => first.distance - second.distance);
+
+        const best = staffDistances[0] || null;
+        const second = staffDistances[1] || null;
+        const gap = best && second ? second.distance - best.distance : 1;
+
+        return { best, second, gap };
+    };
+
+    const rememberStableMatch = (candidate) => {
+        if (!confirmedMatch || confirmedMatch.label !== candidate.label) {
+            confirmedMatch = { label: candidate.label, count: 1, distance: candidate.distance };
+        } else {
+            confirmedMatch.count += 1;
+            confirmedMatch.distance = Math.min(confirmedMatch.distance, candidate.distance);
+        }
+
+        return confirmedMatch.count >= requiredStableMatches;
+    };
+
+    const resetStableMatch = () => {
+        confirmedMatch = null;
+    };
+
     const scan = async () => {
         if (!matcher || isPunching || popupOpen || !video.videoWidth || isScanning) return;
         isScanning = true;
@@ -346,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!detection) {
                 matchedName.textContent = 'Waiting...';
                 matchedDistance.textContent = 'No clear face detected';
+                resetStableMatch();
                 return;
             }
 
@@ -353,21 +392,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 matchedName.textContent = 'Adjust position';
                 matchedDistance.textContent = 'Move closer and face the camera';
                 setMessage('Move closer, keep face centered, and look at the camera.', 'warning');
+                resetStableMatch();
                 return;
             }
 
-            const match = matcher.findBestMatch(detection.descriptor);
-            const staff = staffMembers.find((item) => String(item.id) === String(match.label));
+            const matchResult = findBestStaffMatch(detection.descriptor);
+            const match = matchResult.best;
+            const staff = match?.staff;
 
             if (!staff || match.distance > settings.max_match_distance) {
                 matchedName.textContent = 'Unknown';
-                matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
+                matchedDistance.textContent = match ? `Distance ${match.distance.toFixed(3)}` : 'No match';
+                resetStableMatch();
+                return;
+            }
+
+            if (matchResult.gap < minimumDistanceGap && match.distance > 0.48) {
+                matchedName.textContent = 'Ambiguous match';
+                matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} / next ${matchResult.second.distance.toFixed(3)}`;
+                setMessage('Face match is too close to another staff. Improve lighting or re-enroll clearer samples.', 'warning');
+                resetStableMatch();
                 return;
             }
 
             matchedName.textContent = staff.name;
-            matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
-            await punch(match, detection);
+            matchedDistance.textContent = `Distance ${match.distance.toFixed(3)} · confirming ${confirmedMatch?.label === match.label ? Math.min(confirmedMatch.count + 1, requiredStableMatches) : 1}/${requiredStableMatches}`;
+
+            if (!rememberStableMatch(match)) {
+                return;
+            }
+
+            await punch({ label: match.label, distance: confirmedMatch.distance }, detection);
+            resetStableMatch();
         } finally {
             isScanning = false;
         }
