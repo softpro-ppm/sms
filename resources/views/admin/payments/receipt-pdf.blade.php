@@ -4,60 +4,67 @@
     <meta charset="UTF-8">
     <title>Payment Receipt - {{ $payment->payment_receipt_number }}</title>
     <style>
-        @page { size: A5 landscape; margin: 5mm; }
+        @page { size: A5 landscape; margin: 4mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
-            font-size: 8.2pt;
+            font-size: 8.4pt;
             line-height: 1.18;
             color: #0f172a;
+            background: #ffffff;
         }
         .receipt {
-            border: 1px solid #dbe2ea;
-            border-radius: 6px;
-            padding: 7px 9px 5px;
+            border: 1.2px solid #cbd5e1;
+            border-radius: 7px;
+            padding: 6px 10px 7px;
             page-break-inside: avoid;
+            background: #ffffff;
+        }
+        .top-rule {
+            height: 4px;
+            margin: -6px -10px 6px;
+            background: #1d4ed8;
         }
         .header {
             width: 100%;
-            border-bottom: 1px solid #dbe2ea;
+            border-bottom: 1.2px solid #dbe2ea;
             padding-bottom: 5px;
             margin-bottom: 6px;
         }
         .header td { vertical-align: top; }
         .logo {
-            height: 28px;
-            width: auto;
+            height: 29px;
+            width: 100%;
             display: block;
         }
         .brand-name {
-            font-size: 12.5pt;
+            font-size: 14.3pt;
             font-weight: 700;
             color: #1d4ed8;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
         }
         .brand-sub {
-            font-size: 7.1pt;
+            font-size: 7.7pt;
             color: #64748b;
             margin-top: 1px;
         }
         .header-right {
             text-align: right;
-            width: 42%;
+            width: 43%;
         }
         .receipt-title {
-            font-size: 10.5pt;
+            font-size: 12.2pt;
             font-weight: 700;
             color: #111827;
         }
         .receipt-meta {
             margin-top: 2px;
-            font-size: 7.5pt;
+            font-size: 7.6pt;
             color: #475569;
         }
         .two-col {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         .two-col td {
             width: 50%;
@@ -66,38 +73,40 @@
         .two-col td:first-child { padding-right: 4px; }
         .two-col td:last-child { padding-left: 4px; }
         .panel {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #dbe2ea;
             border-radius: 6px;
-            padding: 5px 6px;
+            padding: 4px 7px;
+            background: #fbfdff;
         }
         .panel-title {
-            font-size: 6.6pt;
+            font-size: 7pt;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
+            letter-spacing: 1.2px;
+            color: #2563eb;
             margin-bottom: 3px;
+            font-weight: 700;
         }
         table.info {
             width: 100%;
             border-collapse: collapse;
         }
         table.info td {
-            padding: 0;
+            padding: 1px 0;
             vertical-align: top;
         }
         table.info td.label {
-            width: 32%;
+            width: 30%;
             color: #64748b;
         }
         table.info td.value {
-            font-weight: 600;
+            font-weight: 700;
             color: #0f172a;
         }
         .summary {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 5px 0;
-            margin: 2px -5px 6px;
+            border-spacing: 6px 0;
+            margin: 1px -6px 5px;
         }
         .summary td {
             width: 33.33%;
@@ -107,58 +116,62 @@
             border-radius: 6px;
             padding: 5px 6px;
             text-align: center;
+            background: #ffffff;
         }
         .summary-label {
-            font-size: 6.6pt;
+            font-size: 7pt;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 1px;
             color: #64748b;
+            font-weight: 700;
         }
         .summary-value {
-            font-size: 12.5pt;
+            font-size: 14.4pt;
             font-weight: 700;
             color: #0f172a;
-            margin-top: 1px;
+            margin-top: 2px;
         }
         .summary-sub {
-            margin-top: 1px;
-            font-size: 7.1pt;
+            margin-top: 2px;
+            font-size: 7.6pt;
             color: #475569;
         }
         .summary-card.balance .summary-value {
             color: #dc2626;
         }
         .history {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #dbe2ea;
             border-radius: 6px;
             overflow: hidden;
             page-break-inside: avoid;
+            margin-top: 1px;
         }
         .history-head {
-            padding: 4px 6px;
+            padding: 4px 7px;
             border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
+            background: #f8fbff;
         }
         .history-title {
-            font-size: 6.6pt;
+            font-size: 7pt;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
+            letter-spacing: 1.2px;
+            color: #2563eb;
+            font-weight: 700;
         }
         .history-sub {
             margin-top: 1px;
             font-size: 7.8pt;
-            font-weight: 600;
+            font-weight: 700;
             color: #111827;
         }
         table.data {
             width: 100%;
             border-collapse: collapse;
-            font-size: 7.4pt;
+            font-size: 7.7pt;
         }
         table.data th,
         table.data td {
-            padding: 3px 5px;
+            padding: 3px 7px;
             border-bottom: 1px solid #edf2f7;
             text-align: left;
         }
@@ -167,7 +180,7 @@
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.7px;
-            font-size: 6.5pt;
+            font-size: 7pt;
             font-weight: 700;
         }
         table.data tr:last-child td {
@@ -179,42 +192,42 @@
         }
         .remarks {
             margin-top: 4px;
-            font-size: 7pt;
+            font-size: 7.6pt;
             color: #475569;
         }
         .footer {
             width: 100%;
-            margin-top: 4px;
+            margin-top: 6px;
             border-top: 1px solid #e2e8f0;
             padding-top: 4px;
-            font-size: 7pt;
+            font-size: 7.6pt;
             color: #64748b;
             page-break-inside: avoid;
         }
         .footer td { vertical-align: bottom; }
         .footer-note {
-            font-size: 7pt;
+            font-size: 7.6pt;
         }
         .sign {
             text-align: right;
             width: 38%;
         }
         .signature-img {
-            width: 30mm;
+            width: 28mm;
             height: auto;
             display: block;
             margin-left: auto;
             margin-bottom: 1px;
         }
         .sign-line {
-            width: 30mm;
+            width: 28mm;
             border-top: 1px solid #475569;
             margin-left: auto;
             margin-bottom: 1px;
         }
         .sign-label {
             color: #334155;
-            font-size: 6.9pt;
+            font-size: 7.5pt;
         }
     </style>
 </head>
@@ -392,12 +405,12 @@
         <div class="remarks">Remarks: {{ \Illuminate\Support\Str::limit($payment->remarks, 50) }}</div>
     @endif
 
-    <table class="footer" cellspacing="0" cellpadding="0">
+    <table class="footer" width="100%" cellspacing="0" cellpadding="0">
         <tr>
-            <td>
+            <td style="width: 62%;">
                 <div class="footer-note">Valid for approved payments only.</div>
             </td>
-            <td class="sign">
+            <td class="sign" style="width: 38%;">
                 @if($signaturePath)
                     <img src="{{ $signaturePath }}" class="signature-img" alt="Signature">
                 @endif
