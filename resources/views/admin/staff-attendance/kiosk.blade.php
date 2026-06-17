@@ -37,8 +37,8 @@
                 <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Auto recognition</h3>
             </div>
             <div class="p-6">
-                <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950">
-                    <video id="kiosk-video" class="aspect-video w-full object-cover" playsinline autoplay muted></video>
+                <div class="relative mx-auto max-w-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 sm:max-w-none">
+                    <video id="kiosk-video" class="aspect-[3/4] w-full object-cover sm:aspect-video" playsinline autoplay muted></video>
                     <canvas id="kiosk-canvas" class="hidden"></canvas>
                 </div>
                 <p id="kiosk-status" class="mt-3 text-sm text-slate-500">Loading face recognition models...</p>
@@ -133,8 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let scanTimer = null;
     let locationTimer = null;
     let activeStream = null;
+    let isScanning = false;
     const staffCooldowns = new Map();
     const cooldownMs = 120000;
+    const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -278,19 +280,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startKioskCamera = async () => {
         if (document.hidden || activeStream || !matcher) return;
+        const portraitCamera = window.matchMedia('(max-width: 640px)').matches;
 
         activeStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'user',
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
+                width: { ideal: portraitCamera ? 720 : 1280 },
+                height: { ideal: portraitCamera ? 1280 : 720 },
             },
             audio: false,
         });
         video.srcObject = activeStream;
         getLocation();
         status.textContent = 'Kiosk ready. Recognition is running automatically.';
-        scanTimer = window.setInterval(scan, 2500);
+        scanTimer = window.setInterval(scan, 1100);
         locationTimer = window.setInterval(getLocation, 60000);
     };
 
@@ -332,36 +335,42 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const scan = async () => {
-        if (!matcher || isPunching || popupOpen || !video.videoWidth) return;
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks(true)
-            .withFaceDescriptor();
+        if (!matcher || isPunching || popupOpen || !video.videoWidth || isScanning) return;
+        isScanning = true;
 
-        if (!detection) {
-            matchedName.textContent = 'Waiting...';
-            matchedDistance.textContent = 'No clear face detected';
-            return;
-        }
+        try {
+            const detection = await faceapi.detectSingleFace(video, detectorOptions)
+                .withFaceLandmarks(true)
+                .withFaceDescriptor();
 
-        if (!faceLooksUsable(detection)) {
-            matchedName.textContent = 'Adjust position';
-            matchedDistance.textContent = 'Move closer and face the camera';
-            setMessage('Move closer, keep face centered, and look at the camera.', 'warning');
-            return;
-        }
+            if (!detection) {
+                matchedName.textContent = 'Waiting...';
+                matchedDistance.textContent = 'No clear face detected';
+                return;
+            }
 
-        const match = matcher.findBestMatch(detection.descriptor);
-        const staff = staffMembers.find((item) => String(item.id) === String(match.label));
+            if (!faceLooksUsable(detection)) {
+                matchedName.textContent = 'Adjust position';
+                matchedDistance.textContent = 'Move closer and face the camera';
+                setMessage('Move closer, keep face centered, and look at the camera.', 'warning');
+                return;
+            }
 
-        if (!staff || match.distance > settings.max_match_distance) {
-            matchedName.textContent = 'Unknown';
+            const match = matcher.findBestMatch(detection.descriptor);
+            const staff = staffMembers.find((item) => String(item.id) === String(match.label));
+
+            if (!staff || match.distance > settings.max_match_distance) {
+                matchedName.textContent = 'Unknown';
+                matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
+                return;
+            }
+
+            matchedName.textContent = staff.name;
             matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
-            return;
+            await punch(match, detection);
+        } finally {
+            isScanning = false;
         }
-
-        matchedName.textContent = staff.name;
-        matchedDistance.textContent = `Distance ${match.distance.toFixed(3)}`;
-        await punch(match, detection);
     };
 
     const load = async () => {

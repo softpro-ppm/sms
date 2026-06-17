@@ -195,15 +195,17 @@ class StaffMemberController extends Controller
             $imagePaths[] = $this->storeDataImage((string) $image, 'staff-members/enrollment/' . now()->format('Ym'), "sample-{$index}");
         }
 
+        $keepApproved = $staffMember->status === 'approved';
+
         $staffMember->update([
             'face_descriptors' => array_slice($descriptors, 0, 5),
             'face_image_paths' => $imagePaths,
             'face_enrolled_at' => now(),
-            'status' => auth()->user()->is_admin ? 'approved' : 'pending',
-            'approved_by' => auth()->user()->is_admin ? auth()->id() : null,
-            'approved_at' => auth()->user()->is_admin ? now() : null,
-            'approval_notes' => auth()->user()->is_admin ? 'Face samples re-enrolled by admin.' : 'Face samples re-enrolled. Awaiting admin approval.',
-            'is_active' => auth()->user()->is_admin,
+            'status' => $keepApproved || auth()->user()->is_admin ? 'approved' : 'pending',
+            'approved_by' => $keepApproved ? $staffMember->approved_by : (auth()->user()->is_admin ? auth()->id() : null),
+            'approved_at' => $keepApproved ? $staffMember->approved_at : (auth()->user()->is_admin ? now() : null),
+            'approval_notes' => $keepApproved || auth()->user()->is_admin ? 'Face samples re-enrolled.' : 'Face samples re-enrolled. Awaiting admin approval.',
+            'is_active' => $keepApproved || auth()->user()->is_admin,
         ]);
 
         if ($oldPaths->isNotEmpty()) {
@@ -211,7 +213,7 @@ class StaffMemberController extends Controller
         }
 
         return redirect()->route('admin.staff-members.show', $staffMember)
-            ->with('success', auth()->user()->is_admin ? 'Face samples updated.' : 'Face samples submitted for admin approval.');
+            ->with('success', $keepApproved || auth()->user()->is_admin ? 'Face samples updated.' : 'Face samples submitted for admin approval.');
     }
 
     public function deactivate(StaffMember $staffMember)
