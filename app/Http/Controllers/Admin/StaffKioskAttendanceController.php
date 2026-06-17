@@ -21,6 +21,7 @@ class StaffKioskAttendanceController extends Controller
     private const CHECK_OUT_END = '21:00';
     private const MAX_MATCH_DISTANCE = 0.38;
     private const PUNCH_COOLDOWN_SECONDS = 120;
+    private const TEMPORARY_CHECK_IN_GRACE_DATE = '2026-06-17';
 
     public function kiosk()
     {
@@ -105,7 +106,7 @@ class StaffKioskAttendanceController extends Controller
 
         if (!$attendance->check_in_at) {
             $isRegistrationDay = $this->isRegistrationDay($staff, $now);
-            if (!$isRegistrationDay) {
+            if (!$isRegistrationDay && !$this->isTemporaryCheckInGraceDay($now)) {
                 $this->ensureWithinWindow($now, 'check_in');
             }
 
@@ -444,6 +445,11 @@ class StaffKioskAttendanceController extends Controller
                 'attendance' => 'Check-out is allowed only from ' . self::CHECK_OUT_START . ' to ' . self::CHECK_OUT_END . '.',
             ]);
         }
+    }
+
+    protected function isTemporaryCheckInGraceDay(Carbon $now): bool
+    {
+        return $now->toDateString() === self::TEMPORARY_CHECK_IN_GRACE_DATE;
     }
 
     protected function distanceFromCentre($latitude, $longitude, $accuracy = null): array
