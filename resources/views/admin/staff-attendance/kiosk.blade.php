@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
     const requiredStableMatches = 3;
     const minimumDistanceGap = 0.045;
+    const strictMatchDistance = settings.max_match_distance;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -420,14 +421,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const match = matchResult.best;
             const staff = match?.staff;
 
-            if (!staff || match.distance > settings.max_match_distance) {
+            if (!staff || match.distance > strictMatchDistance) {
                 matchedName.textContent = 'Unknown';
-                matchedDistance.textContent = match ? `Distance ${match.distance.toFixed(3)}` : 'No match';
+                matchedDistance.textContent = match ? `Distance ${match.distance.toFixed(3)} · low confidence` : 'No match';
+                setMessage('Face not recognized with safe confidence. Please stand clearly in front or re-enroll this staff.', 'warning');
                 resetStableMatch();
                 return;
             }
 
-            if (matchResult.gap < minimumDistanceGap && match.distance > 0.48) {
+            if (matchResult.gap < minimumDistanceGap) {
                 matchedName.textContent = 'Ambiguous match';
                 matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} / next ${matchResult.second.distance.toFixed(3)}`;
                 setMessage('Face match is too close to another staff. Improve lighting or re-enroll clearer samples.', 'warning');

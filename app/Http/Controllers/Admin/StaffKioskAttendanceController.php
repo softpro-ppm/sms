@@ -19,7 +19,7 @@ class StaffKioskAttendanceController extends Controller
     private const CHECK_OUT_START = '16:30';
     private const CHECK_OUT_EXPECTED = '18:00';
     private const CHECK_OUT_END = '21:00';
-    private const MAX_MATCH_DISTANCE = 0.55;
+    private const MAX_MATCH_DISTANCE = 0.38;
     private const PUNCH_COOLDOWN_SECONDS = 120;
 
     public function kiosk()
