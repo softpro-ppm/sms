@@ -40,6 +40,9 @@
                 <div class="relative mx-auto max-w-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 sm:max-w-none">
                     <video id="kiosk-video" class="aspect-[3/4] w-full object-contain sm:aspect-video" playsinline autoplay muted></video>
                     <canvas id="kiosk-canvas" class="hidden"></canvas>
+                    <button type="button" id="switch-camera" class="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-slate-950/70 text-white shadow-lg backdrop-blur transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-white/70" title="Switch camera" aria-label="Switch camera">
+                        <i class="fas fa-camera-rotate text-base"></i>
+                    </button>
                 </div>
                 <p id="kiosk-status" class="mt-3 text-sm text-slate-500">Loading face recognition models...</p>
             </div>
@@ -124,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupMessage = document.getElementById('popup-message');
     const popupLocation = document.getElementById('popup-location');
     const popupCountdown = document.getElementById('popup-countdown');
+    const switchCameraButton = document.getElementById('switch-camera');
     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     let locationSnapshot = {};
     let isPunching = false;
@@ -134,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let locationTimer = null;
     let activeStream = null;
     let isScanning = false;
+    let cameraFacingMode = 'user';
     let confirmedMatch = null;
     const staffCooldowns = new Map();
     const cooldownMs = 120000;
@@ -278,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         video.srcObject = null;
+        resetStableMatch();
         status.textContent = 'Kiosk paused. Return to this tab to restart camera.';
     };
 
@@ -285,17 +291,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.hidden || activeStream || !matcher) return;
         const portraitCamera = window.matchMedia('(max-width: 640px)').matches;
 
-        activeStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'user',
-                width: { ideal: portraitCamera ? 640 : 1280 },
-                height: { ideal: portraitCamera ? 480 : 720 },
-            },
-            audio: false,
-        });
+        const videoConstraints = {
+            facingMode: { ideal: cameraFacingMode },
+            width: { ideal: portraitCamera ? 640 : 1280 },
+            height: { ideal: portraitCamera ? 480 : 720 },
+        };
+
+        try {
+            activeStream = await navigator.mediaDevices.getUserMedia({
+                video: videoConstraints,
+                audio: false,
+            });
+        } catch (error) {
+            cameraFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user';
+            activeStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    ...videoConstraints,
+                    facingMode: { ideal: cameraFacingMode },
+                },
+                audio: false,
+            });
+        }
+
         video.srcObject = activeStream;
         getLocation();
-        status.textContent = 'Kiosk ready. Recognition is running automatically.';
+        status.textContent = `Kiosk ready. ${cameraFacingMode === 'user' ? 'Front' : 'Back'} camera is running automatically.`;
         scanTimer = window.setInterval(scan, 1100);
         locationTimer = window.setInterval(getLocation, 60000);
     };
@@ -457,6 +477,20 @@ document.addEventListener('DOMContentLoaded', () => {
             startKioskCamera().catch(() => {
                 status.textContent = 'Camera restart failed. Reload the kiosk page.';
             });
+        }
+    });
+
+    switchCameraButton?.addEventListener('click', async () => {
+        cameraFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user';
+        stopKioskCamera();
+        status.textContent = `Switching to ${cameraFacingMode === 'user' ? 'front' : 'back'} camera...`;
+
+        try {
+            await startKioskCamera();
+            setMessage(`${cameraFacingMode === 'user' ? 'Front' : 'Back'} camera selected.`, 'neutral');
+        } catch (error) {
+            status.textContent = 'Camera switch failed. Please allow camera permission and try again.';
+            setMessage('Camera switch failed on this device/browser.', 'error');
         }
     });
 
