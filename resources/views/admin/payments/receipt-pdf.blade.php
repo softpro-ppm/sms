@@ -62,6 +62,19 @@
             font-size: 7.6pt;
             color: #475569;
         }
+        .paid-badge {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 3px 10px;
+            border: 1px solid #86efac;
+            border-radius: 999px;
+            background: #dcfce7;
+            color: #15803d;
+            font-size: 7.5pt;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
         .two-col {
             width: 100%;
             margin-bottom: 5px;
@@ -139,6 +152,17 @@
         .summary-card.balance .summary-value {
             color: #dc2626;
         }
+        .summary-card.balance.cleared .summary-value {
+            color: #16a34a;
+        }
+        .summary-card.balance.cleared {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+        .summary-card.balance.pending {
+            border-color: #fecaca;
+            background: #fff7f7;
+        }
         .history {
             border: 1px solid #dbe2ea;
             border-radius: 6px;
@@ -183,6 +207,23 @@
             font-size: 7pt;
             font-weight: 700;
         }
+        table.data tr.current td {
+            background: #eff6ff;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .current-tag {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 1px 5px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 6pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         table.data tr:last-child td {
             border-bottom: none;
         }
@@ -207,6 +248,30 @@
         .footer td { vertical-align: bottom; }
         .footer-note {
             font-size: 7.6pt;
+        }
+        .verify-box {
+            width: 100%;
+        }
+        .qr {
+            width: 20mm;
+            height: 20mm;
+            border: 1px solid #dbe2ea;
+            border-radius: 4px;
+            padding: 2px;
+            background: #ffffff;
+        }
+        .verify-title {
+            font-size: 7pt;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .verify-text {
+            margin-top: 2px;
+            font-size: 6.8pt;
+            color: #64748b;
+            line-height: 1.25;
         }
         .sign {
             text-align: right;
@@ -245,6 +310,14 @@
     $balance = $enrollment ? $allocationService->getTotalOutstandingAt($enrollment, $asOf) : 0.0;
     $netPayable = max(0, round($totalFee - $discountTotal, 2));
     $paymentHistory = collect();
+    $displayBalance = (int) round((float) $balance);
+    $balanceCleared = $displayBalance <= 0;
+    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+    $verificationUrl = $enrollment?->enrollment_number
+        ? $baseUrl . '/verify/' . $enrollment->enrollment_number
+        : $baseUrl . '/verify';
+    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->margin(1)->generate($verificationUrl);
+    $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 
     if ($enrollment) {
         $paymentHistory = $enrollment->payments()
@@ -283,6 +356,7 @@
                 @if($enrollment?->enrollment_number)
                     <div class="receipt-meta">Enrollment #{{ $enrollment->enrollment_number }}</div>
                 @endif
+                <div class="paid-badge">Paid</div>
             </td>
         </tr>
     </table>
@@ -359,9 +433,9 @@
                 </div>
             </td>
             <td>
-                <div class="summary-card balance">
+                <div class="summary-card balance {{ $balanceCleared ? 'cleared' : 'pending' }}">
                     <div class="summary-label">Balance</div>
-                    <div class="summary-value">{{ $rs }}{{ number_format($balance, 0) }}</div>
+                    <div class="summary-value">{{ $rs }}{{ number_format($displayBalance, 0) }}</div>
                     <div class="summary-sub">After this payment</div>
                 </div>
             </td>
@@ -386,9 +460,14 @@
                     $historyAsOf = \Carbon\Carbon::parse($historyPayment->approved_at ?? $historyPayment->created_at);
                     $balanceAfter = $allocationService->getTotalOutstandingAt($enrollment, $historyAsOf);
                 @endphp
-                <tr>
+                <tr class="{{ $historyPayment->id === $payment->id ? 'current' : '' }}">
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $historyPayment->payment_receipt_number }}</td>
+                    <td>
+                        {{ $historyPayment->payment_receipt_number }}
+                        @if($historyPayment->id === $payment->id)
+                            <span class="current-tag">This</span>
+                        @endif
+                    </td>
                     <td>{{ \Carbon\Carbon::parse($historyPayment->approved_at ?? $historyPayment->created_at)->format('d M Y') }}</td>
                     <td class="amt">{{ $rs }}{{ number_format((float) $historyPayment->amount, 0) }}</td>
                     <td class="amt">{{ $rs }}{{ number_format($balanceAfter, 0) }}</td>
@@ -408,7 +487,20 @@
     <table class="footer" width="100%" cellspacing="0" cellpadding="0">
         <tr>
             <td style="width: 62%;">
-                <div class="footer-note">Valid for approved payments only.</div>
+                <table class="verify-box" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td style="width: 24mm;">
+                            <img src="{{ $qrBase64 }}" class="qr" alt="Verify receipt">
+                        </td>
+                        <td>
+                            <div class="verify-title">Scan to verify</div>
+                            <div class="verify-text">
+                                Verify enrollment and payment record online.<br>
+                                Valid for approved payments only.
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </td>
             <td class="sign" style="width: 38%;">
                 @if($signaturePath)
