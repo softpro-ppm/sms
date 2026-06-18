@@ -28,32 +28,33 @@
         .header {
             width: 100%;
             border-bottom: 1.2px solid #dbe2ea;
-            padding-bottom: 5px;
+            padding-bottom: 4px;
             margin-bottom: 6px;
         }
-        .header td { vertical-align: top; }
+        .header td { vertical-align: middle; }
         .logo {
-            height: 29px;
-            width: 100%;
+            width: 12mm;
+            height: 12mm;
             display: block;
         }
         .brand-name {
-            font-size: 14.3pt;
+            font-size: 17.2pt;
             font-weight: 700;
             color: #1d4ed8;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.1px;
+            line-height: 1.05;
         }
         .brand-sub {
-            font-size: 7.7pt;
+            font-size: 8.2pt;
             color: #64748b;
-            margin-top: 1px;
+            margin-top: 2px;
         }
         .header-right {
             text-align: right;
-            width: 43%;
+            width: 38%;
         }
         .receipt-title {
-            font-size: 12.2pt;
+            font-size: 12.6pt;
             font-weight: 700;
             color: #111827;
         }
@@ -64,13 +65,13 @@
         }
         .paid-badge {
             display: inline-block;
-            margin-top: 4px;
-            padding: 3px 10px;
+            margin-top: 3px;
+            padding: 2px 9px;
             border: 1px solid #86efac;
             border-radius: 999px;
             background: #dcfce7;
             color: #15803d;
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             font-weight: 700;
             letter-spacing: 1.4px;
             text-transform: uppercase;
@@ -337,10 +338,10 @@
 <div class="receipt">
     <table class="header" cellspacing="0" cellpadding="0">
         <tr>
-            <td style="width: 56%;">
-                <table cellspacing="0" cellpadding="0">
+            <td style="width: 62%;">
+                <table cellspacing="0" cellpadding="0" style="width: 100%;">
                     <tr>
-                        <td style="width: 54px;">
+                        <td style="width: 48px;">
                             <img src="{{ public_path('images/logo/Logo_png.png') }}" alt="SoftPro Logo" class="logo">
                         </td>
                         <td>
