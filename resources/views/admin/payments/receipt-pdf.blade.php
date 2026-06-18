@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Payment Receipt - {{ $payment->payment_receipt_number }}</title>
     <style>
-        @page { size: A5 landscape; margin: 4mm; }
+        @page { size: A4 portrait; margin: 4mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
@@ -14,6 +14,7 @@
             background: #ffffff;
         }
         .receipt {
+            width: 202mm;
             border: 1.2px solid #cbd5e1;
             border-radius: 7px;
             padding: 6px 10px 7px;

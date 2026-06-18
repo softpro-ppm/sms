@@ -631,7 +631,7 @@ class PaymentController extends Controller
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
-        $pdf->setPaper('a5', 'landscape');
+        $pdf->setPaper('a4', 'portrait');
 
         return $pdf->stream('receipt_' . $payment->payment_receipt_number . '.pdf');
     }
@@ -642,7 +642,7 @@ class PaymentController extends Controller
         $payment->load(['student', 'enrollment.batch.course', 'approvedBy', 'allocations']);
         
         $pdf = Pdf::loadView('admin.payments.receipt-pdf', compact('payment'));
-        $pdf->setPaper('a5', 'landscape');
+        $pdf->setPaper('a4', 'portrait');
         
         return $pdf->download('receipt_' . $payment->payment_receipt_number . '.pdf');
     }
