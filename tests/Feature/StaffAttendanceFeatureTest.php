@@ -416,6 +416,66 @@ class StaffAttendanceFeatureTest extends TestCase
         $this->assertGreaterThan(100, $attendance->check_in_distance_meters);
     }
 
+    public function test_kiosk_pin_fallback_records_pending_review_without_exposing_face_match(): void
+    {
+        Storage::fake('public');
+
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'Fallback Centre',
+            'code' => 'PIN',
+            'status' => 'active',
+        ]);
+
+        $reception = User::factory()->create([
+            'role' => 'reception',
+            'training_partner_id' => $partner->id,
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $staff = StaffMember::create([
+            'training_partner_id' => $partner->id,
+            'name' => 'PIN Staff',
+            'phone' => '9000012345',
+            'status' => 'approved',
+            'face_descriptors' => [array_fill(0, 128, 0.1), array_fill(0, 128, 0.2), array_fill(0, 128, 0.3)],
+            'face_image_paths' => ['staff/sample.jpg'],
+            'face_enrolled_at' => now()->subDay(),
+            'approved_at' => now()->subDay(),
+            'is_active' => true,
+        ]);
+
+        $this->travelTo(now()->setTime(9, 15));
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'verification_method' => 'pin_fallback',
+                'pin' => '0000',
+            ])
+            ->assertUnprocessable();
+
+        $this->actingAs($reception)
+            ->postJson(route('admin.staff-attendance.kiosk.punch'), [
+                'staff_member_id' => $staff->id,
+                'face_image' => $this->dataImage(),
+                'verification_method' => 'pin_fallback',
+                'pin' => '2345',
+            ])
+            ->assertOk()
+            ->assertJsonPath('verification_method', 'pin_fallback')
+            ->assertJsonPath('verification_status', 'pending_review');
+
+        $attendance = StaffMemberAttendance::where('staff_member_id', $staff->id)->firstOrFail();
+        $this->assertSame('pin_fallback', $attendance->check_in_verification_method);
+        $this->assertSame('pending_review', $attendance->check_in_verification_status);
+        $this->assertSame('face_verification_failed', $attendance->check_in_fallback_reason);
+        $this->assertNull($attendance->check_in_match_distance);
+        Storage::disk('public')->assertExists($attendance->check_in_image_path);
+    }
+
     public function test_admin_can_correct_staff_attendance_record(): void
     {
         $partner = TrainingPartner::create([

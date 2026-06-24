@@ -30,11 +30,31 @@
         </div>
     </section>
 
+    <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div class="grid gap-5 px-6 py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+            <div>
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Step 1</div>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Select staff</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-600">Staff name select chesaka face verification start avutundi.</p>
+            </div>
+            <div>
+                <label for="selected-staff-id" class="block text-sm font-medium text-slate-700">Approved staff</label>
+                <select id="selected-staff-id" class="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-primary-300 focus:ring-primary-100">
+                    <option value="">Select staff to start camera</option>
+                    @foreach($staffMembers as $staff)
+                        <option value="{{ $staff['id'] }}">{{ $staff['name'] }}{{ $staff['staff_code'] ? ' - ' . $staff['staff_code'] : '' }}</option>
+                    @endforeach
+                </select>
+                <p id="selected-staff-meta" class="mt-2 text-xs text-slate-500">Face scan is disabled until a staff profile is selected.</p>
+            </div>
+        </div>
+    </section>
+
     <div class="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-200 px-6 py-5">
-                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Live camera</div>
-                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Auto recognition</h3>
+                <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Step 2</div>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Face verification</h3>
             </div>
             <div class="p-6">
                 <div class="relative mx-auto max-w-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 sm:max-w-none">
@@ -60,8 +80,19 @@
                         <p id="matched-name" class="mt-2 text-2xl font-semibold text-slate-900">Waiting...</p>
                         <p id="matched-distance" class="mt-1 text-sm text-slate-500">No match yet</p>
                     </div>
+                    <div id="pin-fallback-panel" class="hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">PIN fallback</p>
+                        <p class="mt-1 text-sm leading-6 text-amber-800">Face verify avvakapothe selected staff phone last 4 digits enter cheyyandi. This punch goes to admin review.</p>
+                        <div class="mt-3 flex gap-2">
+                            <input id="pin-code" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="4 digit PIN" class="min-w-0 flex-1 rounded-2xl border-amber-200 px-4 py-2.5 text-sm shadow-sm focus:border-amber-300 focus:ring-amber-100">
+                            <button type="button" id="pin-submit" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700">
+                                <i class="fas fa-key text-xs"></i>
+                                Verify
+                            </button>
+                        </div>
+                    </div>
                     <div id="punch-message" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-                        Stand in front of the camera. Attendance will be marked automatically.
+                        Select staff first. Attendance will be marked only after selected staff face verification.
                     </div>
                     <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                         Approved staff loaded: {{ $staffMembers->count() }}
@@ -117,9 +148,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('kiosk-video');
     const canvas = document.getElementById('kiosk-canvas');
     const status = document.getElementById('kiosk-status');
+    const selectedStaffInput = document.getElementById('selected-staff-id');
+    const selectedStaffMeta = document.getElementById('selected-staff-meta');
     const matchedName = document.getElementById('matched-name');
     const matchedDistance = document.getElementById('matched-distance');
     const punchMessage = document.getElementById('punch-message');
+    const pinFallbackPanel = document.getElementById('pin-fallback-panel');
+    const pinCode = document.getElementById('pin-code');
+    const pinSubmit = document.getElementById('pin-submit');
     const popup = document.getElementById('attendance-popup');
     const popupStaff = document.getElementById('popup-staff');
     const popupAction = document.getElementById('popup-action');
@@ -140,15 +176,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let isScanning = false;
     let cameraFacingMode = 'user';
     let confirmedMatch = null;
+    let selectedStaff = null;
+    let failedFaceAttempts = 0;
+    let lastDetection = null;
     const staffCooldowns = new Map();
     const cooldownMs = 120000;
     const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
     const requiredStableMatches = 3;
-    const minimumDistanceGap = 0.035;
     const strictMatchDistance = settings.max_match_distance;
     const strongSingleMatchDistance = 0.38;
     const supportMatchDistance = 0.50;
     const requiredSupportingSamples = 2;
+    const maxFaceAttemptsBeforePin = 8;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -159,6 +198,34 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         punchMessage.className = `rounded-2xl px-4 py-3 text-sm ${colors[mode] || colors.neutral}`;
         punchMessage.textContent = message;
+    };
+
+    const hidePinFallback = () => {
+        pinFallbackPanel?.classList.add('hidden');
+        if (pinCode) pinCode.value = '';
+    };
+
+    const showPinFallback = () => {
+        if (!selectedStaff) return;
+        pinFallbackPanel?.classList.remove('hidden');
+        setMessage(`Face verification failed for ${selectedStaff.name}. Use PIN fallback only after confirming the selected staff name.`, 'warning');
+        pinCode?.focus();
+    };
+
+    const registerFaceFailure = (message) => {
+        failedFaceAttempts += 1;
+        setMessage(`${message} Attempt ${Math.min(failedFaceAttempts, maxFaceAttemptsBeforePin)}/${maxFaceAttemptsBeforePin}.`, 'warning');
+
+        if (failedFaceAttempts >= maxFaceAttemptsBeforePin) {
+            showPinFallback();
+        }
+    };
+
+    const resetVerificationState = () => {
+        failedFaceAttempts = 0;
+        lastDetection = null;
+        resetStableMatch();
+        hidePinFallback();
     };
 
     const playSuccessTone = () => {
@@ -288,11 +355,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         video.srcObject = null;
         resetStableMatch();
-        status.textContent = 'Kiosk paused. Return to this tab to restart camera.';
+        status.textContent = selectedStaff
+            ? 'Kiosk paused. Return to this tab to restart camera.'
+            : 'Select staff to start camera.';
     };
 
     const startKioskCamera = async () => {
-        if (document.hidden || activeStream || !matcher) return;
+        if (document.hidden || activeStream || !matcher || !selectedStaff) return;
         const portraitCamera = window.matchMedia('(max-width: 640px)').matches;
 
         const videoConstraints = {
@@ -319,17 +388,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         video.srcObject = activeStream;
         getLocation();
-        status.textContent = `Kiosk ready. ${cameraFacingMode === 'user' ? 'Front' : 'Back'} camera is running automatically.`;
+        status.textContent = `Kiosk ready for ${selectedStaff.name}. ${cameraFacingMode === 'user' ? 'Front' : 'Back'} camera is running automatically.`;
         scanTimer = window.setInterval(scan, 1100);
         locationTimer = window.setInterval(getLocation, 60000);
     };
 
-    const punch = async (match, detection) => {
+    const punch = async (match, detection, verificationMethod = 'face', pin = null) => {
         const staffCooldownUntil = staffCooldowns.get(String(match.label)) || 0;
         if (isPunching || popupOpen || Date.now() < staffCooldownUntil) return;
         isPunching = true;
+        pinSubmit?.setAttribute('disabled', 'disabled');
 
         try {
+            const body = {
+                staff_member_id: match.label,
+                face_image: captureAttendanceImage(detection || lastDetection),
+                verification_method: verificationMethod,
+                ...locationSnapshot,
+            };
+
+            if (verificationMethod === 'face') {
+                body.match_distance = match.distance;
+            } else {
+                body.pin = pin;
+                if (match.distance !== null && match.distance !== undefined) {
+                    body.match_distance = match.distance;
+                }
+            }
+
             const response = await fetch('{{ route('admin.staff-attendance.kiosk.punch') }}', {
                 method: 'POST',
                 headers: {
@@ -337,12 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrf,
                 },
-                body: JSON.stringify({
-                    staff_member_id: match.label,
-                    face_image: captureAttendanceImage(detection),
-                    match_distance: match.distance,
-                    ...locationSnapshot,
-                }),
+                body: JSON.stringify(body),
             });
 
             const payload = await response.json();
@@ -354,32 +435,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setMessage(payload.message, 'success');
             showAttendancePopup(payload, match);
+            resetVerificationState();
         } catch (error) {
             setMessage('Network error while marking attendance.', 'error');
         } finally {
             isPunching = false;
+            pinSubmit?.removeAttribute('disabled');
         }
     };
 
-    const findBestStaffMatch = (descriptor) => {
-        const staffDistances = staffMembers.map((staff) => {
-            const distances = staff.descriptors.map((storedDescriptor) => (
-                faceapi.euclideanDistance(descriptor, new Float32Array(storedDescriptor))
-            )).sort((first, second) => first - second);
+    const verifySelectedStaffFace = (descriptor) => {
+        if (!selectedStaff) return null;
 
-            return {
-                label: String(staff.id),
-                staff,
-                distance: distances[0] || Number.POSITIVE_INFINITY,
-                supportCount: distances.filter((distance) => distance <= supportMatchDistance).length,
-            };
-        }).sort((first, second) => first.distance - second.distance);
+        const distances = selectedStaff.descriptors.map((storedDescriptor) => (
+            faceapi.euclideanDistance(descriptor, new Float32Array(storedDescriptor))
+        )).sort((first, second) => first - second);
 
-        const best = staffDistances[0] || null;
-        const second = staffDistances[1] || null;
-        const gap = best && second ? second.distance - best.distance : 1;
-
-        return { best, second, gap };
+        return {
+            label: String(selectedStaff.id),
+            staff: selectedStaff,
+            distance: distances[0] || Number.POSITIVE_INFINITY,
+            supportCount: distances.filter((distance) => distance <= supportMatchDistance).length,
+        };
     };
 
     const rememberStableMatch = (candidate) => {
@@ -398,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const scan = async () => {
-        if (!matcher || isPunching || popupOpen || !video.videoWidth || isScanning) return;
+        if (!matcher || !selectedStaff || isPunching || popupOpen || !video.videoWidth || isScanning) return;
         isScanning = true;
 
         try {
@@ -408,10 +485,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!detection) {
                 matchedName.textContent = 'Waiting...';
-                matchedDistance.textContent = 'No clear face detected';
+                matchedDistance.textContent = `Selected: ${selectedStaff.name}`;
                 resetStableMatch();
                 return;
             }
+
+            lastDetection = detection;
 
             if (!faceLooksUsable(detection)) {
                 matchedName.textContent = 'Adjust position';
@@ -421,14 +500,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const matchResult = findBestStaffMatch(detection.descriptor);
-            const match = matchResult.best;
+            const match = verifySelectedStaffFace(detection.descriptor);
             const staff = match?.staff;
 
             if (!staff || match.distance > strictMatchDistance) {
-                matchedName.textContent = 'Unknown';
-                matchedDistance.textContent = match ? `Distance ${match.distance.toFixed(3)} · low confidence` : 'No match';
-                setMessage('Face not recognized with safe confidence. Please stand clearly in front or re-enroll this staff.', 'warning');
+                matchedName.textContent = selectedStaff.name;
+                matchedDistance.textContent = match ? `Distance ${match.distance.toFixed(3)} · not verified` : 'No face samples';
+                registerFaceFailure('Selected staff face did not verify.');
                 resetStableMatch();
                 return;
             }
@@ -439,21 +517,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!hasStrongSingleMatch && !hasSupportingSamples) {
                 matchedName.textContent = 'Need clearer match';
                 matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} · sample support ${match.supportCount}/${requiredSupportingSamples}`;
-                setMessage('Face is close, but not enough enrolled samples agree. Re-enroll this staff with clearer front/left/right photos.', 'warning');
-                resetStableMatch();
-                return;
-            }
-
-            if (matchResult.gap < minimumDistanceGap && !hasStrongSingleMatch) {
-                matchedName.textContent = 'Ambiguous match';
-                matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} / next ${matchResult.second.distance.toFixed(3)}`;
-                setMessage('Face match is too close to another staff. Improve lighting or re-enroll clearer samples.', 'warning');
+                registerFaceFailure('Face is close, but not enough enrolled samples agree.');
                 resetStableMatch();
                 return;
             }
 
             matchedName.textContent = staff.name;
             matchedDistance.textContent = `Distance ${match.distance.toFixed(3)} · samples ${match.supportCount} · confirming ${confirmedMatch?.label === match.label ? Math.min(confirmedMatch.count + 1, requiredStableMatches) : 1}/${requiredStableMatches}`;
+            failedFaceAttempts = 0;
+            hidePinFallback();
 
             if (!rememberStableMatch(match)) {
                 return;
@@ -478,14 +550,57 @@ document.addEventListener('DOMContentLoaded', () => {
             faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('vendor/face-api/models') }}'),
         ]);
 
-        const labeledDescriptors = staffMembers.map((staff) => new faceapi.LabeledFaceDescriptors(
-            String(staff.id),
-            staff.descriptors.map((descriptor) => new Float32Array(descriptor))
-        ));
-        matcher = new faceapi.FaceMatcher(labeledDescriptors, settings.max_match_distance);
-
-        await startKioskCamera();
+        matcher = true;
+        status.textContent = 'Face models loaded. Select staff to start camera.';
+        setMessage('Step 1: Select staff. Step 2: Face verification will start automatically.', 'neutral');
     };
+
+    selectedStaffInput?.addEventListener('change', async () => {
+        const staffId = selectedStaffInput.value;
+        selectedStaff = staffMembers.find((staff) => String(staff.id) === String(staffId)) || null;
+        resetVerificationState();
+        stopKioskCamera();
+
+        if (!selectedStaff) {
+            selectedStaffMeta.textContent = 'Face scan is disabled until a staff profile is selected.';
+            matchedName.textContent = 'Waiting...';
+            matchedDistance.textContent = 'No staff selected';
+            setMessage('Select staff first. Attendance will be marked only after selected staff face verification.', 'neutral');
+            return;
+        }
+
+        selectedStaffMeta.textContent = `${selectedStaff.designation || 'Staff'}${selectedStaff.staff_code ? ` · ${selectedStaff.staff_code}` : ''}`;
+        matchedName.textContent = selectedStaff.name;
+        matchedDistance.textContent = 'Ready for face verification';
+        setMessage(`Selected ${selectedStaff.name}. Camera starting now.`, 'neutral');
+
+        try {
+            await startKioskCamera();
+        } catch (error) {
+            status.textContent = 'Camera start failed. Please allow camera permission and try again.';
+            setMessage('Camera permission failed on this device/browser.', 'error');
+        }
+    });
+
+    pinSubmit?.addEventListener('click', async () => {
+        if (!selectedStaff || isPunching) return;
+        const pin = (pinCode?.value || '').trim();
+
+        if (!/^\d{4}$/.test(pin)) {
+            setMessage('Enter selected staff phone last 4 digit PIN.', 'error');
+            pinCode?.focus();
+            return;
+        }
+
+        await punch({ label: String(selectedStaff.id), distance: null }, lastDetection, 'pin_fallback', pin);
+    });
+
+    pinCode?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            pinSubmit?.click();
+        }
+    });
 
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
@@ -498,6 +613,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     switchCameraButton?.addEventListener('click', async () => {
+        if (!selectedStaff) {
+            setMessage('Select staff before switching camera.', 'warning');
+            return;
+        }
+
         cameraFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user';
         stopKioskCamera();
         status.textContent = `Switching to ${cameraFacingMode === 'user' ? 'front' : 'back'} camera...`;

@@ -60,25 +60,33 @@ class StaffKioskAttendanceController extends Controller
         $validated = $request->validate([
             'staff_member_id' => ['required', 'integer', 'exists:staff_members,id'],
             'face_image' => ['required', 'string'],
-            'match_distance' => ['required', 'numeric', 'min:0', 'max:2'],
+            'match_distance' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'verification_method' => ['nullable', 'string', 'in:face,pin_fallback'],
+            'pin' => ['nullable', 'string', 'regex:/^\d{4}$/'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'accuracy' => ['nullable', 'numeric', 'min:0', 'max:10000'],
         ]);
 
-        if ((float) $validated['match_distance'] > self::MAX_MATCH_DISTANCE) {
-            throw ValidationException::withMessages([
-                'attendance' => 'Face match confidence is too low. Please try again.',
-            ]);
-        }
-
         $staff = StaffMember::findOrFail($validated['staff_member_id']);
         $this->ensureStaffAccess($staff);
+        $verificationMethod = $validated['verification_method'] ?? 'face';
+        $matchDistance = isset($validated['match_distance']) ? (float) $validated['match_distance'] : null;
 
         if (!$staff->is_approved || empty($staff->face_descriptors)) {
             throw ValidationException::withMessages([
                 'attendance' => 'This staff profile is not approved for attendance.',
             ]);
+        }
+
+        if ($verificationMethod === 'face') {
+            if ($matchDistance === null || $matchDistance > self::MAX_MATCH_DISTANCE) {
+                throw ValidationException::withMessages([
+                    'attendance' => 'Face match confidence is too low. Please try again.',
+                ]);
+            }
+        } else {
+            $this->validatePinFallback($staff, $validated['pin'] ?? null);
         }
 
         $now = now();
@@ -104,6 +112,12 @@ class StaffKioskAttendanceController extends Controller
                 'attendance_date' => $now->toDateString(),
             ]);
 
+        if ($attendance->check_in_at && !$attendance->check_out_at && $attendance->check_in_at->diffInSeconds($now) < self::PUNCH_COOLDOWN_SECONDS) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Attendance already recorded recently. Please wait before punching again.',
+            ]);
+        }
+
         if (!$attendance->check_in_at) {
             $isRegistrationDay = $this->isRegistrationDay($staff, $now);
             if (!$isRegistrationDay && !$this->isTemporaryCheckInGraceDay($now)) {
@@ -116,7 +130,10 @@ class StaffKioskAttendanceController extends Controller
                 'check_in_at' => $now,
                 'check_in_status' => $isRegistrationDay ? 'registration_day' : ($now->format('H:i') > self::CHECK_IN_ON_TIME_UNTIL ? 'late' : 'on_time'),
                 'check_in_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-ins"),
-                'check_in_match_distance' => $validated['match_distance'],
+                'check_in_match_distance' => $verificationMethod === 'face' ? $matchDistance : null,
+                'check_in_verification_method' => $verificationMethod,
+                'check_in_verification_status' => $verificationMethod === 'face' ? 'verified' : 'pending_review',
+                'check_in_fallback_reason' => $verificationMethod === 'pin_fallback' ? 'face_verification_failed' : null,
                 'check_in_latitude' => $validated['latitude'] ?? null,
                 'check_in_longitude' => $validated['longitude'] ?? null,
                 'check_in_accuracy_meters' => isset($validated['accuracy']) ? (int) round($validated['accuracy']) : null,
@@ -131,6 +148,8 @@ class StaffKioskAttendanceController extends Controller
                 'staff' => $staff->name,
                 'action' => 'check_in',
                 'location' => $distance,
+                'verification_method' => $verificationMethod,
+                'verification_status' => $verificationMethod === 'face' ? 'verified' : 'pending_review',
             ]);
         }
 
@@ -150,7 +169,10 @@ class StaffKioskAttendanceController extends Controller
             'check_out_at' => $now,
             'check_out_status' => $isRegistrationDay ? 'registration_day' : ($now->format('H:i') < self::CHECK_OUT_EXPECTED ? 'early' : 'on_time'),
             'check_out_image_path' => $this->storeDataImage($validated['face_image'], "staff-members/attendance/{$staff->id}/check-outs"),
-            'check_out_match_distance' => $validated['match_distance'],
+            'check_out_match_distance' => $verificationMethod === 'face' ? $matchDistance : null,
+            'check_out_verification_method' => $verificationMethod,
+            'check_out_verification_status' => $verificationMethod === 'face' ? 'verified' : 'pending_review',
+            'check_out_fallback_reason' => $verificationMethod === 'pin_fallback' ? 'face_verification_failed' : null,
             'check_out_latitude' => $validated['latitude'] ?? null,
             'check_out_longitude' => $validated['longitude'] ?? null,
             'check_out_accuracy_meters' => isset($validated['accuracy']) ? (int) round($validated['accuracy']) : null,
@@ -165,6 +187,8 @@ class StaffKioskAttendanceController extends Controller
             'staff' => $staff->name,
             'action' => 'check_out',
             'location' => $distance,
+            'verification_method' => $verificationMethod,
+            'verification_status' => $verificationMethod === 'face' ? 'verified' : 'pending_review',
         ]);
     }
 
@@ -350,7 +374,7 @@ class StaffKioskAttendanceController extends Controller
             $query->where('staff_member_id', $request->integer('staff_member_id'));
         }
 
-        $rows = collect([['Date', 'Staff Code', 'Staff', 'Designation', 'Check In', 'In Status', 'Check Out', 'Out Status', 'Hours', 'In Match', 'Out Match']]);
+        $rows = collect([['Date', 'Staff Code', 'Staff', 'Designation', 'Check In', 'In Status', 'In Verification', 'Check Out', 'Out Status', 'Out Verification', 'Hours', 'In Match', 'Out Match']]);
 
         $query->chunk(200, function ($records) use ($rows) {
             foreach ($records as $record) {
@@ -361,8 +385,10 @@ class StaffKioskAttendanceController extends Controller
                     $record->staffMember?->designation,
                     $record->check_in_at?->format('Y-m-d H:i:s'),
                     $record->check_in_status,
+                    trim(($record->check_in_verification_method ?: '-') . ' ' . ($record->check_in_verification_status ?: '')),
                     $record->check_out_at?->format('Y-m-d H:i:s'),
                     $record->check_out_status,
+                    trim(($record->check_out_verification_method ?: '-') . ' ' . ($record->check_out_verification_status ?: '')),
                     $record->check_in_at && $record->check_out_at ? round($record->check_in_at->diffInMinutes($record->check_out_at) / 60, 2) : '',
                     $record->check_in_match_distance,
                     $record->check_out_match_distance,
@@ -443,6 +469,18 @@ class StaffKioskAttendanceController extends Controller
         if ($action === 'check_out' && ($time < self::CHECK_OUT_START || $time > self::CHECK_OUT_END)) {
             throw ValidationException::withMessages([
                 'attendance' => 'Check-out is allowed only from ' . self::CHECK_OUT_START . ' to ' . self::CHECK_OUT_END . '.',
+            ]);
+        }
+    }
+
+    protected function validatePinFallback(StaffMember $staff, ?string $pin): void
+    {
+        $phoneDigits = preg_replace('/\D+/', '', (string) $staff->phone);
+        $expectedPin = substr($phoneDigits, -4);
+
+        if (!$pin || strlen($expectedPin) !== 4 || !hash_equals($expectedPin, $pin)) {
+            throw ValidationException::withMessages([
+                'attendance' => 'PIN verification failed. Please check the selected staff and try again.',
             ]);
         }
     }

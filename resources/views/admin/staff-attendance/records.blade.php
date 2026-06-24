@@ -113,8 +113,22 @@
                                 @endif
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-600">
-                                In {{ $record->check_in_match_distance ?? '-' }}<br>
-                                Out {{ $record->check_out_match_distance ?? '-' }}
+                                <div>
+                                    In {{ $record->check_in_match_distance ?? '-' }}
+                                    @if($record->check_in_verification_method === 'pin_fallback')
+                                        <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-800">PIN review</span>
+                                    @elseif($record->check_in_verification_method === 'face')
+                                        <span class="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-800">Face</span>
+                                    @endif
+                                </div>
+                                <div class="mt-1">
+                                    Out {{ $record->check_out_match_distance ?? '-' }}
+                                    @if($record->check_out_verification_method === 'pin_fallback')
+                                        <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-800">PIN review</span>
+                                    @elseif($record->check_out_verification_method === 'face')
+                                        <span class="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-800">Face</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-5 py-3.5 whitespace-nowrap text-sm text-slate-600">
                                 In {{ $record->check_in_distance_meters !== null ? $record->check_in_distance_meters . 'm' : '-' }}<br>
