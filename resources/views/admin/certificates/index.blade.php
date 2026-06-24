@@ -175,6 +175,7 @@
                             <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Batch</th>
                             <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Certificate Number</th>
                             <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Status</th>
+                            <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Physical Copy</th>
                             <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Issue Date</th>
                             <th class="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Actions</th>
                         </tr>
@@ -204,6 +205,27 @@
                                         {{ $certificate->is_issued ? 'Issued' : 'Pending' }}
                                     </span>
                                 </td>
+                                <td class="px-5 py-3.5">
+                                    @if($certificate->physical_copy_issued_at)
+                                        <div class="space-y-1">
+                                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                                                <i class="fas fa-hand-holding mr-1"></i>
+                                                Physical Issued
+                                            </span>
+                                            <div class="text-xs text-gray-500">{{ $certificate->physical_copy_issued_at->format('M d, Y') }}</div>
+                                        </div>
+                                    @elseif($certificate->is_issued)
+                                        <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                                            <i class="fas fa-box-open mr-1"></i>
+                                            Physical Pending
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                                            <i class="fas fa-lock mr-1"></i>
+                                            Not Ready
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-5 py-3.5 text-sm text-gray-500">{{ $certificate->issue_date ? $certificate->issue_date->format('M d, Y') : 'N/A' }}</td>
                                 <td class="px-5 py-3.5">
                                     <div class="flex flex-wrap items-center gap-2">
@@ -225,6 +247,18 @@
                                                class="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-sm text-violet-700 transition hover:bg-violet-100">
                                                 <i class="fas fa-download"></i>
                                             </a>
+                                            @unless($certificate->physical_copy_issued_at)
+                                                <form action="{{ route('admin.certificates.physical-copy', $certificate) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit"
+                                                            class="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-sm text-emerald-700 transition hover:bg-emerald-100"
+                                                            onclick="return confirm('Mark physical certificate copy as issued to this student?')"
+                                                            title="Mark physical copy issued">
+                                                        <i class="fas fa-hand-holding"></i>
+                                                    </button>
+                                                </form>
+                                            @endunless
                                             <form action="{{ route('admin.certificates.revoke', $certificate) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('PATCH')

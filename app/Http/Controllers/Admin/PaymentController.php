@@ -43,32 +43,7 @@ class PaymentController extends Controller
         $status = trim((string) $request->get('status', ''));
         $dateFilter = trim((string) $request->get('date_filter', ''));
 
-        $query = $this->scopePayments(Payment::with(['student', 'enrollment.batch.course', 'approvedBy']));
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('payment_receipt_number', 'like', "%{$search}%")
-                  ->orWhereHas('student', function ($studentQuery) use ($search) {
-                      $studentQuery->where('full_name', 'like', "%{$search}%")
-                          ->orWhere('email', 'like', "%{$search}%")
-                          ->orWhere('whatsapp_number', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('enrollment.batch', function ($batchQuery) use ($search) {
-                      $batchQuery->where('batch_name', 'like', "%{$search}%")
-                          ->orWhereHas('course', function ($courseQuery) use ($search) {
-                              $courseQuery->where('name', 'like', "%{$search}%");
-                          });
-                  });
-            });
-        }
-
-        if ($status !== '') {
-            $query->where('status', $status);
-        }
-
-        if ($dateFilter === 'today') {
-            $query->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()]);
-        }
+        $query = $this->paymentsIndexQuery($request);
 
         $payments = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
@@ -228,6 +203,109 @@ class PaymentController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    public function exportAllCsv(Request $request)
+    {
+        $filename = 'all_payments_'.now()->format('Ymd_His').'.csv';
+
+        return response()->streamDownload(function () use ($request) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Sl. No',
+                'Receipt No',
+                'Student',
+                'Email',
+                'WhatsApp',
+                'Course',
+                'Batch',
+                'Batch Start date',
+                'Batch End date',
+                'Amount Total',
+                'Amount Paid',
+                'Amount Balance',
+                'Payment Method',
+                'Payment Type',
+                'Status',
+            ]);
+
+            $index = 0;
+            $this->paymentsIndexQuery($request)
+                ->orderByDesc('created_at')
+                ->chunk(500, function ($payments) use ($handle, &$index) {
+                    foreach ($payments as $payment) {
+                        $index++;
+                        $enrollment = $payment->enrollment;
+
+                        fputcsv($handle, [
+                            $index,
+                            $payment->payment_receipt_number,
+                            $payment->student?->full_name,
+                            $payment->student?->email,
+                            $payment->student?->whatsapp_number,
+                            $enrollment?->display_course_name ?? 'N/A',
+                            $enrollment?->batch?->batch_name ?? 'N/A',
+                            $enrollment?->effective_start_date?->format('Y-m-d'),
+                            $enrollment?->effective_end_date?->format('Y-m-d'),
+                            $enrollment?->total_fee ?? $payment->amount,
+                            $enrollment?->paid_amount ?? $payment->amount,
+                            $enrollment?->outstanding_amount ?? 0,
+                            $payment->payment_method_label,
+                            ucwords(str_replace('_', ' ', (string) $payment->payment_type)),
+                            ucfirst((string) $payment->status),
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    private function paymentsIndexQuery(Request $request)
+    {
+        $search = trim((string) $request->get('search', ''));
+        $status = trim((string) $request->get('status', ''));
+        $dateFilter = trim((string) $request->get('date_filter', ''));
+
+        $query = $this->scopePayments(
+            Payment::with(['student', 'enrollment.batch.course', 'enrollment.legacyLinkCourse', 'approvedBy'])
+        );
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('payment_receipt_number', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($studentQuery) use ($search) {
+                        $studentQuery->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('whatsapp_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('enrollment', function ($enrollmentQuery) use ($search) {
+                        $enrollmentQuery->where('legacy_course_name', 'like', "%{$search}%")
+                            ->orWhereHas('legacyLinkCourse', function ($courseQuery) use ($search) {
+                                $courseQuery->where('name', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('batch', function ($batchQuery) use ($search) {
+                                $batchQuery->where('batch_name', 'like', "%{$search}%")
+                                    ->orWhereHas('course', function ($courseQuery) use ($search) {
+                                        $courseQuery->where('name', 'like', "%{$search}%");
+                                    });
+                            });
+                    });
+            });
+        }
+
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+
+        if ($dateFilter === 'today') {
+            $query->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()]);
+        }
+
+        return $query;
     }
 
     private function pendingPaymentsQuery(Request $request)

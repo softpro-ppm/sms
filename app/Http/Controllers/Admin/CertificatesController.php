@@ -48,7 +48,7 @@ class CertificatesController extends Controller
             }
         }
 
-        $query = $this->scopeCertificates(Certificate::with(['student', 'course', 'batch', 'assessmentResult']));
+        $query = $this->scopeCertificates(Certificate::with(['student', 'course', 'batch', 'assessmentResult', 'physicalCopyIssuedBy']));
 
         // Filter by course
         if ($request->filled('course_id')) {
@@ -148,7 +148,7 @@ class CertificatesController extends Controller
         if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
             abort(404);
         }
-        $certificate->load(['student', 'course', 'batch', 'assessmentResult', 'enrollment']);
+        $certificate->load(['student', 'course', 'batch', 'assessmentResult', 'enrollment', 'physicalCopyIssuedBy']);
 
         return view('admin.certificates.show', compact('certificate'));
     }
@@ -248,10 +248,41 @@ class CertificatesController extends Controller
         if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
             abort(404);
         }
-        $certificate->update(['is_issued' => false]);
+        $certificate->update([
+            'is_issued' => false,
+            'physical_copy_issued_at' => null,
+            'physical_copy_issued_by' => null,
+            'physical_copy_notes' => null,
+        ]);
         
         return redirect()->back()
             ->with('success', 'Certificate revoked successfully!');
+    }
+
+    public function markPhysicalCopyIssued(Request $request, Certificate $certificate)
+    {
+        $tpId = $this->getTrainingPartnerId();
+        if ($tpId !== null && (int) $certificate->student?->training_partner_id !== $tpId) {
+            abort(404);
+        }
+
+        if (! $certificate->is_issued || ! $certificate->certificate_number) {
+            return redirect()->back()
+                ->with('error', 'Generate the certificate before marking the physical copy as issued.');
+        }
+
+        $validated = $request->validate([
+            'physical_copy_notes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $certificate->update([
+            'physical_copy_issued_at' => now(),
+            'physical_copy_issued_by' => auth()->id(),
+            'physical_copy_notes' => $validated['physical_copy_notes'] ?? null,
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Physical certificate copy marked as issued to the student.');
     }
 
     public function create(Request $request)

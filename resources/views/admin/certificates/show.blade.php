@@ -64,6 +64,34 @@
                             <span class="text-sm text-gray-500">Issue Date:</span>
                             <span class="text-sm font-medium">{{ $certificate->issue_date ? $certificate->issue_date->format('M d, Y') : 'Not Issued' }}</span>
                         </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-sm text-gray-500">Physical Copy:</span>
+                            <span class="text-right text-sm font-medium">
+                                @if($certificate->physical_copy_issued_at)
+                                    <span class="text-green-700">Issued</span>
+                                @elseif($certificate->is_issued)
+                                    <span class="text-amber-700">Pending</span>
+                                @else
+                                    <span class="text-gray-500">Not Ready</span>
+                                @endif
+                            </span>
+                        </div>
+                        @if($certificate->physical_copy_issued_at)
+                            <div class="flex justify-between gap-3">
+                                <span class="text-sm text-gray-500">Physical Issued On:</span>
+                                <span class="text-right text-sm font-medium">{{ $certificate->physical_copy_issued_at->format('M d, Y H:i') }}</span>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <span class="text-sm text-gray-500">Marked By:</span>
+                                <span class="text-right text-sm font-medium">{{ $certificate->physicalCopyIssuedBy?->name ?? 'N/A' }}</span>
+                            </div>
+                            @if($certificate->physical_copy_notes)
+                                <div>
+                                    <span class="text-sm text-gray-500">Handover Note:</span>
+                                    <p class="mt-1 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">{{ $certificate->physical_copy_notes }}</p>
+                                </div>
+                            @endif
+                        @endif
                         <div class="flex justify-between">
                             <span class="text-sm text-gray-500">Created:</span>
                             <span class="text-sm font-medium">{{ $certificate->created_at->format('M d, Y H:i') }}</span>
@@ -182,6 +210,31 @@
                             <i class="fas fa-download mr-2"></i>
                             Download Certificate
                         </a>
+
+                        @if(!$certificate->physical_copy_issued_at)
+                            <form action="{{ route('admin.certificates.physical-copy', $certificate) }}" method="POST" class="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                                @csrf
+                                @method('PATCH')
+                                <label for="physical_copy_notes" class="block text-sm font-medium text-emerald-900">Physical copy handover note</label>
+                                <input type="text"
+                                       name="physical_copy_notes"
+                                       id="physical_copy_notes"
+                                       maxlength="255"
+                                       placeholder="Optional"
+                                       class="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                                <button type="submit"
+                                        onclick="return confirm('Mark physical certificate copy as issued to this student?')"
+                                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                                    <i class="fas fa-hand-holding mr-2"></i>
+                                    Mark Physical Copy Issued
+                                </button>
+                            </form>
+                        @else
+                            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                                <i class="fas fa-hand-holding mr-2"></i>
+                                Physical copy issued to student
+                            </div>
+                        @endif
                         
                         <form action="{{ route('admin.certificates.revoke', $certificate) }}" method="POST">
                             @csrf

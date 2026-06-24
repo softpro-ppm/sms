@@ -67,6 +67,40 @@ class CertificatesQueuePageTest extends TestCase
             ->assertSeeText($certificate->fresh()->certificate_number);
     }
 
+    public function test_admin_can_mark_physical_certificate_copy_issued(): void
+    {
+        [$admin, $certificate] = $this->certificateFixture('PHY');
+
+        $certificate->forceFill([
+            'certificate_number' => 'CERT-PHY-'.now()->format('Ym').'-0001',
+            'is_issued' => true,
+            'issue_date' => now()->toDateString(),
+        ])->save();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.certificates.physical-copy', $certificate), [
+                'physical_copy_notes' => 'Handed over at reception',
+            ])
+            ->assertRedirect();
+
+        $certificate->refresh();
+        $this->assertNotNull($certificate->physical_copy_issued_at);
+        $this->assertSame($admin->id, $certificate->physical_copy_issued_by);
+        $this->assertSame('Handed over at reception', $certificate->physical_copy_notes);
+    }
+
+    public function test_admin_cannot_mark_physical_copy_before_certificate_is_generated(): void
+    {
+        [$admin, $certificate] = $this->certificateFixture('PND');
+
+        $this->actingAs($admin)
+            ->patch(route('admin.certificates.physical-copy', $certificate))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertNull($certificate->fresh()->physical_copy_issued_at);
+    }
+
     private function certificateFixture(string $partnerCode): array
     {
         $partner = TrainingPartner::create([

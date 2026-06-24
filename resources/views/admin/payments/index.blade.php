@@ -175,6 +175,11 @@
                 <i class="fas fa-times mr-1"></i>
                 Clear
             </a>
+            <a href="{{ route('admin.payments.export-csv', request()->query()) }}"
+               class="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
+                <i class="fas fa-download mr-1"></i>
+                Download CSV
+            </a>
         </div>
     </form>
 </div>

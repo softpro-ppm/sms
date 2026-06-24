@@ -177,6 +177,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/payments/pending-approvals', [PaymentController::class, 'pendingApprovals'])->name('payments.pending-approvals');
     Route::get('/payments/pending-approvals/export-csv', [PaymentController::class, 'exportPendingApprovalsCsv'])->name('payments.pending-approvals.export-csv');
     Route::get('/payments/pending/export-csv', [PaymentController::class, 'exportPendingCsv'])->name('payments.pending.export-csv');
+    Route::get('/payments/export-csv', [PaymentController::class, 'exportAllCsv'])->name('payments.export-csv');
     Route::get('/payments/debug', [PaymentController::class, 'debug'])->name('payments.debug');
     Route::get('/payments/create', [PaymentController::class, 'create'])->name('payments.create');
     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
@@ -312,6 +313,7 @@ Route::middleware(['auth', 'role:admin,reception,super_admin', 'password.force']
     Route::get('/certificates/{certificate}/preview', [CertificatesController::class, 'preview'])->name('certificates.preview');
     Route::post('/certificates/{certificate}/generate', [CertificatesController::class, 'generate'])->name('certificates.generate');
     Route::get('/certificates/{certificate}/download', [CertificatesController::class, 'download'])->name('certificates.download');
+    Route::patch('/certificates/{certificate}/physical-copy', [CertificatesController::class, 'markPhysicalCopyIssued'])->name('certificates.physical-copy');
     Route::patch('/certificates/{certificate}/revoke', [CertificatesController::class, 'revoke'])->name('certificates.revoke');
     Route::get('/api/batches/by-course', [CertificatesController::class, 'getBatchesByCourse'])->name('certificates.batches-by-course');
     Route::get('/api/certificates/stats', [CertificatesController::class, 'getStats'])->name('certificates.stats');

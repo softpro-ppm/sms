@@ -204,4 +204,42 @@ class PaymentApproveIdempotencyTest extends TestCase
         $this->assertStringContainsString($payment->payment_receipt_number, $csv);
         $this->assertStringNotContainsString('APPROVED', $csv);
     }
+
+    public function test_all_payments_csv_exports_filtered_fee_summary_columns(): void
+    {
+        [$admin, $payment] = $this->seedFixture();
+
+        Payment::create([
+            'student_id' => $payment->student_id,
+            'enrollment_id' => $payment->enrollment_id,
+            'payment_receipt_number' => 'RCP-'.now()->format('Y').'-APPROVED'.uniqid(),
+            'amount' => 250,
+            'payment_type' => 'partial',
+            'payment_method' => 'cash',
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.payments.export-csv', ['status' => 'pending']))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $csv = $response->streamedContent();
+
+        $this->assertStringContainsString(
+            '"Sl. No","Receipt No",Student,Email,WhatsApp,Course,Batch,"Batch Start date","Batch End date","Amount Total","Amount Paid","Amount Balance","Payment Method","Payment Type",Status',
+            $csv
+        );
+        $this->assertStringContainsString($payment->payment_receipt_number, $csv);
+        $this->assertStringContainsString('Fixture Student', $csv);
+        $this->assertStringContainsString('Fixture Course', $csv);
+        $this->assertStringContainsString('Fix-B1', $csv);
+        $this->assertStringContainsString(',5000.00,0.00,5000.00,', $csv);
+        $this->assertStringContainsString('Cash/UPI', $csv);
+        $this->assertStringContainsString('Partial', $csv);
+        $this->assertStringContainsString('Pending', $csv);
+        $this->assertStringNotContainsString('APPROVED', $csv);
+    }
 }

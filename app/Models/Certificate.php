@@ -17,12 +17,16 @@ class Certificate extends Model
         'issue_date',
         'certificate_content',
         'certificate_file_path',
-        'is_issued'
+        'is_issued',
+        'physical_copy_issued_at',
+        'physical_copy_issued_by',
+        'physical_copy_notes',
     ];
 
     protected $casts = [
         'issue_date' => 'date',
-        'is_issued' => 'boolean'
+        'is_issued' => 'boolean',
+        'physical_copy_issued_at' => 'datetime',
     ];
 
     // Relationships
@@ -49,6 +53,11 @@ class Certificate extends Model
     public function assessmentResult(): BelongsTo
     {
         return $this->belongsTo(AssessmentResult::class);
+    }
+
+    public function physicalCopyIssuedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'physical_copy_issued_by');
     }
 
     // Accessors
