@@ -4,8 +4,8 @@
 @section('page-title', 'Attendance Kiosk')
 
 @section('content')
-<div class="space-y-5">
-    <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+<div class="space-y-3 sm:space-y-5">
+    <section class="hidden overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm md:block">
         <div class="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <div class="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">
@@ -30,33 +30,32 @@
         </div>
     </section>
 
-    <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div class="grid gap-5 px-6 py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div>
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px]">
+        <div class="grid gap-3 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+            <div class="hidden sm:block">
                 <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Step 1</div>
                 <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Select staff</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-600">Staff name select chesaka face verification start avutundi.</p>
             </div>
             <div>
-                <label for="selected-staff-id" class="block text-sm font-medium text-slate-700">Approved staff</label>
-                <select id="selected-staff-id" class="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-primary-300 focus:ring-primary-100">
+                <label for="selected-staff-id" class="block text-sm font-semibold text-slate-800 sm:font-medium sm:text-slate-700">Select staff</label>
+                <select id="selected-staff-id" class="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-3 text-base shadow-sm focus:border-primary-300 focus:ring-primary-100 sm:text-sm">
                     <option value="">Select staff to start camera</option>
                     @foreach($staffMembers as $staff)
                         <option value="{{ $staff['id'] }}">{{ $staff['name'] }}{{ $staff['staff_code'] ? ' - ' . $staff['staff_code'] : '' }}</option>
                     @endforeach
                 </select>
-                <p id="selected-staff-meta" class="mt-2 text-xs text-slate-500">Face scan is disabled until a staff profile is selected.</p>
+                <p id="selected-staff-meta" class="mt-2 hidden text-xs text-slate-500 sm:block"></p>
             </div>
         </div>
     </section>
 
-    <div class="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-            <div class="border-b border-slate-200 px-6 py-5">
+    <div class="grid gap-3 sm:gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px]">
+            <div class="hidden border-b border-slate-200 px-6 py-5 sm:block">
                 <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Step 2</div>
                 <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Face verification</h3>
             </div>
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 <div class="relative mx-auto max-w-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 sm:max-w-none">
                     <video id="kiosk-video" class="aspect-[3/4] w-full object-contain sm:aspect-video" playsinline autoplay muted></video>
                     <canvas id="kiosk-canvas" class="hidden"></canvas>
@@ -64,17 +63,17 @@
                         <i class="fas fa-camera-rotate text-base"></i>
                     </button>
                 </div>
-                <p id="kiosk-status" class="mt-3 text-sm text-slate-500">Loading face recognition models...</p>
+                <p id="kiosk-status" class="mt-2 text-sm text-slate-500 sm:mt-3">Loading face recognition models...</p>
             </div>
         </section>
 
         <section class="space-y-5">
-            <div class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-200 px-6 py-5">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px]">
+                <div class="border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
                     <div class="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Match</div>
                     <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-900">Current result</h3>
                 </div>
-                <div class="space-y-4 p-6">
+                <div class="space-y-4 p-4 sm:p-6">
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Detected staff</p>
                         <p id="matched-name" class="mt-2 text-2xl font-semibold text-slate-900">Waiting...</p>
@@ -82,7 +81,7 @@
                     </div>
                     <div id="pin-fallback-panel" class="hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">PIN fallback</p>
-                        <p class="mt-1 text-sm leading-6 text-amber-800">Face verify avvakapothe selected staff phone last 4 digits enter cheyyandi. This punch goes to admin review.</p>
+                        <p class="mt-1 text-sm leading-6 text-amber-800">If face verification fails, enter the selected staff phone number's last 4 digits. This punch goes to admin review.</p>
                         <div class="mt-3 flex gap-2">
                             <input id="pin-code" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="4 digit PIN" class="min-w-0 flex-1 rounded-2xl border-amber-200 px-4 py-2.5 text-sm shadow-sm focus:border-amber-300 focus:ring-amber-100">
                             <button type="button" id="pin-submit" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700">
@@ -94,7 +93,7 @@
                     <div id="punch-message" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
                         Select staff first. Attendance will be marked only after selected staff face verification.
                     </div>
-                    <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <div class="hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:block">
                         Approved staff loaded: {{ $staffMembers->count() }}
                     </div>
                 </div>
