@@ -144,8 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cooldownMs = 120000;
     const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
     const requiredStableMatches = 3;
-    const minimumDistanceGap = 0.045;
+    const minimumDistanceGap = 0.035;
     const strictMatchDistance = settings.max_match_distance;
+    const strongSingleMatchDistance = 0.38;
+    const supportMatchDistance = 0.50;
+    const requiredSupportingSamples = 2;
 
     const setMessage = (message, mode = 'neutral') => {
         const colors = {
@@ -362,12 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const staffDistances = staffMembers.map((staff) => {
             const distances = staff.descriptors.map((storedDescriptor) => (
                 faceapi.euclideanDistance(descriptor, new Float32Array(storedDescriptor))
-            ));
+            )).sort((first, second) => first - second);
 
             return {
                 label: String(staff.id),
                 staff,
-                distance: Math.min(...distances),
+                distance: distances[0] || Number.POSITIVE_INFINITY,
+                supportCount: distances.filter((distance) => distance <= supportMatchDistance).length,
             };
         }).sort((first, second) => first.distance - second.distance);
 
@@ -429,7 +433,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (matchResult.gap < minimumDistanceGap) {
+            const hasStrongSingleMatch = match.distance <= strongSingleMatchDistance;
+            const hasSupportingSamples = match.supportCount >= requiredSupportingSamples;
+
+            if (!hasStrongSingleMatch && !hasSupportingSamples) {
+                matchedName.textContent = 'Need clearer match';
+                matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} · sample support ${match.supportCount}/${requiredSupportingSamples}`;
+                setMessage('Face is close, but not enough enrolled samples agree. Re-enroll this staff with clearer front/left/right photos.', 'warning');
+                resetStableMatch();
+                return;
+            }
+
+            if (matchResult.gap < minimumDistanceGap && !hasStrongSingleMatch) {
                 matchedName.textContent = 'Ambiguous match';
                 matchedDistance.textContent = `${staff.name} ${match.distance.toFixed(3)} / next ${matchResult.second.distance.toFixed(3)}`;
                 setMessage('Face match is too close to another staff. Improve lighting or re-enroll clearer samples.', 'warning');
@@ -438,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             matchedName.textContent = staff.name;
-            matchedDistance.textContent = `Distance ${match.distance.toFixed(3)} · confirming ${confirmedMatch?.label === match.label ? Math.min(confirmedMatch.count + 1, requiredStableMatches) : 1}/${requiredStableMatches}`;
+            matchedDistance.textContent = `Distance ${match.distance.toFixed(3)} · samples ${match.supportCount} · confirming ${confirmedMatch?.label === match.label ? Math.min(confirmedMatch.count + 1, requiredStableMatches) : 1}/${requiredStableMatches}`;
 
             if (!rememberStableMatch(match)) {
                 return;
