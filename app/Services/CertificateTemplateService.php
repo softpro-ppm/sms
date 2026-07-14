@@ -83,11 +83,11 @@ class CertificateTemplateService
             default => 'Mr. / Ms.',
         };
 
-        // Parent label and name (F/o = Father of, D/o = Daughter of)
+        // Parent label and name (S/o = Son of, D/o = Daughter of)
         $parentLabel = match (strtolower($student->gender ?? '')) {
-            'male' => 'F/o',
+            'male' => 'S/o',
             'female' => 'D/o',
-            default => 'F/o D/o',
+            default => 'S/o / D/o',
         };
         $parentName = trim($student->father_name ?? '');
 
