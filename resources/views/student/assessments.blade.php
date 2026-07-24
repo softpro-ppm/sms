@@ -37,7 +37,7 @@
                             @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['institute_eligible'], 'label' => 'Institute marked exam-eligible'])
                             @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['fee_fully_paid'], 'label' => 'Fees fully paid'])
                             @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['batch_ended'], 'label' => 'Batch end date passed'])
-                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['within_exam_window'], 'label' => 'Inside exam window (1 year after batch end)'])
+                            @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['within_exam_window'], 'label' => 'Exam access window is open'])
                             @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $ch['online_lessons_complete'], 'label' => $ch['lms_progress'] ? 'All online lessons done ('.$ch['lms_progress']['completed'].'/'.$ch['lms_progress']['total'].')' : 'Online lessons (none or N/A)'])
                         </ul>
                         @if($ch['is_legacy'])

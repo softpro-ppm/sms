@@ -39,7 +39,7 @@
             </h2>
             <ul class="list-disc list-inside text-gray-700 space-y-2 text-sm leading-relaxed">
                 <li>Students complete <strong>online lessons</strong> when the course has them.</li>
-                <li>The exam unlocks after <strong>batch end date</strong>, <strong>full payment</strong>, institute eligibility, and <strong>within one year</strong> of batch end (normal enrollments).</li>
+                <li>The exam unlocks after <strong>batch end date</strong>, <strong>full payment</strong>, and institute eligibility for normal enrollments.</li>
             </ul>
         </section>
 

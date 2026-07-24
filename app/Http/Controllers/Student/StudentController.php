@@ -790,7 +790,7 @@ class StudentController extends Controller
 
         if (! $eligibleEnrollment) {
             return redirect()->route('student.assessments')
-                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, wait until after your batch end date, clear all fees, and ensure your institute has marked you eligible for the exam.');
+                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, clear all fees, and ensure your institute has marked you eligible for the exam after the batch end date.');
         }
 
         // Check if assessment has started (session check)
@@ -856,7 +856,7 @@ class StudentController extends Controller
 
         if (! $eligibleEnrollment) {
             return redirect()->route('student.assessments')
-                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, wait until after your batch end date, clear all fees, and ensure your institute has marked you eligible for the exam.');
+                ->with('error', 'Exam is not available yet. Finish all online lessons for this course, clear all fees, and ensure your institute has marked you eligible for the exam after the batch end date.');
         }
 
         // Mark assessment as started in session

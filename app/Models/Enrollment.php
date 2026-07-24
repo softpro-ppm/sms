@@ -159,18 +159,18 @@ class Enrollment extends Model
         $lms = $course ? $this->lmsProgressForCourse($course) : null;
 
         $batchEnded = false;
-        $inWindow = false;
+        $examWindowOpen = false;
         if ($this->batch?->end_date) {
             $end = Carbon::parse($this->batch->end_date)->startOfDay();
             $batchEnded = now()->startOfDay()->gte($end);
-            $inWindow = $batchEnded && now()->lte($end->copy()->addYear());
+            $examWindowOpen = $batchEnded;
         }
 
         return [
             'institute_eligible' => (bool) $this->is_eligible_for_assessment,
             'fee_fully_paid' => (bool) $this->is_fully_paid,
             'batch_ended' => $batchEnded,
-            'within_exam_window' => $inWindow,
+            'within_exam_window' => $examWindowOpen,
             'online_lessons_complete' => $lms === null ? true : ($lms['completed'] >= $lms['total']),
             'lms_progress' => $lms,
             'can_take' => (bool) $this->can_take_assessment,
@@ -259,10 +259,9 @@ class Enrollment extends Model
             return false;
         }
 
-        $endDate = Carbon::parse($this->batch->end_date);
-        $validUntil = $endDate->copy()->addYear();
+        $endDate = Carbon::parse($this->batch->end_date)->startOfDay();
 
-        if (! (now()->gte($endDate) && now()->lte($validUntil))) {
+        if (! now()->startOfDay()->gte($endDate)) {
             return false;
         }
 

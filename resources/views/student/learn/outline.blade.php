@@ -60,7 +60,7 @@
                     @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['institute_eligible'], 'label' => 'Institute marked you exam-eligible'])
                     @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['fee_fully_paid'], 'label' => 'Course fee fully paid'])
                     @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['batch_ended'], 'label' => 'Batch end date reached'])
-                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['within_exam_window'], 'label' => 'Within exam window (1 yr after batch end)'])
+                    @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['within_exam_window'], 'label' => 'Exam access window is open'])
                     @include('student.learn.partials.exam-readiness-row', ['variant' => 'light', 'ok' => $checklist['online_lessons_complete'], 'label' => $checklist['lms_progress'] ? 'All online lessons completed' : 'Online lessons (none for this course)'])
                 </ul>
                 @if($checklist['can_take'])
