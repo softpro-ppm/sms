@@ -232,7 +232,13 @@ class Enrollment extends Model
             return $this->legacy_link_course_id ? (int) $this->legacy_link_course_id : null;
         }
 
-        return $this->batch?->course_id ? (int) $this->batch->course_id : null;
+        $course = $this->batch?->course;
+
+        if (! $course) {
+            return null;
+        }
+
+        return (int) $course->assessmentHostCourse()->id;
     }
 
     public function getIsFullyPaidAttribute(): bool
