@@ -6,6 +6,7 @@ use App\Models\Batch;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Student;
+use App\Models\TrainingPartner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -65,6 +66,16 @@ class EnrollmentExamEligibilityTest extends TestCase
 
     public function test_tally_advanced_enrollment_can_fallback_to_shared_tally_assessment_catalog(): void
     {
+        $partner = TrainingPartner::create([
+            'type' => 'STANDARD',
+            'name' => 'SoftPro Partner',
+            'code' => 'SPT001',
+            'contact_name' => 'Admin',
+            'contact_phone' => '9876543212',
+            'contact_email' => 'partner@example.com',
+            'status' => 'approved',
+        ]);
+
         $basicCourse = Course::create([
             'name' => 'TALLY',
             'description' => 'Shared tally exam catalog',
@@ -76,6 +87,7 @@ class EnrollmentExamEligibilityTest extends TestCase
         ]);
 
         $advancedCourse = Course::create([
+            'training_partner_id' => $partner->id,
             'name' => 'Tally ERP 9 Advanced',
             'description' => 'Advanced tally course',
             'course_fee' => 2300,

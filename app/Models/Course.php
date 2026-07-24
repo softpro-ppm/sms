@@ -213,7 +213,10 @@ class Course extends Model
             ->when(
                 $this->training_partner_id === null,
                 fn ($q) => $q->whereNull('training_partner_id'),
-                fn ($q) => $q->where('training_partner_id', $this->training_partner_id)
+                fn ($q) => $q->where(function ($inner) {
+                    $inner->where('training_partner_id', $this->training_partner_id)
+                        ->orWhereNull('training_partner_id');
+                })
             )
             ->whereHas('assessments', fn ($q) => $q->where('is_active', true))
             ->whereHas('questionBanks', fn ($q) => $q->where('is_active', true), '>=', 25)
